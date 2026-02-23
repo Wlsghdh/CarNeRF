@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}매물 검색{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Sidebar Filters -->
+        <aside class="lg:w-64 flex-shrink-0">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-24">
+                <h2 class="font-bold text-lg mb-4">필터</h2>
+                <form id="filter-form" class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">브랜드</label>
+                        <select name="brand" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                            <option value="">전체</option>
+                            {% for b in brands %}
+                            <option value="{{ b }}" {{ 'selected' if filters.brand == b }}>{{ b }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">연료</label>
+                        <select name="fuel_type" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                            <option value="">전체</option>
+                            <option value="가솔린" {{ 'selected' if filters.fuel_type == '가솔린' }}>가솔린</option>
+                            <option value="디젤" {{ 'selected' if filters.fuel_type == '디젤' }}>디젤</option>
+                            <option value="전기" {{ 'selected' if filters.fuel_type == '전기' }}>전기</option>
+                            <option value="하이브리드" {{ 'selected' if filters.fuel_type == '하이브리드' }}>하이브리드</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">가격 (만원)</label>
+                        <div class="flex gap-2">
+                            <input type="number" name="price_min" placeholder="최소" value="{{ filters.price_min or '' }}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                            <span class="text-gray-400 self-center">~</span>
+                            <input type="number" name="price_max" placeholder="최대" value="{{ filters.price_max or '' }}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">연식</label>
+                        <div class="flex gap-2">
+                            <input type="number" name="year_min" placeholder="최소" value="{{ filters.year_min or '' }}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                            <span class="text-gray-400 self-center">~</span>
+                            <input type="number" name="year_max" placeholder="최대" value="{{ filters.year_max or '' }}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-primary-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-primary-700 transition">
+                        필터 적용
+                    </button>
+                    <a href="/listings" class="block text-center text-sm text-gray-400 hover:text-gray-600 transition">초기화</a>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold">매물 검색</h1>
+                    <p class="text-sm text-gray-500 mt-1">총 <span id="total-count" class="font-semibold text-primary-600">{{ total }}</span>대</p>
+                </div>
+                <select id="sort-select" class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                    <option value="newest" {{ 'selected' if filters.sort == 'newest' }}>최신순</option>
+                    <option value="price_asc" {{ 'selected' if filters.sort == 'price_asc' }}>가격 낮은순</option>
+                    <option value="price_desc" {{ 'selected' if filters.sort == 'price_desc' }}>가격 높은순</option>
+                    <option value="mileage" {{ 'selected' if filters.sort == 'mileage' }}>주행거리순</option>
+                </select>
+            </div>
+
+            {% if listings %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6" id="listings-grid">
+                {% for listing in listings %}
+                <a href="/vehicles/{{ listing.vehicle.id }}" class="group bg-white rounded-2xl shadow-sm hover:shadow-lg transition overflow-hidden border border-gray-100">
+                    <div class="aspect-[4/3] bg-gray-100 relative overflow-hidden">
+                        <img src="{{ listing.vehicle.thumbnail_url }}" alt="{{ listing.vehicle.brand }} {{ listing.vehicle.model }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                        {% if listing.vehicle.model_3d_status == 'ready' %}
+                        <span class="absolute top-3 left-3 bg-primary-600 text-white text-xs px-2 py-1 rounded-full font-medium">3D</span>
+                        {% endif %}
+                        {% if not listing.is_negotiable %}
+                        <span class="absolute top-3 right-3 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium">확정가</span>
+                        {% endif %}
+                    </div>
+                    <div class="p-4">
+                        <p class="text-xs text-gray-400 mb-1">{{ listing.vehicle.brand }} {{ listing.vehicle.model }} · {{ listing.vehicle.year }}년</p>
+                        <h3 class="font-semibold text-gray-900 mb-2 truncate">{{ listing.title }}</h3>
+                        <p class="text-primary-600 font-bold text-lg">{{ "{:,}".format(listing.price) }}만원</p>
+                        <div class="flex items-center gap-2 mt-2 text-xs text-gray-400">
+                            <span>{{ "{:,}".format(listing.vehicle.mileage) }}km</span>
+                            <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+                            <span>{{ listing.vehicle.fuel_type }}</span>
+                            <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+                            <span>{{ listing.vehicle.region }}</span>
+                        </div>
+                        <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-50 text-xs text-gray-400">
+                            <span>조회 {{ listing.view_count }}</span>
+                            <span>{{ listing.vehicle.transmission }}</span>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if total_pages > 1 %}
+            <div class="flex justify-center mt-10 gap-2">
+                {% for p in range(1, total_pages + 1) %}
+                <a href="?page={{ p }}{% if filters.brand %}&brand={{ filters.brand }}{% endif %}{% if filters.fuel_type %}&fuel_type={{ filters.fuel_type }}{% endif %}{% if filters.sort %}&sort={{ filters.sort }}{% endif %}"
+                   class="w-10 h-10 flex items-center justify-center rounded-lg text-sm font-medium transition {{ 'bg-primary-600 text-white' if p == current_page else 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50' }}">
+                    {{ p }}
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div class="text-center py-20">
+                <p class="text-gray-400 text-lg">검색 조건에 맞는 매물이 없습니다.</p>
+                <a href="/listings" class="text-primary-600 hover:text-primary-700 text-sm mt-2 inline-block">필터 초기화</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/listings.js"></script>
+{% endblock %}

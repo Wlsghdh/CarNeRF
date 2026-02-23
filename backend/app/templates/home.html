@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}홈{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="bg-gradient-to-br from-carnerf-dark via-gray-900 to-primary-900 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
+        <div class="max-w-3xl">
+            <h1 class="text-4xl lg:text-5xl font-bold leading-tight mb-6">
+                AI가 분석하는 중고차,<br>
+                <span class="text-primary-400">3D로 직접 확인</span>하세요
+            </h1>
+            <p class="text-lg text-gray-300 mb-8 leading-relaxed">
+                CarNeRF는 3D Gaussian Splatting 기술로 차량을 정밀하게 스캔하고,<br class="hidden sm:inline">
+                AI가 외관·내부·엔진 상태를 분석하여 신뢰할 수 있는 중고차 거래를 만듭니다.
+            </p>
+            <div class="flex flex-wrap gap-4">
+                <a href="/listings" class="bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 rounded-xl font-semibold transition shadow-lg shadow-primary-600/30">
+                    매물 둘러보기
+                </a>
+                <a href="/sell" class="bg-white/10 hover:bg-white/20 text-white px-8 py-3 rounded-xl font-semibold transition backdrop-blur border border-white/20">
+                    내 차 팔기
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How it works -->
+<section class="py-16 lg:py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold mb-3">이용방법</h2>
+            <p class="text-gray-500">간단한 3단계로 안심 거래를 시작하세요</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="text-center p-6">
+                <div class="w-16 h-16 bg-primary-100 text-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl font-bold">1</div>
+                <h3 class="text-lg font-semibold mb-2">스마트폰으로 촬영</h3>
+                <p class="text-gray-500 text-sm">차량 주위를 한 바퀴 돌며 동영상을 촬영합니다. 약 1~2분이면 충분합니다.</p>
+            </div>
+            <div class="text-center p-6">
+                <div class="w-16 h-16 bg-primary-100 text-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl font-bold">2</div>
+                <h3 class="text-lg font-semibold mb-2">AI 3D 스캔 & 진단</h3>
+                <p class="text-gray-500 text-sm">3D Gaussian Splatting으로 차량을 재구성하고, AI가 외관·내부 상태를 분석합니다.</p>
+            </div>
+            <div class="text-center p-6">
+                <div class="w-16 h-16 bg-primary-100 text-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl font-bold">3</div>
+                <h3 class="text-lg font-semibold mb-2">안심 거래</h3>
+                <p class="text-gray-500 text-sm">3D 모델과 AI 진단 리포트로 투명하게 차량 상태를 확인하고 안전하게 거래합니다.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured listings -->
+<section class="py-16 lg:py-20 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h2 class="text-3xl font-bold mb-1">추천 매물</h2>
+                <p class="text-gray-500">AI가 엄선한 우수 컨디션 차량</p>
+            </div>
+            <a href="/listings" class="text-primary-600 hover:text-primary-700 font-medium text-sm transition">
+                전체보기 &rarr;
+            </a>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for listing in featured %}
+            <a href="/vehicles/{{ listing.vehicle.id }}" class="group bg-white rounded-2xl shadow-sm hover:shadow-lg transition overflow-hidden border border-gray-100">
+                <div class="aspect-[4/3] bg-gray-100 relative overflow-hidden">
+                    <img src="{{ listing.vehicle.thumbnail_url }}" alt="{{ listing.vehicle.brand }} {{ listing.vehicle.model }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                    {% if listing.vehicle.model_3d_status == 'ready' %}
+                    <span class="absolute top-3 left-3 bg-primary-600 text-white text-xs px-2 py-1 rounded-full font-medium">3D</span>
+                    {% endif %}
+                </div>
+                <div class="p-4">
+                    <p class="text-xs text-gray-400 mb-1">{{ listing.vehicle.brand }} · {{ listing.vehicle.year }}년</p>
+                    <h3 class="font-semibold text-gray-900 mb-2 truncate">{{ listing.title }}</h3>
+                    <p class="text-primary-600 font-bold text-lg">{{ "{:,}".format(listing.price) }}만원</p>
+                    <div class="flex items-center gap-2 mt-2 text-xs text-gray-400">
+                        <span>{{ "{:,}".format(listing.vehicle.mileage) }}km</span>
+                        <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+                        <span>{{ listing.vehicle.fuel_type }}</span>
+                        <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+                        <span>{{ listing.vehicle.region }}</span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Features -->
+<section class="py-16 lg:py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold mb-3">핵심 기능</h2>
+            <p class="text-gray-500">CarNeRF만의 차별화된 기술</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4 text-xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25" /></svg>
+                </div>
+                <h3 class="font-semibold mb-2">3D Gaussian Splatting</h3>
+                <p class="text-sm text-gray-500">포토리얼리스틱 3D 모델로 차량을 360도 어디서나 확인</p>
+            </div>
+            <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-4 text-xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" /></svg>
+                </div>
+                <h3 class="font-semibold mb-2">AI 차량 진단</h3>
+                <p class="text-sm text-gray-500">외관, 내부, 엔진 상태를 AI가 종합 분석하여 점수화</p>
+            </div>
+            <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                <div class="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mb-4 text-xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" /></svg>
+                </div>
+                <h3 class="font-semibold mb-2">AI 시세 분석</h3>
+                <p class="text-sm text-gray-500">빅데이터 기반 적정 시세를 분석하여 합리적 가격 제안</p>
+            </div>
+            <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center mb-4 text-xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>
+                </div>
+                <h3 class="font-semibold mb-2">안심 거래 보장</h3>
+                <p class="text-sm text-gray-500">투명한 차량 정보 공개로 안전한 중고차 거래 환경 제공</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

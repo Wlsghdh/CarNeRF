@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" fill="none">
+  <rect width="400" height="300" fill="#f1f5f9"/>
+  <g transform="translate(120, 90)">
+    <!-- Car body -->
+    <path d="M20 80 L40 40 L120 40 L145 80 Z" fill="#94a3b8" stroke="#64748b" stroke-width="2"/>
+    <rect x="5" y="80" width="150" height="40" rx="8" fill="#64748b"/>
+    <!-- Windows -->
+    <path d="M45 45 L55 75 L105 75 L115 45 Z" fill="#cbd5e1"/>
+    <line x1="80" y1="45" x2="80" y2="75" stroke="#94a3b8" stroke-width="1.5"/>
+    <!-- Wheels -->
+    <circle cx="40" cy="120" r="18" fill="#334155" stroke="#1e293b" stroke-width="3"/>
+    <circle cx="40" cy="120" r="8" fill="#94a3b8"/>
+    <circle cx="120" cy="120" r="18" fill="#334155" stroke="#1e293b" stroke-width="3"/>
+    <circle cx="120" cy="120" r="8" fill="#94a3b8"/>
+    <!-- Headlight -->
+    <rect x="145" y="85" width="10" height="10" rx="2" fill="#fbbf24"/>
+    <!-- Taillight -->
+    <rect x="5" y="85" width="8" height="8" rx="2" fill="#ef4444"/>
+  </g>
+  <text x="200" y="250" text-anchor="middle" fill="#94a3b8" font-family="sans-serif" font-size="14">CarNeRF</text>
+</svg>

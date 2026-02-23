@@ -1,0 +1,76 @@
+# ======================
+# CarNeRF .gitignore
+# ======================
+
+# --- 대용량 데이터 (GitHub에 올리지 않음) ---
+data/
+backend/app/static/models/
+backend/uploads/
+
+# --- 3D 모델 파일 ---
+*.ply
+*.splat
+*.pcd
+*.bin
+
+# --- 데이터베이스 ---
+*.db
+*.sqlite
+*.sqlite3
+
+# --- 로그 ---
+*.log
+server.log
+nohup.out
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+.Python
+env/
+venv/
+.env
+.venv
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# --- Conda ---
+.conda/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+*.ipynb
+
+# --- 서드파티 (별도 submodule or 로컬 설치) ---
+third_party/
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# --- IDE ---
+.vscode/
+.idea/
+*.code-workspace
+
+# --- 환경변수 ---
+.env
+.env.local
+.env.*.local
+secrets.txt
+
+# --- COLMAP 출력물 ---
+colmap_output/
+sparse/
+dense/
+
+# --- Gaussian Splatting 출력물 ---
+gaussian_output/
+output/
+point_cloud/

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CarNeRF - 3D Gaussian Splatting Viewer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- 헤더 UI -->
+        <div id="header">
+            <h1>CarNeRF Viewer</h1>
+            <div id="controls">
+                <button id="btn-load" title="PLY/SPLAT 파일 로드">파일 로드</button>
+                <button id="btn-reset" title="카메라 초기 위치로 리셋">카메라 리셋</button>
+                <input type="file" id="file-input" accept=".ply,.splat" style="display:none">
+            </div>
+        </div>
+
+        <!-- 3D 캔버스 -->
+        <canvas id="canvas"></canvas>
+
+        <!-- 정보 패널 -->
+        <div id="info-panel">
+            <div id="info-text">파일을 로드하세요</div>
+            <div id="stats"></div>
+        </div>
+
+        <!-- 로딩 표시 -->
+        <div id="loading" style="display:none">
+            <div class="spinner"></div>
+            <div id="loading-text">로딩 중...</div>
+        </div>
+
+        <!-- 드래그 앤 드롭 오버레이 -->
+        <div id="drop-overlay" style="display:none">
+            <div class="drop-text">파일을 여기에 놓으세요<br>(.ply 또는 .splat)</div>
+        </div>
+    </div>
+
+    <!-- Three.js CDN -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/"
+        }
+    }
+    </script>
+    <script type="module" src="main.js"></script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}로그인{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto px-4 py-16">
+    <div class="text-center mb-8">
+        <div class="w-12 h-12 bg-primary-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <span class="text-white font-bold text-lg">3D</span>
+        </div>
+        <h1 class="text-2xl font-bold">CarNeRF</h1>
+        <p class="text-gray-500 text-sm mt-1">AI 중고차 플랫폼에 오신 것을 환영합니다</p>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <!-- Tabs -->
+        <div class="flex border-b border-gray-100">
+            <button id="tab-login" class="flex-1 py-3 text-sm font-medium text-primary-600 border-b-2 border-primary-600 transition" onclick="switchTab('login')">로그인</button>
+            <button id="tab-register" class="flex-1 py-3 text-sm font-medium text-gray-400 hover:text-gray-600 transition" onclick="switchTab('register')">회원가입</button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="login-form" class="p-6 space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">이메일</label>
+                <input type="email" name="email" required placeholder="demo@carnerf.kr" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
+                <input type="password" name="password" required placeholder="demo1234" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+            </div>
+            <div id="login-error" class="hidden text-sm text-red-500 bg-red-50 p-3 rounded-lg"></div>
+            <button type="submit" class="w-full bg-primary-600 text-white py-2.5 rounded-lg font-semibold hover:bg-primary-700 transition">로그인</button>
+            <div class="text-center">
+                <p class="text-xs text-gray-400">데모 계정: demo@carnerf.kr / demo1234</p>
+            </div>
+        </form>
+
+        <!-- Register Form -->
+        <form id="register-form" class="p-6 space-y-4 hidden">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">이름</label>
+                <input type="text" name="username" required placeholder="홍길동" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">이메일</label>
+                <input type="email" name="email" required placeholder="user@example.com" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
+                <input type="password" name="password" required minlength="6" placeholder="6자 이상" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">전화번호</label>
+                <input type="tel" name="phone" placeholder="010-1234-5678" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+            </div>
+            <div id="register-error" class="hidden text-sm text-red-500 bg-red-50 p-3 rounded-lg"></div>
+            <div id="register-success" class="hidden text-sm text-green-600 bg-green-50 p-3 rounded-lg"></div>
+            <button type="submit" class="w-full bg-primary-600 text-white py-2.5 rounded-lg font-semibold hover:bg-primary-700 transition">회원가입</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function switchTab(tab) {
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const loginTab = document.getElementById('tab-login');
+    const registerTab = document.getElementById('tab-register');
+
+    if (tab === 'login') {
+        loginForm.classList.remove('hidden');
+        registerForm.classList.add('hidden');
+        loginTab.classList.add('text-primary-600', 'border-b-2', 'border-primary-600');
+        loginTab.classList.remove('text-gray-400');
+        registerTab.classList.remove('text-primary-600', 'border-b-2', 'border-primary-600');
+        registerTab.classList.add('text-gray-400');
+    } else {
+        loginForm.classList.add('hidden');
+        registerForm.classList.remove('hidden');
+        registerTab.classList.add('text-primary-600', 'border-b-2', 'border-primary-600');
+        registerTab.classList.remove('text-gray-400');
+        loginTab.classList.remove('text-primary-600', 'border-b-2', 'border-primary-600');
+        loginTab.classList.add('text-gray-400');
+    }
+}
+
+// Check URL param for tab
+const params = new URLSearchParams(window.location.search);
+if (params.get('tab') === 'register') switchTab('register');
+
+// Login
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const errorEl = document.getElementById('login-error');
+    errorEl.classList.add('hidden');
+
+    try {
+        const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: form.email.value,
+                password: form.password.value,
+            }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            errorEl.textContent = data.detail || '로그인에 실패했습니다.';
+            errorEl.classList.remove('hidden');
+            return;
+        }
+        window.location.href = '/';
+    } catch {
+        errorEl.textContent = '서버 오류가 발생했습니다.';
+        errorEl.classList.remove('hidden');
+    }
+});
+
+// Register
+document.getElementById('register-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const errorEl = document.getElementById('register-error');
+    const successEl = document.getElementById('register-success');
+    errorEl.classList.add('hidden');
+    successEl.classList.add('hidden');
+
+    try {
+        const res = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: form.username.value,
+                email: form.email.value,
+                password: form.password.value,
+                phone: form.phone.value || null,
+            }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            errorEl.textContent = data.detail || '회원가입에 실패했습니다.';
+            errorEl.classList.remove('hidden');
+            return;
+        }
+        successEl.textContent = '회원가입이 완료되었습니다! 로그인해주세요.';
+        successEl.classList.remove('hidden');
+        setTimeout(() => switchTab('login'), 1500);
+    } catch {
+        errorEl.textContent = '서버 오류가 발생했습니다.';
+        errorEl.classList.remove('hidden');
+    }
+});
+</script>
+{% endblock %}

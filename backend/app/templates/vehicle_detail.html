@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+{% block title %}{{ vehicle.brand }} {{ vehicle.model }}{% endblock %}
+
+{% block head %}
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.162.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.162.0/examples/jsm/",
+        "@mkkellogg/gaussian-splats-3d": "https://unpkg.com/@mkkellogg/gaussian-splats-3d@0.4.7/build/gaussian-splats-3d.module.js"
+    }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Breadcrumb -->
+    <nav class="text-sm text-gray-400 mb-6">
+        <a href="/" class="hover:text-gray-600">홈</a>
+        <span class="mx-2">/</span>
+        <a href="/listings" class="hover:text-gray-600">매물 검색</a>
+        <span class="mx-2">/</span>
+        <span class="text-gray-700">{{ vehicle.brand }} {{ vehicle.model }}</span>
+    </nav>
+
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+        <!-- Left: Image + 3D Viewer -->
+        <div class="lg:col-span-3 space-y-4">
+            <!-- Image / 3D Toggle -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="flex border-b border-gray-100">
+                    <button id="tab-photo" class="flex-1 py-3 text-sm font-medium text-primary-600 border-b-2 border-primary-600 transition" onclick="showTab('photo')">사진</button>
+                    <button id="tab-3d" class="flex-1 py-3 text-sm font-medium text-gray-400 hover:text-gray-600 transition" onclick="showTab('3d')">3D 뷰어</button>
+                </div>
+                <div id="panel-photo" class="aspect-[16/10] bg-gray-100">
+                    <img src="{{ vehicle.thumbnail_url }}" alt="{{ vehicle.brand }} {{ vehicle.model }}" class="w-full h-full object-cover">
+                </div>
+                <div id="panel-3d" class="aspect-[16/10] bg-gray-900 hidden relative">
+                    <div id="viewer-container" class="w-full h-full"></div>
+                    {% if vehicle.model_3d_status != 'ready' %}
+                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/80 text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-gray-400 mb-3"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25" /></svg>
+                        <p class="font-medium">3D 스캔 준비 중</p>
+                        <p class="text-sm text-gray-400 mt-1">차량 3D 모델이 곧 준비됩니다</p>
+                    </div>
+                    {% endif %}
+                    {% if vehicle.model_3d_status == 'ready' %}
+                    <a href="/viewer/{{ vehicle.id }}" target="_blank" class="absolute bottom-4 right-4 bg-white/20 hover:bg-white/30 backdrop-blur text-white text-xs px-3 py-1.5 rounded-lg transition">
+                        전체화면으로 보기
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Description -->
+            {% if listing and listing.description %}
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h3 class="font-semibold text-lg mb-3">판매자 설명</h3>
+                <p class="text-gray-600 leading-relaxed whitespace-pre-line">{{ listing.description }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right: Info -->
+        <div class="lg:col-span-2 space-y-4">
+            <!-- Price & Title -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h1 class="text-2xl font-bold mb-1">{{ listing.title if listing else vehicle.brand + ' ' + vehicle.model }}</h1>
+                <p class="text-sm text-gray-400 mb-4">{{ vehicle.brand }} {{ vehicle.model }} {{ vehicle.year }}년 {{ vehicle.trim or '' }}</p>
+                {% if listing %}
+                <div class="flex items-end gap-2 mb-4">
+                    <span class="text-3xl font-bold text-primary-600">{{ "{:,}".format(listing.price) }}</span>
+                    <span class="text-lg text-gray-500 mb-0.5">만원</span>
+                    {% if listing.is_negotiable %}
+                    <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full ml-2">네고가능</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if diagnosis %}
+                <div class="bg-gray-50 rounded-xl p-4 mb-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-600">AI 추정 시세</span>
+                        <span class="text-sm font-bold text-primary-600">{{ "{:,}".format(diagnosis.estimated_price_low) }} ~ {{ "{:,}".format(diagnosis.estimated_price_high) }}만원</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        {% set price_range = diagnosis.estimated_price_high - diagnosis.estimated_price_low %}
+                        {% set price_pos = ((listing.price - diagnosis.estimated_price_low) / price_range * 100) if price_range > 0 else 50 %}
+                        {% set price_pos_clamped = [0, [price_pos, 100]|min]|max %}
+                        <div class="bg-primary-500 h-2 rounded-full relative" style="width: {{ price_pos_clamped }}%">
+                            <div class="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-primary-600 rounded-full border-2 border-white"></div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if listing %}
+                <div class="flex gap-3">
+                    <button class="flex-1 bg-primary-600 text-white py-3 rounded-xl font-semibold hover:bg-primary-700 transition">연락하기</button>
+                    <button class="px-4 py-3 border border-gray-200 rounded-xl text-gray-500 hover:bg-gray-50 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Specs -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h3 class="font-semibold text-lg mb-4">차량 정보</h3>
+                <dl class="space-y-3">
+                    <div class="flex justify-between py-2 border-b border-gray-50">
+                        <dt class="text-sm text-gray-500">브랜드/모델</dt>
+                        <dd class="text-sm font-medium">{{ vehicle.brand }} {{ vehicle.model }}</dd>
+                    </div>
+                    <div class="flex justify-between py-2 border-b border-gray-50">
+                        <dt class="text-sm text-gray-500">연식</dt>
+                        <dd class="text-sm font-medium">{{ vehicle.year }}년</dd>
+                    </div>
+                    {% if vehicle.trim %}
+                    <div class="flex justify-between py-2 border-b border-gray-50">
+                        <dt class="text-sm text-gray-500">트림</dt>
+                        <dd class="text-sm font-medium">{{ vehicle.trim }}</dd>
+                    </div>
+                    {% endif %}
+                    <div class="flex justify-between py-2 border-b border-gray-50">
+                        <dt class="text-sm text-gray-500">주행거리</dt>
+                        <dd class="text-sm font-medium">{{ "{:,}".format(vehicle.mileage) }}km</dd>
+                    </div>
+                    <div class="flex justify-between py-2 border-b border-gray-50">
+                        <dt class="text-sm text-gray-500">연료</dt>
+                        <dd class="text-sm font-medium">{{ vehicle.fuel_type }}</dd>
+                    </div>
+                    <div class="flex justify-between py-2 border-b border-gray-50">
+                        <dt class="text-sm text-gray-500">변속기</dt>
+                        <dd class="text-sm font-medium">{{ vehicle.transmission }}</dd>
+                    </div>
+                    {% if vehicle.engine_cc and vehicle.engine_cc > 0 %}
+                    <div class="flex justify-between py-2 border-b border-gray-50">
+                        <dt class="text-sm text-gray-500">배기량</dt>
+                        <dd class="text-sm font-medium">{{ "{:,}".format(vehicle.engine_cc) }}cc</dd>
+                    </div>
+                    {% endif %}
+                    {% if vehicle.color %}
+                    <div class="flex justify-between py-2 border-b border-gray-50">
+                        <dt class="text-sm text-gray-500">색상</dt>
+                        <dd class="text-sm font-medium">{{ vehicle.color }}</dd>
+                    </div>
+                    {% endif %}
+                    {% if vehicle.region %}
+                    <div class="flex justify-between py-2">
+                        <dt class="text-sm text-gray-500">지역</dt>
+                        <dd class="text-sm font-medium">{{ vehicle.region }}</dd>
+                    </div>
+                    {% endif %}
+                </dl>
+            </div>
+
+            <!-- Seller info -->
+            {% if listing %}
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h3 class="font-semibold text-lg mb-3">판매자 정보</h3>
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-medium">
+                        {{ listing.seller.username[0] }}
+                    </div>
+                    <div>
+                        <p class="font-medium text-sm">{{ listing.seller.username }}</p>
+                        <p class="text-xs text-gray-400">조회 {{ listing.view_count }}회</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Diagnosis Report -->
+    {% if diagnosis %}
+    <div class="mt-8 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 lg:p-8">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold">AI 진단 리포트</h2>
+                <p class="text-sm text-gray-400">CarNeRF AI가 분석한 차량 상태 종합 리포트</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Overall -->
+            <div class="text-center">
+                <div class="relative w-24 h-24 mx-auto mb-3">
+                    <svg class="w-24 h-24 transform -rotate-90" viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e5e7eb" stroke-width="3"/>
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="{{ '#22c55e' if diagnosis.overall_score >= 85 else '#f59e0b' if diagnosis.overall_score >= 70 else '#ef4444' }}" stroke-width="3" stroke-dasharray="{{ diagnosis.overall_score }}, 100" stroke-linecap="round"/>
+                    </svg>
+                    <span class="absolute inset-0 flex items-center justify-center text-2xl font-bold">{{ diagnosis.overall_score }}</span>
+                </div>
+                <p class="text-sm font-medium">종합 점수</p>
+            </div>
+            <!-- Exterior -->
+            <div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-600">외관 상태</span>
+                    <span class="font-semibold">{{ diagnosis.exterior_score }}점</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3">
+                    <div class="h-3 rounded-full {{ 'bg-green-500' if diagnosis.exterior_score >= 85 else 'bg-yellow-500' if diagnosis.exterior_score >= 70 else 'bg-red-500' }}" style="width: {{ diagnosis.exterior_score }}%"></div>
+                </div>
+            </div>
+            <!-- Interior -->
+            <div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-600">내부 상태</span>
+                    <span class="font-semibold">{{ diagnosis.interior_score }}점</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3">
+                    <div class="h-3 rounded-full {{ 'bg-green-500' if diagnosis.interior_score >= 85 else 'bg-yellow-500' if diagnosis.interior_score >= 70 else 'bg-red-500' }}" style="width: {{ diagnosis.interior_score }}%"></div>
+                </div>
+            </div>
+            <!-- Engine -->
+            <div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-600">엔진 상태</span>
+                    <span class="font-semibold">{{ diagnosis.engine_score }}점</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3">
+                    <div class="h-3 rounded-full {{ 'bg-green-500' if diagnosis.engine_score >= 85 else 'bg-yellow-500' if diagnosis.engine_score >= 70 else 'bg-red-500' }}" style="width: {{ diagnosis.engine_score }}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-gray-50 rounded-xl p-4">
+                <h4 class="text-sm font-semibold text-gray-700 mb-2">사고 이력</h4>
+                <p class="text-sm text-gray-600">{{ diagnosis.accident_history or '정보 없음' }}</p>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-4">
+                <h4 class="text-sm font-semibold text-gray-700 mb-2">AI 종합 소견</h4>
+                <p class="text-sm text-gray-600">{{ diagnosis.report_summary }}</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showTab(tab) {
+    const photoPanel = document.getElementById('panel-photo');
+    const threeDPanel = document.getElementById('panel-3d');
+    const photoTab = document.getElementById('tab-photo');
+    const threeDTab = document.getElementById('tab-3d');
+
+    if (tab === 'photo') {
+        photoPanel.classList.remove('hidden');
+        threeDPanel.classList.add('hidden');
+        photoTab.classList.add('text-primary-600', 'border-b-2', 'border-primary-600');
+        photoTab.classList.remove('text-gray-400');
+        threeDTab.classList.remove('text-primary-600', 'border-b-2', 'border-primary-600');
+        threeDTab.classList.add('text-gray-400');
+    } else {
+        photoPanel.classList.add('hidden');
+        threeDPanel.classList.remove('hidden');
+        threeDTab.classList.add('text-primary-600', 'border-b-2', 'border-primary-600');
+        threeDTab.classList.remove('text-gray-400');
+        photoTab.classList.remove('text-primary-600', 'border-b-2', 'border-primary-600');
+        photoTab.classList.add('text-gray-400');
+    }
+}
+</script>
+{% if vehicle.model_3d_status == 'ready' and vehicle.model_3d_url %}
+<script type="module">
+    import { initViewer } from '/static/js/viewer.js';
+    let viewerLoaded = false;
+    const origShowTab = window.showTab;
+    window.showTab = function(tab) {
+        origShowTab(tab);
+        if (tab === '3d' && !viewerLoaded) {
+            viewerLoaded = true;
+            initViewer('viewer-container', {
+                modelUrl: '{{ vehicle.model_3d_url }}',
+                autoRotate: false,
+                backgroundColor: 0x111827,
+            });
+        }
+    };
+</script>
+{% endif %}
+{% endblock %}

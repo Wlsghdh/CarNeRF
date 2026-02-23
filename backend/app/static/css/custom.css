@@ -1,0 +1,42 @@
+/* CarNeRF Custom Styles */
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Card hover animation */
+.group:hover .group-hover\:scale-105 {
+    transform: scale(1.05);
+}
+
+/* Score circle animation */
+@keyframes score-fill {
+    from { stroke-dasharray: 0, 100; }
+}
+
+svg circle[stroke-dasharray] {
+    animation: score-fill 1s ease-out;
+}
+
+/* Loading spinner */
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Form focus states */
+input:focus, select:focus, textarea:focus {
+    outline: none;
+}
+
+/* Viewer container */
+#viewer-container canvas,
+#viewer-fullscreen canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+}
