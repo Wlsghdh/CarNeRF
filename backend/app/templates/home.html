@@ -1,134 +1,958 @@
 {% extends "base.html" %}
 {% block title %}홈{% endblock %}
 
+{% block navbar %}{% endblock %}
+
+{% block head %}
+<style>
+:root {
+  --bg:       #07090F;
+  --surface:  #0E1117;
+  --surface2: #161B24;
+  --border:   rgba(255,255,255,0.07);
+  --accent:   #0EA5E9;
+  --accent2:  #6366F1;
+  --text:     #E2E8F0;
+  --muted:    #64748B;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+  font-family: 'Pretendard', sans-serif;
+  overflow-x: hidden;
+}
+
+/* ── CANVAS BG ── */
+#particle-canvas {
+  position: fixed; inset: 0;
+  z-index: 0; pointer-events: none;
+  opacity: 0.5;
+}
+
+/* ── TOP MINIMAL NAV ── */
+#top-nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 20px 40px;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: all 0.4s ease;
+}
+#top-nav.scrolled {
+  background: rgba(7,9,15,0.6);
+  backdrop-filter: blur(16px);
+  padding: 14px 40px;
+  border-bottom: 1px solid var(--border);
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 20px; font-weight: 700; color: #fff;
+  text-decoration: none;
+}
+.nav-logo-badge {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; color: #fff;
+}
+.nav-logo span { color: var(--accent); }
+
+.nav-right {
+  display: flex; align-items: center; gap: 12px;
+}
+.nav-login-btn {
+  padding: 8px 18px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px; color: var(--muted);
+  text-decoration: none;
+  transition: all 0.2s;
+  background: transparent;
+}
+.nav-login-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── FLOATING PILL NAV ── */
+#float-nav {
+  position: fixed;
+  top: 20px; left: 50%; transform: translateX(-50%) translateY(-80px);
+  z-index: 200;
+  background: rgba(14,17,23,0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  padding: 10px 6px;
+  display: flex; align-items: center; gap: 2px;
+  transition: transform 0.5s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s;
+  opacity: 0;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+#float-nav.visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+.fnav-item {
+  padding: 7px 16px;
+  border-radius: 50px;
+  font-size: 13px; font-weight: 500;
+  color: var(--muted);
+  text-decoration: none;
+  transition: all 0.2s;
+  cursor: pointer;
+  border: none; background: transparent;
+}
+.fnav-item:hover { color: #fff; background: rgba(255,255,255,0.07); }
+.fnav-item.active { color: #fff; background: rgba(14,165,233,0.15); }
+.fnav-divider { width: 1px; height: 18px; background: var(--border); margin: 0 4px; }
+.fnav-cta {
+  padding: 7px 18px;
+  border-radius: 50px;
+  background: var(--accent);
+  color: #fff; font-size: 13px; font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+  margin-left: 4px;
+}
+.fnav-cta:hover { background: #38BEF8; transform: scale(1.03); }
+
+/* ── SECTIONS ── */
+section { position: relative; z-index: 1; }
+
+/* ── HERO ── */
+#hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+  padding: 120px 24px 80px;
+  position: relative; overflow: hidden;
+}
+
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 14px;
+  border: 1px solid rgba(14,165,233,0.3);
+  border-radius: 50px;
+  font-size: 12px; font-weight: 500;
+  color: var(--accent);
+  background: rgba(14,165,233,0.08);
+  margin-bottom: 28px;
+  animation: fadeUp 0.8s ease 0.2s both;
+}
+.eyebrow-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity:1; transform:scale(1); }
+  50%      { opacity:0.5; transform:scale(1.4); }
+}
+
+.hero-title {
+  font-size: clamp(40px,7vw,80px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -2px;
+  color: #fff;
+  margin-bottom: 24px;
+  animation: fadeUp 0.8s ease 0.4s both;
+}
+.hero-title .accent { 
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero-title .line2 { display: block; }
+
+.hero-sub {
+  font-size: clamp(15px,2vw,18px);
+  color: var(--muted);
+  line-height: 1.8;
+  max-width: 560px;
+  margin: 0 auto 40px;
+  animation: fadeUp 0.8s ease 0.6s both;
+}
+
+.hero-btns {
+  display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+  animation: fadeUp 0.8s ease 0.8s both;
+}
+.btn-primary {
+  padding: 14px 32px;
+  background: var(--accent);
+  color: #fff; font-weight: 600; font-size: 15px;
+  border-radius: 12px; text-decoration: none;
+  border: none; cursor: pointer;
+  transition: all 0.25s;
+  box-shadow: 0 0 30px rgba(14,165,233,0.35);
+}
+.btn-primary:hover {
+  background: #38BEF8;
+  transform: translateY(-2px);
+  box-shadow: 0 0 40px rgba(14,165,233,0.5);
+}
+.btn-ghost {
+  padding: 14px 32px;
+  border: 1px solid var(--border);
+  color: var(--muted); font-size: 15px; font-weight: 500;
+  border-radius: 12px; text-decoration: none;
+  transition: all 0.25s;
+  background: rgba(255,255,255,0.03);
+}
+.btn-ghost:hover {
+  border-color: rgba(255,255,255,0.2);
+  color: #fff;
+  background: rgba(255,255,255,0.06);
+}
+
+/* 3D 와이어프레임 카 */
+.hero-visual {
+  margin-top: 60px;
+  width: 100%; max-width: 700px;
+  height: 220px;
+  position: relative;
+  animation: fadeUp 0.8s ease 1s both;
+}
+.hero-car-svg {
+  width: 100%; height: 100%;
+  opacity: 0.25;
+  animation: floatCar 6s ease-in-out infinite;
+}
+@keyframes floatCar {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-12px); }
+}
+
+.scroll-hint {
+  position: absolute; bottom: 36px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  color: var(--muted); font-size: 11px; letter-spacing: 2px;
+  text-transform: uppercase;
+  animation: fadeIn 1s ease 1.5s both;
+}
+.scroll-arrow {
+  width: 20px; height: 20px;
+  border-right: 1.5px solid var(--muted);
+  border-bottom: 1.5px solid var(--muted);
+  transform: rotate(45deg);
+  animation: scrollBounce 2s ease-in-out infinite;
+}
+@keyframes scrollBounce {
+  0%,100% { transform: rotate(45deg) translateY(0); opacity:0.4; }
+  50%      { transform: rotate(45deg) translateY(4px); opacity:1; }
+}
+
+/* ── STATS ── */
+#stats {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 48px 24px;
+}
+.stats-inner {
+  max-width: 900px; margin: 0 auto;
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 0;
+}
+.stat-item {
+  text-align: center;
+  padding: 0 24px;
+  border-right: 1px solid var(--border);
+}
+.stat-item:last-child { border-right: none; }
+.stat-num {
+  font-size: clamp(32px,5vw,52px);
+  font-weight: 800;
+  background: linear-gradient(90deg,#fff,var(--muted));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.stat-label { font-size: 13px; color: var(--muted); font-weight: 400; }
+
+/* ── HOW IT WORKS ── */
+#how-it-works {
+  padding: 100px 24px;
+  max-width: 1100px; margin: 0 auto;
+}
+.section-tag {
+  font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--accent); font-weight: 600;
+  margin-bottom: 12px;
+}
+.section-title {
+  font-size: clamp(28px,4vw,44px);
+  font-weight: 800; line-height: 1.2;
+  letter-spacing: -1px;
+  margin-bottom: 60px;
+  color: #fff;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 2px;
+}
+.step {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 40px 32px;
+  position: relative;
+  transition: all 0.35s;
+  opacity: 0; transform: translateY(30px);
+}
+.step:first-child { border-radius: 16px 0 0 16px; }
+.step:last-child  { border-radius: 0 16px 16px 0; }
+.step.in-view { opacity: 1; transform: translateY(0); }
+.step:hover {
+  background: var(--surface2);
+  border-color: rgba(14,165,233,0.2);
+  z-index: 1;
+}
+
+.step-num {
+  font-size: 52px; font-weight: 900;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--accent), transparent);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 20px;
+}
+.step-icon {
+  width: 44px; height: 44px;
+  background: rgba(14,165,233,0.1);
+  border: 1px solid rgba(14,165,233,0.2);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 20px;
+  color: var(--accent);
+}
+.step-icon svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+.step h3 { font-size: 17px; font-weight: 700; margin-bottom: 10px; color: #fff; }
+.step p  { font-size: 13px; color: var(--muted); line-height: 1.8; }
+
+.step-connector {
+  position: absolute; right: -1px; top: 50%;
+  transform: translateY(-50%);
+  width: 2px; height: 40px;
+  background: linear-gradient(to bottom, transparent, var(--accent), transparent);
+  display: none;
+}
+
+/* ── FEATURED LISTINGS ── */
+#featured {
+  padding: 80px 24px;
+  max-width: 1200px; margin: 0 auto;
+}
+.featured-header {
+  display: flex; align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 40px;
+}
+.all-link {
+  font-size: 13px; color: var(--muted);
+  text-decoration: none; display: flex; align-items: center; gap: 4px;
+  transition: color 0.2s;
+  padding-bottom: 4px;
+}
+.all-link:hover { color: var(--accent); }
+
+.car-grid {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 16px;
+}
+.car-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  text-decoration: none; color: inherit;
+  transition: all 0.3s;
+  opacity: 0; transform: translateY(20px);
+}
+.car-card.in-view { opacity: 1; transform: translateY(0); }
+.car-card:hover {
+  border-color: rgba(14,165,233,0.3);
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(14,165,233,0.1);
+}
+.car-img {
+  aspect-ratio: 4/3;
+  background: var(--surface2);
+  position: relative; overflow: hidden;
+}
+.car-img img {
+  width: 100%; height: 100%; object-fit: cover;
+  transition: transform 0.5s;
+}
+.car-card:hover .car-img img { transform: scale(1.06); }
+.badge-3d {
+  position: absolute; top: 10px; left: 10px;
+  background: var(--accent);
+  color: #fff; font-size: 10px; font-weight: 700;
+  padding: 3px 8px; border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+.car-info { padding: 16px; }
+.car-brand { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+.car-name { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.car-price { font-size: 18px; font-weight: 800; color: var(--accent); margin-bottom: 8px; }
+.car-meta { display: flex; gap: 6px; font-size: 11px; color: var(--muted); align-items: center; flex-wrap: wrap; }
+.car-meta-dot { width: 3px; height: 3px; background: var(--muted); border-radius: 50%; }
+
+/* ── FEATURES ── */
+#features {
+  padding: 100px 24px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+.features-inner { max-width: 1100px; margin: 0 auto; }
+.feat-grid {
+  display: grid;
+  grid-template-columns: repeat(2,1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+}
+.feat-item {
+  background: var(--surface);
+  padding: 44px 40px;
+  transition: background 0.3s;
+  opacity: 0; transform: translateY(20px);
+}
+.feat-item.in-view { opacity: 1; transform: translateY(0); }
+.feat-item:hover { background: var(--surface2); }
+
+.feat-icon {
+  width: 48px; height: 48px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 20px;
+}
+.feat-icon svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+.feat-icon.blue  { background: rgba(14,165,233,0.12); color: #0EA5E9; border: 1px solid rgba(14,165,233,0.2); }
+.feat-icon.indigo{ background: rgba(99,102,241,0.12); color: #6366F1; border: 1px solid rgba(99,102,241,0.2); }
+.feat-icon.emerald{background:rgba(16,185,129,0.12); color: #10B981; border: 1px solid rgba(16,185,129,0.2); }
+.feat-icon.amber { background: rgba(245,158,11,0.12); color: #F59E0B; border: 1px solid rgba(245,158,11,0.2); }
+
+.feat-title { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 10px; }
+.feat-desc  { font-size: 13px; color: var(--muted); line-height: 1.8; }
+.feat-tag   { display: inline-block; margin-top: 14px; font-size: 10px; font-weight: 600;
+              letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px;
+              border-radius: 6px; color: var(--muted); background: rgba(255,255,255,0.04); }
+
+/* ── CTA ── */
+#cta {
+  padding: 120px 24px;
+  text-align: center;
+  position: relative; overflow: hidden;
+}
+.cta-glow {
+  position: absolute;
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(14,165,233,0.12) 0%, transparent 70%);
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  pointer-events: none;
+}
+.cta-title { font-size: clamp(30px,5vw,54px); font-weight: 800; letter-spacing: -1.5px; margin-bottom: 16px; color: #fff; }
+.cta-sub { font-size: 15px; color: var(--muted); margin-bottom: 40px; }
+
+/* ── FOOTER ── */
+footer.dark-footer {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 60px 24px 32px;
+  color: var(--muted);
+}
+.footer-inner { max-width: 1100px; margin: 0 auto; }
+.footer-top {
+  display: grid; grid-template-columns: 2fr 1fr 1fr;
+  gap: 48px; margin-bottom: 48px;
+}
+.footer-logo-wrap { display: flex; flex-direction: column; gap: 12px; }
+.footer-logo {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 18px; font-weight: 700; color: #fff; text-decoration: none;
+}
+.footer-desc { font-size: 13px; line-height: 1.8; max-width: 260px; }
+.footer-col h4 { font-size: 12px; font-weight: 600; color: #fff; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 16px; }
+.footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.footer-col li a { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+.footer-col li a:hover { color: #fff; }
+.footer-col li { font-size: 13px; }
+.footer-bottom {
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 12px;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .car-grid { grid-template-columns: repeat(2,1fr); }
+  .feat-grid { grid-template-columns: 1fr; }
+  .footer-top { grid-template-columns: 1fr; gap: 32px; }
+}
+@media (max-width: 640px) {
+  .steps { grid-template-columns: 1fr; }
+  .step:first-child { border-radius: 16px 16px 0 0; }
+  .step:last-child  { border-radius: 0 0 16px 16px; }
+  .stats-inner { grid-template-columns: 1fr; gap: 32px; }
+  .stat-item { border-right: none; border-bottom: 1px solid var(--border); padding: 0 0 32px; }
+  .stat-item:last-child { border-bottom: none; }
+  .car-grid { grid-template-columns: 1fr; }
+  #float-nav { display: none; }
+  .featured-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<!-- Hero -->
-<section class="bg-gradient-to-br from-carnerf-dark via-gray-900 to-primary-900 text-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
-        <div class="max-w-3xl">
-            <h1 class="text-4xl lg:text-5xl font-bold leading-tight mb-6">
-                AI가 분석하는 중고차,<br>
-                <span class="text-primary-400">3D로 직접 확인</span>하세요
-            </h1>
-            <p class="text-lg text-gray-300 mb-8 leading-relaxed">
-                CarNeRF는 3D Gaussian Splatting 기술로 차량을 정밀하게 스캔하고,<br class="hidden sm:inline">
-                AI가 외관·내부·엔진 상태를 분석하여 신뢰할 수 있는 중고차 거래를 만듭니다.
-            </p>
-            <div class="flex flex-wrap gap-4">
-                <a href="/listings" class="bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 rounded-xl font-semibold transition shadow-lg shadow-primary-600/30">
-                    매물 둘러보기
-                </a>
-                <a href="/sell" class="bg-white/10 hover:bg-white/20 text-white px-8 py-3 rounded-xl font-semibold transition backdrop-blur border border-white/20">
-                    내 차 팔기
-                </a>
-            </div>
-        </div>
-    </div>
+
+<!-- Canvas 배경 -->
+<canvas id="particle-canvas"></canvas>
+
+<!-- 미니멀 상단 NAV -->
+<nav id="top-nav">
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-badge">3D</div>
+    Car<span>NeRF</span>
+  </a>
+  <div class="nav-right">
+    {% if user %}
+    <span style="font-size:13px;color:var(--muted)">{{ user.username }}님</span>
+    <button onclick="logout()" style="font-size:13px;color:var(--muted);background:none;border:none;cursor:pointer;">로그아웃</button>
+    {% else %}
+    <a href="/login" class="nav-login-btn">로그인 / 가입</a>
+    {% endif %}
+  </div>
+</nav>
+
+<!-- FLOATING PILL NAV (스크롤 후 출현) -->
+<div id="float-nav">
+  <a class="fnav-item active" href="#hero">홈</a>
+  <a class="fnav-item" href="#how-it-works">이용방법</a>
+  <a class="fnav-item" href="#featured">매물</a>
+  <a class="fnav-item" href="#features">기능</a>
+  <div class="fnav-divider"></div>
+  <a class="fnav-cta" href="/sell">내 차 팔기</a>
+</div>
+
+<!-- ══ HERO ══ -->
+<section id="hero">
+  <div class="hero-eyebrow">
+    <div class="eyebrow-dot"></div>
+    3D Gaussian Splatting 기반 중고차 플랫폼
+  </div>
+
+  <h1 class="hero-title">
+    AI가 분석하는 중고차<br>
+    <span class="accent">3D로 직접 확인</span>하세요
+  </h1>
+
+  <p class="hero-sub">
+    스마트폰으로 차량을 촬영하면 40분 안에<br>
+    포토리얼리스틱 3D 모델이 완성됩니다.<br>
+    AI가 결함을 탐지하고 적정 시세까지 알려드립니다.
+  </p>
+
+  <div class="hero-btns">
+    <a href="/listings" class="btn-primary">매물 둘러보기</a>
+    <a href="/sell"     class="btn-ghost">내 차 팔기 →</a>
+  </div>
+
+  <!-- 와이어프레임 차량 SVG 애니메이션 -->
+  <div class="hero-visual">
+    <svg class="hero-car-svg" viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="wireGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stop-color="#0EA5E9" stop-opacity="0.8"/>
+          <stop offset="50%"  stop-color="#6366F1" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#0EA5E9" stop-opacity="0.8"/>
+        </linearGradient>
+      </defs>
+      <!-- Car body -->
+      <polyline points="80,150 100,80 200,55 340,50 480,55 580,80 620,150" fill="none" stroke="url(#wireGrad)" stroke-width="1.5"/>
+      <line x1="80" y1="150" x2="620" y2="150" stroke="url(#wireGrad)" stroke-width="1.5"/>
+      <!-- Roof -->
+      <polyline points="185,80 220,50 340,42 460,50 510,80" fill="none" stroke="url(#wireGrad)" stroke-width="1"/>
+      <!-- Grid lines vertical -->
+      <line x1="200" y1="55" x2="185" y2="80" stroke="url(#wireGrad)" stroke-width="0.8"/>
+      <line x1="270" y1="52" x2="262" y2="70" stroke="url(#wireGrad)" stroke-width="0.8"/>
+      <line x1="340" y1="50" x2="340" y2="42" stroke="url(#wireGrad)" stroke-width="0.8"/>
+      <line x1="415" y1="52" x2="420" y2="70" stroke="url(#wireGrad)" stroke-width="0.8"/>
+      <line x1="480" y1="55" x2="495" y2="80" stroke="url(#wireGrad)" stroke-width="0.8"/>
+      <!-- Grid lines horizontal -->
+      <line x1="100" y1="115" x2="600" y2="115" stroke="url(#wireGrad)" stroke-width="0.6" stroke-dasharray="4,8"/>
+      <line x1="95" y1="132" x2="605" y2="132" stroke="url(#wireGrad)" stroke-width="0.6" stroke-dasharray="4,8"/>
+      <!-- Wheels -->
+      <circle cx="190" cy="150" r="30" fill="none" stroke="url(#wireGrad)" stroke-width="1.5"/>
+      <circle cx="190" cy="150" r="18" fill="none" stroke="url(#wireGrad)" stroke-width="0.8" stroke-dasharray="3,5"/>
+      <circle cx="510" cy="150" r="30" fill="none" stroke="url(#wireGrad)" stroke-width="1.5"/>
+      <circle cx="510" cy="150" r="18" fill="none" stroke="url(#wireGrad)" stroke-width="0.8" stroke-dasharray="3,5"/>
+      <!-- Windows -->
+      <polyline points="210,78 230,56 330,50 340,78" fill="none" stroke="url(#wireGrad)" stroke-width="1"/>
+      <polyline points="355,78 365,50 450,50 475,78" fill="none" stroke="url(#wireGrad)" stroke-width="1"/>
+      <!-- Ground reflection -->
+      <line x1="100" y1="185" x2="600" y2="185" stroke="url(#wireGrad)" stroke-width="0.3" stroke-dasharray="2,12"/>
+    </svg>
+  </div>
+
+  <div class="scroll-hint">
+    <span>스크롤</span>
+    <div class="scroll-arrow"></div>
+  </div>
 </section>
 
-<!-- How it works -->
-<section class="py-16 lg:py-20 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12">
-            <h2 class="text-3xl font-bold mb-3">이용방법</h2>
-            <p class="text-gray-500">간단한 3단계로 안심 거래를 시작하세요</p>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div class="text-center p-6">
-                <div class="w-16 h-16 bg-primary-100 text-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl font-bold">1</div>
-                <h3 class="text-lg font-semibold mb-2">스마트폰으로 촬영</h3>
-                <p class="text-gray-500 text-sm">차량 주위를 한 바퀴 돌며 동영상을 촬영합니다. 약 1~2분이면 충분합니다.</p>
-            </div>
-            <div class="text-center p-6">
-                <div class="w-16 h-16 bg-primary-100 text-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl font-bold">2</div>
-                <h3 class="text-lg font-semibold mb-2">AI 3D 스캔 & 진단</h3>
-                <p class="text-gray-500 text-sm">3D Gaussian Splatting으로 차량을 재구성하고, AI가 외관·내부 상태를 분석합니다.</p>
-            </div>
-            <div class="text-center p-6">
-                <div class="w-16 h-16 bg-primary-100 text-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl font-bold">3</div>
-                <h3 class="text-lg font-semibold mb-2">안심 거래</h3>
-                <p class="text-gray-500 text-sm">3D 모델과 AI 진단 리포트로 투명하게 차량 상태를 확인하고 안전하게 거래합니다.</p>
-            </div>
-        </div>
+<!-- ══ STATS ══ -->
+<section id="stats">
+  <div class="stats-inner">
+    <div class="stat-item reveal">
+      <div class="stat-num" data-target="1200">0</div>
+      <div class="stat-label">등록 차량 수</div>
     </div>
+    <div class="stat-item reveal">
+      <div class="stat-num" data-target="40">0</div>
+      <div class="stat-label">3D 모델 생성 시간 (분)</div>
+    </div>
+    <div class="stat-item reveal">
+      <div class="stat-num" data-target="98">0</div>
+      <div class="stat-label">AI 진단 정확도 (%)</div>
+    </div>
+  </div>
 </section>
 
-<!-- Featured listings -->
-<section class="py-16 lg:py-20 bg-gray-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center mb-8">
-            <div>
-                <h2 class="text-3xl font-bold mb-1">추천 매물</h2>
-                <p class="text-gray-500">AI가 엄선한 우수 컨디션 차량</p>
-            </div>
-            <a href="/listings" class="text-primary-600 hover:text-primary-700 font-medium text-sm transition">
-                전체보기 &rarr;
-            </a>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {% for listing in featured %}
-            <a href="/vehicles/{{ listing.vehicle.id }}" class="group bg-white rounded-2xl shadow-sm hover:shadow-lg transition overflow-hidden border border-gray-100">
-                <div class="aspect-[4/3] bg-gray-100 relative overflow-hidden">
-                    <img src="{{ listing.vehicle.thumbnail_url }}" alt="{{ listing.vehicle.brand }} {{ listing.vehicle.model }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
-                    {% if listing.vehicle.model_3d_status == 'ready' %}
-                    <span class="absolute top-3 left-3 bg-primary-600 text-white text-xs px-2 py-1 rounded-full font-medium">3D</span>
-                    {% endif %}
-                </div>
-                <div class="p-4">
-                    <p class="text-xs text-gray-400 mb-1">{{ listing.vehicle.brand }} · {{ listing.vehicle.year }}년</p>
-                    <h3 class="font-semibold text-gray-900 mb-2 truncate">{{ listing.title }}</h3>
-                    <p class="text-primary-600 font-bold text-lg">{{ "{:,}".format(listing.price) }}만원</p>
-                    <div class="flex items-center gap-2 mt-2 text-xs text-gray-400">
-                        <span>{{ "{:,}".format(listing.vehicle.mileage) }}km</span>
-                        <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
-                        <span>{{ listing.vehicle.fuel_type }}</span>
-                        <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
-                        <span>{{ listing.vehicle.region }}</span>
-                    </div>
-                </div>
-            </a>
-            {% endfor %}
-        </div>
+<!-- ══ HOW IT WORKS ══ -->
+<section>
+<div id="how-it-works">
+  <div class="section-tag">How it works</div>
+  <h2 class="section-title">3단계로 완성되는<br>AI 3D 차량 진단</h2>
+  <div class="steps">
+    <div class="step" style="transition-delay:0s">
+      <div class="step-num">01</div>
+      <div class="step-icon">
+        <svg viewBox="0 0 24 24"><path d="M15 10l4.553-2.069A1 1 0 0121 8.914V15a1 1 0 01-1.447.895L15 13.7"/><rect x="2" y="6" width="13" height="12" rx="2"/></svg>
+      </div>
+      <h3>스마트폰으로 촬영</h3>
+      <p>차량 주위를 한 바퀴 돌며 동영상 촬영. 약 1~2분이면 충분합니다. 360도 각도에서 꼼꼼하게 담아주세요.</p>
     </div>
+    <div class="step" style="transition-delay:0.15s">
+      <div class="step-num">02</div>
+      <div class="step-icon">
+        <svg viewBox="0 0 24 24"><path d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313"/></svg>
+      </div>
+      <h3>3D 재구성 & AI 진단</h3>
+      <p>3D Gaussian Splatting으로 포토리얼리스틱 3D 모델 생성. AI가 스크래치, 찌그러짐, 도장 상태를 자동 분석합니다.</p>
+    </div>
+    <div class="step" style="transition-delay:0.3s">
+      <div class="step-num">03</div>
+      <div class="step-icon">
+        <svg viewBox="0 0 24 24"><path d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/></svg>
+      </div>
+      <h3>3D 뷰어로 안심 거래</h3>
+      <p>브라우저에서 3D 모델을 360도 확인하고 AI 진단 리포트와 적정 시세 분석까지 한 번에. 투명한 거래가 시작됩니다.</p>
+    </div>
+  </div>
+</div>
 </section>
 
-<!-- Features -->
-<section class="py-16 lg:py-20 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12">
-            <h2 class="text-3xl font-bold mb-3">핵심 기능</h2>
-            <p class="text-gray-500">CarNeRF만의 차별화된 기술</p>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4 text-xl">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25" /></svg>
-                </div>
-                <h3 class="font-semibold mb-2">3D Gaussian Splatting</h3>
-                <p class="text-sm text-gray-500">포토리얼리스틱 3D 모델로 차량을 360도 어디서나 확인</p>
-            </div>
-            <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-                <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-4 text-xl">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" /></svg>
-                </div>
-                <h3 class="font-semibold mb-2">AI 차량 진단</h3>
-                <p class="text-sm text-gray-500">외관, 내부, 엔진 상태를 AI가 종합 분석하여 점수화</p>
-            </div>
-            <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-                <div class="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mb-4 text-xl">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" /></svg>
-                </div>
-                <h3 class="font-semibold mb-2">AI 시세 분석</h3>
-                <p class="text-sm text-gray-500">빅데이터 기반 적정 시세를 분석하여 합리적 가격 제안</p>
-            </div>
-            <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-                <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center mb-4 text-xl">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>
-                </div>
-                <h3 class="font-semibold mb-2">안심 거래 보장</h3>
-                <p class="text-sm text-gray-500">투명한 차량 정보 공개로 안전한 중고차 거래 환경 제공</p>
-            </div>
-        </div>
+<!-- ══ FEATURED LISTINGS ══ -->
+<section>
+<div id="featured">
+  <div class="featured-header">
+    <div>
+      <div class="section-tag">Featured</div>
+      <h2 class="section-title" style="margin-bottom:0">추천 매물</h2>
     </div>
+    <a href="/listings" class="all-link">전체 보기 →</a>
+  </div>
+
+  <div class="car-grid">
+    {% for listing in featured %}
+    <a href="/vehicles/{{ listing.vehicle.id }}" class="car-card reveal" style="transition-delay: {{ loop.index0 * 0.08 }}s">
+      <div class="car-img">
+        <img src="{{ listing.vehicle.thumbnail_url }}" alt="{{ listing.vehicle.brand }} {{ listing.vehicle.model }}"
+             onerror="this.parentElement.style.background='var(--surface2)'">
+        {% if listing.vehicle.model_3d_status == 'ready' %}
+        <span class="badge-3d">3D</span>
+        {% endif %}
+      </div>
+      <div class="car-info">
+        <div class="car-brand">{{ listing.vehicle.brand }} · {{ listing.vehicle.year }}년</div>
+        <div class="car-name">{{ listing.title }}</div>
+        <div class="car-price">{{ "{:,}".format(listing.price) }}만원</div>
+        <div class="car-meta">
+          <span>{{ "{:,}".format(listing.vehicle.mileage) }}km</span>
+          <div class="car-meta-dot"></div>
+          <span>{{ listing.vehicle.fuel_type }}</span>
+          <div class="car-meta-dot"></div>
+          <span>{{ listing.vehicle.region }}</span>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
 </section>
+
+<!-- ══ FEATURES ══ -->
+<section id="features">
+  <div class="features-inner">
+    <div class="section-tag">Technology</div>
+    <h2 class="section-title">CarNeRF만의<br>차별화된 기술</h2>
+    <div class="feat-grid">
+      <div class="feat-item reveal" style="transition-delay:0s">
+        <div class="feat-icon blue">
+          <svg viewBox="0 0 24 24"><path d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313"/></svg>
+        </div>
+        <div class="feat-title">3D Gaussian Splatting</div>
+        <div class="feat-desc">A100 GPU 기반 차량 1대당 약 40분 만에 포토리얼리스틱 3D 모델 생성. 브라우저에서 360도 회전, 확대, 이동이 가능한 인터랙티브 뷰어 제공.</div>
+        <span class="feat-tag">PSNR 34+</span>
+      </div>
+      <div class="feat-item reveal" style="transition-delay:0.1s">
+        <div class="feat-icon indigo">
+          <svg viewBox="0 0 24 24"><path d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </div>
+        <div class="feat-title">2D + 3D 결함 탐지</div>
+        <div class="feat-desc">YOLOv8 기반 2D 이미지 결함 탐지(스크래치/찌그러짐/도장)와 3D 모델의 144방향 자동 렌더링 → 결함 위치를 3D 뷰어에 마커로 표시.</div>
+        <span class="feat-tag">Vision AI</span>
+      </div>
+      <div class="feat-item reveal" style="transition-delay:0.2s">
+        <div class="feat-icon emerald">
+          <svg viewBox="0 0 24 24"><path d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z"/></svg>
+        </div>
+        <div class="feat-title">AI 가격 예측</div>
+        <div class="feat-desc">엔카/KB차차차 실거래가 빅데이터 + XGBoost 모델로 적정 시세 예측. 결함 탐지 결과를 피처로 반영해 ±10% 이내 정확도 목표.</div>
+        <span class="feat-tag">ML · XGBoost</span>
+      </div>
+      <div class="feat-item reveal" style="transition-delay:0.3s">
+        <div class="feat-icon amber">
+          <svg viewBox="0 0 24 24"><path d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+        </div>
+        <div class="feat-title">안심 거래 리포트</div>
+        <div class="feat-desc">3D 모델 + 결함 탐지 + 시세 분석을 하나의 리포트로. 숨겨진 결함 없이 투명한 정보를 바탕으로 합리적인 중고차 거래를 지원합니다.</div>
+        <span class="feat-tag">Transparent</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CTA ══ -->
+<section id="cta">
+  <div class="cta-glow"></div>
+  <div class="reveal">
+    <div class="section-tag" style="margin-bottom:16px">Get Started</div>
+    <div class="cta-title">지금 바로 시작하세요</div>
+    <div class="cta-sub">내 차를 3D로 스캔하고 AI 진단 리포트를 받아보세요</div>
+    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
+      <a href="/sell"     class="btn-primary">내 차 등록하기</a>
+      <a href="/listings" class="btn-ghost">매물 둘러보기 →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══ -->
+<footer class="dark-footer">
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-logo-wrap">
+        <a href="/" class="footer-logo">
+          <div class="nav-logo-badge">3D</div>
+          Car<span style="color:var(--accent)">NeRF</span>
+        </a>
+        <p class="footer-desc">AI 기반 3D 차량 분석으로<br>더 안전한 중고차 거래를 만듭니다.</p>
+      </div>
+      <div class="footer-col">
+        <h4>서비스</h4>
+        <ul>
+          <li><a href="/listings">매물 검색</a></li>
+          <li><a href="/sell">내 차 팔기</a></li>
+          <li><a href="#">AI 진단 리포트</a></li>
+          <li><a href="#">3D 뷰어</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>고객센터</h4>
+        <ul>
+          <li>help@carnerf.kr</li>
+          <li>평일 09:00 – 18:00</li>
+          <li><a href="/login">로그인 / 가입</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 CarNeRF · 프로토타입 데모</span>
+      <span>Powered by 3D Gaussian Splatting</span>
+    </div>
+  </div>
+</footer>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── PARTICLE CANVAS ──
+(function() {
+  const canvas = document.getElementById('particle-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [], lines = [];
+  
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  
+  const N = 60;
+  for (let i = 0; i < N; i++) {
+    particles.push({
+      x: Math.random() * 1920,
+      y: Math.random() * 1080,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      r: Math.random() * 1.5 + 0.5
+    });
+  }
+  
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    
+    // Update + draw dots
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+      if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(14,165,233,0.4)';
+      ctx.fill();
+    });
+    
+    // Draw lines between close particles
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i+1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const d = Math.sqrt(dx*dx + dy*dy);
+        if (d < 160) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(14,165,233,${0.12 * (1 - d/160)})`;
+          ctx.lineWidth = 0.6;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ── FLOATING NAV ──
+const floatNav  = document.getElementById('float-nav');
+const topNav    = document.getElementById('top-nav');
+const fnItems   = document.querySelectorAll('.fnav-item[href]');
+
+window.addEventListener('scroll', () => {
+  const y = window.scrollY;
+  // top nav 스크롤 변화
+  topNav.classList.toggle('scrolled', y > 60);
+  // float nav 출현 (200px 이상)
+  floatNav.classList.toggle('visible', y > 200);
+  
+  // 활성 섹션 표시
+  const sections = ['hero','how-it-works','featured','features'];
+  let current = 'hero';
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && window.scrollY >= el.offsetTop - 200) current = id;
+  });
+  fnItems.forEach(item => {
+    const href = item.getAttribute('href').slice(1);
+    item.classList.toggle('active', href === current);
+  });
+}, { passive: true });
+
+// ── SCROLL REVEAL ──
+const revealObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('in-view');
+      revealObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.12 });
+
+document.querySelectorAll('.step, .feat-item, .car-card').forEach(el => {
+  revealObs.observe(el);
+});
+
+// reveal class (stats, cta)
+const fadeObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.style.opacity = '1';
+      e.target.style.transform = 'translateY(0)';
+      fadeObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.reveal').forEach(el => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(24px)';
+  el.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
+  el.style.transitionDelay = el.style.transitionDelay || '0s';
+  fadeObs.observe(el);
+});
+
+// ── COUNTER ANIMATION ──
+const counterObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const el    = e.target;
+      const target = +el.dataset.target;
+      const suffix = target >= 1000 ? '+' : (el.closest('.stat-item').querySelector('.stat-label').textContent.includes('%') ? '%' : '+');
+      let start = 0;
+      const step = target / 60;
+      const interval = setInterval(() => {
+        start += step;
+        if (start >= target) { start = target; clearInterval(interval); }
+        el.textContent = Math.floor(start).toLocaleString() + suffix;
+      }, 16);
+      counterObs.unobserve(el);
+    }
+  });
+}, { threshold: 0.5 });
+
+document.querySelectorAll('.stat-num[data-target]').forEach(el => counterObs.observe(el));
+
+async function logout() {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  window.location.href = '/';
+}
+</script>
 {% endblock %}

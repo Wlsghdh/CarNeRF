@@ -143,6 +143,44 @@ def prune_by_volume(plydata, max_scale_factor: float = 10.0, max_aspect_ratio: f
     return PlyData([new_vertex])
 
 
+def prune_by_spatial_outliers(plydata, iqr_factor: float = 4.0):
+    """
+    IQR 기반 공간적 outlier 제거.
+    각 축별로 Q1 - factor*IQR ~ Q3 + factor*IQR 범위 밖의 Gaussian 제거.
+    차에서 멀리 떨어진 부유/가시 아티팩트 제거에 효과적.
+    """
+    vertex = plydata["vertex"]
+    num_gaussians = len(vertex.data)
+
+    x = vertex["x"].astype(np.float32)
+    y = vertex["y"].astype(np.float32)
+    z = vertex["z"].astype(np.float32)
+
+    mask = np.ones(num_gaussians, dtype=bool)
+
+    for axis_name, coords in [("x", x), ("y", y), ("z", z)]:
+        q1, q3 = np.percentile(coords, [25, 75])
+        iqr = q3 - q1
+        lo = q1 - iqr_factor * iqr
+        hi = q3 + iqr_factor * iqr
+        axis_mask = (coords >= lo) & (coords <= hi)
+        removed = int(np.sum(~axis_mask))
+        if removed > 0:
+            logger.info(f"  {axis_name}축 공간 outlier 제거: {removed:,}개 (유효 범위: {lo:.3f}~{hi:.3f})")
+        mask &= axis_mask
+
+    remaining = int(np.sum(mask))
+    logger.info(f"공간 outlier pruning: {num_gaussians:,} → {remaining:,}")
+
+    if remaining == num_gaussians:
+        return plydata
+
+    from plyfile import PlyData, PlyElement
+    filtered_data = vertex.data[mask]
+    new_vertex = PlyElement.describe(filtered_data, "vertex")
+    return PlyData([new_vertex])
+
+
 def export_ply(plydata, output_path: str):
     """경량화된 PLY 파일로 저장한다."""
     logger.info(f"PLY 저장 중: {output_path}")
@@ -263,6 +301,7 @@ def main():
     parser.add_argument("--max_gaussians", type=int, default=1_000_000, help="최대 가우시안 수 (기본값: 1,000,000)")
     parser.add_argument("--max_scale_factor", type=float, default=0, help="볼륨 pruning: 스케일 중간값 대비 최대 배수 (0=비활성)")
     parser.add_argument("--max_aspect_ratio", type=float, default=0, help="볼륨 pruning: 최대 종횡비 (0=비활성)")
+    parser.add_argument("--spatial_iqr", type=float, default=0, help="공간 outlier 제거: IQR 배수 (0=비활성, 권장 3.0~5.0)")
     args = parser.parse_args()
 
     input_path = os.path.abspath(args.input)
@@ -283,7 +322,11 @@ def main():
     # PLY 읽기
     plydata = read_ply(input_path)
 
-    # Volume-based pruning (floater 제거)
+    # 1. 공간 outlier 제거 (IQR 기반 — 차에서 먼 부유/가시 아티팩트)
+    if args.spatial_iqr > 0:
+        plydata = prune_by_spatial_outliers(plydata, iqr_factor=args.spatial_iqr)
+
+    # 2. Volume-based pruning (극단적 종횡비/스케일 가우시안 제거)
     if args.max_scale_factor > 0 or args.max_aspect_ratio > 0:
         plydata = prune_by_volume(
             plydata,
@@ -291,7 +334,7 @@ def main():
             max_aspect_ratio=args.max_aspect_ratio if args.max_aspect_ratio > 0 else 50.0,
         )
 
-    # Opacity-based pruning
+    # 3. Opacity-based pruning (투명한 배경 가우시안 제거 + 수량 제한)
     plydata = prune_by_opacity(plydata, max_gaussians=args.max_gaussians)
 
     # Export

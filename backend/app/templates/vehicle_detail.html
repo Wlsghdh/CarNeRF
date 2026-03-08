@@ -11,282 +11,979 @@
     }
 }
 </script>
+<style>
+:root {
+  --bg:      #07090F;
+  --surface: #0E1117;
+  --sur2:    #161B24;
+  --border:  rgba(255,255,255,0.08);
+  --accent:  #0EA5E9;
+  --text:    #E2E8F0;
+  --muted:   #64748B;
+  --muted2:  #94A3B8;
+}
+body { background: var(--bg) !important; color: var(--text) !important; }
+
+.detail-wrap {
+  max-width: 1200px; margin: 0 auto;
+  padding: 80px 24px 60px;
+}
+
+/* ── BREADCRUMB ── */
+.breadcrumb { display: flex; align-items: center; gap: 8px; margin-bottom: 28px; font-size: 13px; }
+.breadcrumb a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
+.breadcrumb a:hover { color: var(--text); }
+.breadcrumb span { color: var(--muted); }
+.breadcrumb .current { color: var(--muted2); }
+
+/* ── GRID ── */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 900px) { .detail-grid { grid-template-columns: 1fr; } }
+
+/* ── CARD ── */
+.dk-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.dk-card-body { padding: 24px; }
+
+/* ── TABS ── */
+.tab-bar {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+}
+.tab-btn {
+  flex: 1; padding: 14px;
+  font-size: 13px; font-weight: 600;
+  color: var(--muted);
+  background: none; border: none; cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  margin-bottom: -1px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ── VIEWER ── */
+.media-panel {
+  aspect-ratio: 16/10;
+  background: var(--sur2);
+  position: relative;
+}
+.media-panel img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.viewer-overlay {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: rgba(7,9,15,0.7);
+  color: var(--muted2);
+}
+.viewer-overlay p { font-size: 14px; font-weight: 600; margin-top: 12px; color: var(--text); }
+.viewer-overlay small { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.fullscreen-btn {
+  position: absolute; bottom: 14px; right: 14px;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #fff; font-size: 12px;
+  padding: 7px 14px; border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.fullscreen-btn:hover { background: rgba(255,255,255,0.18); }
+
+/* ── 3D 뷰어 컨트롤 바 ── */
+.viewer-controls {
+  position: absolute; top: 12px; left: 12px; right: 12px;
+  display: flex; justify-content: space-between; align-items: center;
+  z-index: 15; pointer-events: none;
+}
+.viewer-controls > * { pointer-events: auto; }
+
+.defect-toggle {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(14,17,23,0.85); backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px; padding: 8px 14px;
+  cursor: pointer; transition: all 0.2s;
+  color: var(--muted2); font-size: 12px; font-weight: 600;
+}
+.defect-toggle:hover { border-color: rgba(255,255,255,0.25); color: var(--text); }
+.defect-toggle.active { border-color: #F59E0B60; background: rgba(245,158,11,0.1); color: #F59E0B; }
+
+.defect-badge {
+  display: none; min-width: 18px; height: 18px;
+  background: #EF4444; color: #fff; font-size: 10px; font-weight: 700;
+  border-radius: 10px; align-items: center; justify-content: center;
+  padding: 0 5px;
+}
+
+/* ── PRICE CARD ── */
+.price-section { padding: 24px; }
+.listing-title { font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 6px; line-height: 1.3; }
+.listing-sub   { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+.price-row { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 20px; }
+.price-num { font-size: 32px; font-weight: 900; color: var(--accent); line-height: 1; }
+.price-unit { font-size: 16px; color: var(--muted2); padding-bottom: 2px; }
+.nego-badge {
+  font-size: 11px; font-weight: 600;
+  background: rgba(16,185,129,0.12);
+  color: #10B981;
+  border: 1px solid rgba(16,185,129,0.25);
+  padding: 3px 10px; border-radius: 20px;
+  margin-bottom: 3px;
+}
+
+/* ── 시세 BAR ── */
+.price-bar-wrap {
+  background: var(--sur2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.price-bar-label {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: var(--muted);
+  margin-bottom: 10px;
+}
+.price-bar-label span:last-child { color: var(--accent); font-weight: 600; font-size: 12px; }
+.price-bar-bg {
+  height: 6px; background: var(--border);
+  border-radius: 6px; overflow: visible;
+  position: relative;
+}
+.price-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0EA5E9, #6366F1);
+  border-radius: 6px;
+  position: relative;
+}
+.price-bar-dot {
+  position: absolute; right: -5px; top: 50%;
+  transform: translateY(-50%);
+  width: 12px; height: 12px;
+  background: #fff; border: 2px solid var(--accent);
+  border-radius: 50%;
+}
+
+/* ── AI 진단 버튼 ── */
+.ai-btn-row {
+  display: flex; gap: 10px; margin-bottom: 16px;
+}
+.ai-btn {
+  flex: 1; padding: 12px 16px;
+  border-radius: 10px; border: 1px solid var(--border);
+  background: var(--sur2); color: var(--muted2);
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.ai-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--text); transform: translateY(-1px); }
+.ai-btn.price-btn:hover, .ai-btn.price-btn.active { border-color: #0EA5E960; background: rgba(14,165,233,0.08); color: #0EA5E9; }
+.ai-btn.defect-btn:hover, .ai-btn.defect-btn.active { border-color: #F59E0B60; background: rgba(245,158,11,0.08); color: #F59E0B; }
+.ai-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+/* ── AI 가격 예측 패널 ── */
+.price-predict-panel {
+  display: none;
+  background: var(--sur2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  animation: slideDown 0.3s ease;
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.predict-result-price {
+  font-size: 28px; font-weight: 900;
+  background: linear-gradient(135deg, #0EA5E9, #6366F1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.predict-range {
+  display: flex; align-items: center; gap: 6px;
+  margin: 8px 0 16px;
+  font-size: 13px; color: var(--muted);
+}
+
+.predict-confidence {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 600;
+  padding: 3px 10px; border-radius: 20px;
+  background: rgba(16,185,129,0.1); color: #10B981;
+  border: 1px solid rgba(16,185,129,0.2);
+}
+
+.similar-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.similar-item:last-child { border-bottom: none; }
+
+/* ── 결함 요약 패널 ── */
+.defect-summary-panel {
+  display: none;
+  background: var(--sur2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  animation: slideDown 0.3s ease;
+}
+
+.defect-list-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.defect-list-item:hover { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); }
+.defect-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+
+/* ── BUTTONS ── */
+.action-row { display: flex; gap: 10px; }
+.btn-contact {
+  flex: 1; background: var(--accent);
+  color: #fff; border: none;
+  border-radius: 10px; padding: 13px;
+  font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
+}
+.btn-contact:hover { background: #38BEF8; transform: translateY(-1px); }
+.btn-heart {
+  width: 46px; height: 46px;
+  background: var(--sur2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--muted);
+  transition: all 0.2s;
+}
+.btn-heart:hover { border-color: #EF4444; color: #EF4444; }
+.btn-heart svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+/* ── SPECS ── */
+.specs-list { display: flex; flex-direction: column; }
+.spec-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.spec-row:last-child { border-bottom: none; }
+.spec-key { color: var(--muted); }
+.spec-val { font-weight: 600; color: var(--text); }
+
+/* ── SELLER ── */
+.seller-row { display: flex; align-items: center; gap: 12px; }
+.seller-avatar {
+  width: 40px; height: 40px;
+  background: linear-gradient(135deg, var(--accent), #6366F1);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 800; color: #fff;
+  flex-shrink: 0;
+}
+.seller-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.seller-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* ── DESCRIPTION ── */
+.desc-text { font-size: 14px; color: var(--muted2); line-height: 1.8; white-space: pre-line; }
+
+/* ── AI REPORT ── */
+.report-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  margin-top: 24px;
+}
+.report-header {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 28px;
+}
+.report-icon {
+  width: 44px; height: 44px;
+  background: rgba(99,102,241,0.12);
+  border: 1px solid rgba(99,102,241,0.2);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  color: #6366F1; flex-shrink: 0;
+}
+.report-icon svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+.report-title { font-size: 18px; font-weight: 800; color: var(--text); }
+.report-sub   { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+.score-grid {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+  align-items: center;
+}
+@media (max-width: 640px) { .score-grid { grid-template-columns: 1fr 1fr; } }
+
+/* 원형 점수 */
+.circle-score { text-align: center; }
+.circle-score svg { display: block; margin: 0 auto 8px; }
+.circle-score .score-num {
+  font-size: 22px; font-weight: 900;
+  color: var(--text);
+}
+.circle-score .score-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* 바 점수 */
+.bar-score { display: flex; flex-direction: column; justify-content: center; }
+.bar-score-header {
+  display: flex; justify-content: space-between;
+  font-size: 12px; margin-bottom: 8px;
+}
+.bar-score-header .lbl { color: var(--muted); }
+.bar-score-header .val { font-weight: 700; color: var(--text); }
+.bar-bg { height: 6px; background: var(--sur2); border-radius: 6px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 6px; transition: width 1s ease; }
+.bar-green  { background: linear-gradient(90deg,#059669,#10B981); }
+.bar-yellow { background: linear-gradient(90deg,#D97706,#F59E0B); }
+.bar-red    { background: linear-gradient(90deg,#DC2626,#EF4444); }
+
+.report-boxes {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  margin-top: 4px;
+}
+@media (max-width: 560px) { .report-boxes { grid-template-columns: 1fr; } }
+.report-box {
+  background: var(--sur2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+}
+.report-box h4 { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.report-box p  { font-size: 13px; color: var(--muted2); line-height: 1.7; }
+
+/* ── 로딩 스피너 ── */
+.spinner {
+  width: 20px; height: 20px;
+  border: 2px solid rgba(255,255,255,0.1);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
 {% endblock %}
 
+{% block navbar %}{% endblock %}
+
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <!-- Breadcrumb -->
-    <nav class="text-sm text-gray-400 mb-6">
-        <a href="/" class="hover:text-gray-600">홈</a>
-        <span class="mx-2">/</span>
-        <a href="/listings" class="hover:text-gray-600">매물 검색</a>
-        <span class="mx-2">/</span>
-        <span class="text-gray-700">{{ vehicle.brand }} {{ vehicle.model }}</span>
-    </nav>
-
-    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
-        <!-- Left: Image + 3D Viewer -->
-        <div class="lg:col-span-3 space-y-4">
-            <!-- Image / 3D Toggle -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="flex border-b border-gray-100">
-                    <button id="tab-photo" class="flex-1 py-3 text-sm font-medium text-primary-600 border-b-2 border-primary-600 transition" onclick="showTab('photo')">사진</button>
-                    <button id="tab-3d" class="flex-1 py-3 text-sm font-medium text-gray-400 hover:text-gray-600 transition" onclick="showTab('3d')">3D 뷰어</button>
-                </div>
-                <div id="panel-photo" class="aspect-[16/10] bg-gray-100">
-                    <img src="{{ vehicle.thumbnail_url }}" alt="{{ vehicle.brand }} {{ vehicle.model }}" class="w-full h-full object-cover">
-                </div>
-                <div id="panel-3d" class="aspect-[16/10] bg-gray-900 hidden relative">
-                    <div id="viewer-container" class="w-full h-full"></div>
-                    {% if vehicle.model_3d_status != 'ready' %}
-                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/80 text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-gray-400 mb-3"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25" /></svg>
-                        <p class="font-medium">3D 스캔 준비 중</p>
-                        <p class="text-sm text-gray-400 mt-1">차량 3D 모델이 곧 준비됩니다</p>
-                    </div>
-                    {% endif %}
-                    {% if vehicle.model_3d_status == 'ready' %}
-                    <a href="/viewer/{{ vehicle.id }}" target="_blank" class="absolute bottom-4 right-4 bg-white/20 hover:bg-white/30 backdrop-blur text-white text-xs px-3 py-1.5 rounded-lg transition">
-                        전체화면으로 보기
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Description -->
-            {% if listing and listing.description %}
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h3 class="font-semibold text-lg mb-3">판매자 설명</h3>
-                <p class="text-gray-600 leading-relaxed whitespace-pre-line">{{ listing.description }}</p>
-            </div>
-            {% endif %}
-        </div>
-
-        <!-- Right: Info -->
-        <div class="lg:col-span-2 space-y-4">
-            <!-- Price & Title -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h1 class="text-2xl font-bold mb-1">{{ listing.title if listing else vehicle.brand + ' ' + vehicle.model }}</h1>
-                <p class="text-sm text-gray-400 mb-4">{{ vehicle.brand }} {{ vehicle.model }} {{ vehicle.year }}년 {{ vehicle.trim or '' }}</p>
-                {% if listing %}
-                <div class="flex items-end gap-2 mb-4">
-                    <span class="text-3xl font-bold text-primary-600">{{ "{:,}".format(listing.price) }}</span>
-                    <span class="text-lg text-gray-500 mb-0.5">만원</span>
-                    {% if listing.is_negotiable %}
-                    <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full ml-2">네고가능</span>
-                    {% endif %}
-                </div>
-                {% endif %}
-
-                {% if diagnosis %}
-                <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-sm font-medium text-gray-600">AI 추정 시세</span>
-                        <span class="text-sm font-bold text-primary-600">{{ "{:,}".format(diagnosis.estimated_price_low) }} ~ {{ "{:,}".format(diagnosis.estimated_price_high) }}만원</span>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2">
-                        {% set price_range = diagnosis.estimated_price_high - diagnosis.estimated_price_low %}
-                        {% set price_pos = ((listing.price - diagnosis.estimated_price_low) / price_range * 100) if price_range > 0 else 50 %}
-                        {% set price_pos_clamped = [0, [price_pos, 100]|min]|max %}
-                        <div class="bg-primary-500 h-2 rounded-full relative" style="width: {{ price_pos_clamped }}%">
-                            <div class="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-primary-600 rounded-full border-2 border-white"></div>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-
-                {% if listing %}
-                <div class="flex gap-3">
-                    <button class="flex-1 bg-primary-600 text-white py-3 rounded-xl font-semibold hover:bg-primary-700 transition">연락하기</button>
-                    <button class="px-4 py-3 border border-gray-200 rounded-xl text-gray-500 hover:bg-gray-50 transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
-                    </button>
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- Specs -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h3 class="font-semibold text-lg mb-4">차량 정보</h3>
-                <dl class="space-y-3">
-                    <div class="flex justify-between py-2 border-b border-gray-50">
-                        <dt class="text-sm text-gray-500">브랜드/모델</dt>
-                        <dd class="text-sm font-medium">{{ vehicle.brand }} {{ vehicle.model }}</dd>
-                    </div>
-                    <div class="flex justify-between py-2 border-b border-gray-50">
-                        <dt class="text-sm text-gray-500">연식</dt>
-                        <dd class="text-sm font-medium">{{ vehicle.year }}년</dd>
-                    </div>
-                    {% if vehicle.trim %}
-                    <div class="flex justify-between py-2 border-b border-gray-50">
-                        <dt class="text-sm text-gray-500">트림</dt>
-                        <dd class="text-sm font-medium">{{ vehicle.trim }}</dd>
-                    </div>
-                    {% endif %}
-                    <div class="flex justify-between py-2 border-b border-gray-50">
-                        <dt class="text-sm text-gray-500">주행거리</dt>
-                        <dd class="text-sm font-medium">{{ "{:,}".format(vehicle.mileage) }}km</dd>
-                    </div>
-                    <div class="flex justify-between py-2 border-b border-gray-50">
-                        <dt class="text-sm text-gray-500">연료</dt>
-                        <dd class="text-sm font-medium">{{ vehicle.fuel_type }}</dd>
-                    </div>
-                    <div class="flex justify-between py-2 border-b border-gray-50">
-                        <dt class="text-sm text-gray-500">변속기</dt>
-                        <dd class="text-sm font-medium">{{ vehicle.transmission }}</dd>
-                    </div>
-                    {% if vehicle.engine_cc and vehicle.engine_cc > 0 %}
-                    <div class="flex justify-between py-2 border-b border-gray-50">
-                        <dt class="text-sm text-gray-500">배기량</dt>
-                        <dd class="text-sm font-medium">{{ "{:,}".format(vehicle.engine_cc) }}cc</dd>
-                    </div>
-                    {% endif %}
-                    {% if vehicle.color %}
-                    <div class="flex justify-between py-2 border-b border-gray-50">
-                        <dt class="text-sm text-gray-500">색상</dt>
-                        <dd class="text-sm font-medium">{{ vehicle.color }}</dd>
-                    </div>
-                    {% endif %}
-                    {% if vehicle.region %}
-                    <div class="flex justify-between py-2">
-                        <dt class="text-sm text-gray-500">지역</dt>
-                        <dd class="text-sm font-medium">{{ vehicle.region }}</dd>
-                    </div>
-                    {% endif %}
-                </dl>
-            </div>
-
-            <!-- Seller info -->
-            {% if listing %}
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h3 class="font-semibold text-lg mb-3">판매자 정보</h3>
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-medium">
-                        {{ listing.seller.username[0] }}
-                    </div>
-                    <div>
-                        <p class="font-medium text-sm">{{ listing.seller.username }}</p>
-                        <p class="text-xs text-gray-400">조회 {{ listing.view_count }}회</p>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Diagnosis Report -->
-    {% if diagnosis %}
-    <div class="mt-8 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 lg:p-8">
-        <div class="flex items-center gap-3 mb-6">
-            <div class="w-10 h-10 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>
-            </div>
-            <div>
-                <h2 class="text-xl font-bold">AI 진단 리포트</h2>
-                <p class="text-sm text-gray-400">CarNeRF AI가 분석한 차량 상태 종합 리포트</p>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <!-- Overall -->
-            <div class="text-center">
-                <div class="relative w-24 h-24 mx-auto mb-3">
-                    <svg class="w-24 h-24 transform -rotate-90" viewBox="0 0 36 36">
-                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e5e7eb" stroke-width="3"/>
-                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="{{ '#22c55e' if diagnosis.overall_score >= 85 else '#f59e0b' if diagnosis.overall_score >= 70 else '#ef4444' }}" stroke-width="3" stroke-dasharray="{{ diagnosis.overall_score }}, 100" stroke-linecap="round"/>
-                    </svg>
-                    <span class="absolute inset-0 flex items-center justify-center text-2xl font-bold">{{ diagnosis.overall_score }}</span>
-                </div>
-                <p class="text-sm font-medium">종합 점수</p>
-            </div>
-            <!-- Exterior -->
-            <div>
-                <div class="flex justify-between text-sm mb-1">
-                    <span class="text-gray-600">외관 상태</span>
-                    <span class="font-semibold">{{ diagnosis.exterior_score }}점</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-3">
-                    <div class="h-3 rounded-full {{ 'bg-green-500' if diagnosis.exterior_score >= 85 else 'bg-yellow-500' if diagnosis.exterior_score >= 70 else 'bg-red-500' }}" style="width: {{ diagnosis.exterior_score }}%"></div>
-                </div>
-            </div>
-            <!-- Interior -->
-            <div>
-                <div class="flex justify-between text-sm mb-1">
-                    <span class="text-gray-600">내부 상태</span>
-                    <span class="font-semibold">{{ diagnosis.interior_score }}점</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-3">
-                    <div class="h-3 rounded-full {{ 'bg-green-500' if diagnosis.interior_score >= 85 else 'bg-yellow-500' if diagnosis.interior_score >= 70 else 'bg-red-500' }}" style="width: {{ diagnosis.interior_score }}%"></div>
-                </div>
-            </div>
-            <!-- Engine -->
-            <div>
-                <div class="flex justify-between text-sm mb-1">
-                    <span class="text-gray-600">엔진 상태</span>
-                    <span class="font-semibold">{{ diagnosis.engine_score }}점</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-3">
-                    <div class="h-3 rounded-full {{ 'bg-green-500' if diagnosis.engine_score >= 85 else 'bg-yellow-500' if diagnosis.engine_score >= 70 else 'bg-red-500' }}" style="width: {{ diagnosis.engine_score }}%"></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-gray-50 rounded-xl p-4">
-                <h4 class="text-sm font-semibold text-gray-700 mb-2">사고 이력</h4>
-                <p class="text-sm text-gray-600">{{ diagnosis.accident_history or '정보 없음' }}</p>
-            </div>
-            <div class="bg-gray-50 rounded-xl p-4">
-                <h4 class="text-sm font-semibold text-gray-700 mb-2">AI 종합 소견</h4>
-                <p class="text-sm text-gray-600">{{ diagnosis.report_summary }}</p>
-            </div>
-        </div>
-    </div>
+<!-- NAV -->
+<nav style="position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(7,9,15,0.88);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,0.07);padding:0 32px;height:60px;display:flex;align-items:center;justify-content:space-between;">
+  <a href="/" style="display:flex;align-items:center;gap:8px;text-decoration:none;font-size:18px;font-weight:700;color:#fff;">
+    <div style="width:30px;height:30px;background:linear-gradient(135deg,#0EA5E9,#6366F1);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;">3D</div>
+    Car<span style="color:#0EA5E9">NeRF</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <a href="/listings" style="font-size:13px;color:#64748B;text-decoration:none;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#64748B'">매물 검색</a>
+    <a href="/sell"     style="font-size:13px;color:#64748B;text-decoration:none;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#64748B'">내 차 팔기</a>
+    {% if user %}
+    <span style="font-size:13px;color:#64748B;">{{ user.username }}님</span>
+    <button onclick="logout()" style="font-size:12px;color:#64748B;background:none;border:none;cursor:pointer;">로그아웃</button>
+    {% else %}
+    <a href="/login" style="padding:7px 16px;border:1px solid rgba(255,255,255,0.12);border-radius:8px;font-size:13px;color:#94A3B8;text-decoration:none;">로그인</a>
     {% endif %}
+  </div>
+</nav>
+<div class="detail-wrap">
+
+  <!-- BREADCRUMB -->
+  <nav class="breadcrumb">
+    <a href="/">홈</a>
+    <span>/</span>
+    <a href="/listings">매물 검색</a>
+    <span>/</span>
+    <span class="current">{{ vehicle.brand }} {{ vehicle.model }}</span>
+  </nav>
+
+  <div class="detail-grid">
+
+    <!-- ── LEFT ── -->
+    <div>
+      <!-- 사진 / 3D 뷰어 -->
+      <div class="dk-card">
+        <div class="tab-bar">
+          <button id="tab-photo" class="tab-btn active" onclick="showTab('photo')">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
+            사진
+          </button>
+          <button id="tab-3d" class="tab-btn" onclick="showTab('3d')">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25"/></svg>
+            3D 뷰어
+          </button>
+        </div>
+
+        <!-- 사진 패널 -->
+        <div id="panel-photo" class="media-panel">
+          <img src="{{ vehicle.thumbnail_url }}" alt="{{ vehicle.brand }} {{ vehicle.model }}"
+               onerror="this.style.display='none'">
+        </div>
+
+        <!-- 3D 패널 -->
+        <div id="panel-3d" class="media-panel" style="display:none;">
+          <div id="viewer-container" style="width:100%;height:100%;"></div>
+
+          {% if vehicle.model_3d_status == 'ready' %}
+          <!-- 3D 뷰어 컨트롤 -->
+          <div class="viewer-controls">
+            <button id="toggle-defects-btn" class="defect-toggle" onclick="toggleDefects()">
+              <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z"/>
+              </svg>
+              AI 파손 마커
+              <span id="defect-count-badge" class="defect-badge">0</span>
+            </button>
+            <a href="/viewer/{{ vehicle.id }}" target="_blank" class="fullscreen-btn">전체화면</a>
+          </div>
+          {% endif %}
+
+          {% if vehicle.model_3d_status != 'ready' %}
+          <div class="viewer-overlay">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="#0EA5E9" style="width:48px;height:48px;">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25"/>
+            </svg>
+            <p>3D 스캔 준비 중</p>
+            <small>3D 모델이 곧 준비됩니다</small>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- 판매자 설명 -->
+      {% if listing and listing.description %}
+      <div class="dk-card">
+        <div class="dk-card-body">
+          <h3 style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:12px;">판매자 설명</h3>
+          <p class="desc-text">{{ listing.description }}</p>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- ── RIGHT ── -->
+    <div>
+
+      <!-- 가격 & 제목 -->
+      <div class="dk-card">
+        <div class="price-section">
+          <div class="listing-title">{{ listing.title if listing else vehicle.brand + ' ' + vehicle.model }}</div>
+          <div class="listing-sub">{{ vehicle.brand }} {{ vehicle.model }} {{ vehicle.year }}년 {{ vehicle.trim or '' }}</div>
+
+          {% if listing %}
+          <div class="price-row">
+            <div class="price-num">{{ "{:,}".format(listing.price) }}</div>
+            <div class="price-unit">만원</div>
+            {% if listing.is_negotiable %}
+            <div class="nego-badge">네고 가능</div>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          <!-- AI 시세 바 -->
+          {% if diagnosis %}
+          <div class="price-bar-wrap">
+            <div class="price-bar-label">
+              <span>AI 추정 시세</span>
+              <span>{{ "{:,}".format(diagnosis.estimated_price_low) }} ~ {{ "{:,}".format(diagnosis.estimated_price_high) }}만원</span>
+            </div>
+            <div class="price-bar-bg">
+              {% set price_range = diagnosis.estimated_price_high - diagnosis.estimated_price_low %}
+              {% set price_pos = ((listing.price - diagnosis.estimated_price_low) / price_range * 100) if price_range > 0 else 50 %}
+              {% set pct = [[price_pos, 0]|max, 100]|min %}
+              <div class="price-bar-fill" style="width:{{ pct }}%">
+                <div class="price-bar-dot"></div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- AI 진단 버튼 -->
+          <div class="ai-btn-row">
+            <button class="ai-btn price-btn" onclick="togglePricePredict()">
+              <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              AI 가격 진단
+            </button>
+            <button class="ai-btn defect-btn" onclick="toggleDefectPanel()">
+              <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z"/></svg>
+              AI 파손 진단
+            </button>
+          </div>
+
+          <!-- AI 가격 예측 결과 패널 -->
+          <div id="price-predict-panel" class="price-predict-panel">
+            <div id="price-predict-content">
+              <div style="display:flex;align-items:center;justify-content:center;padding:20px;">
+                <div class="spinner"></div>
+                <span style="margin-left:10px;font-size:13px;color:var(--muted);">AI가 가격을 분석하고 있습니다...</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI 결함 요약 패널 -->
+          <div id="defect-summary-panel" class="defect-summary-panel">
+            <div id="defect-summary-content">
+              <div style="display:flex;align-items:center;justify-content:center;padding:20px;">
+                <div class="spinner"></div>
+                <span style="margin-left:10px;font-size:13px;color:var(--muted);">결함 데이터를 불러오는 중...</span>
+              </div>
+            </div>
+          </div>
+
+          {% if listing %}
+          <div class="action-row">
+            <button class="btn-contact">연락하기</button>
+            <button class="btn-heart">
+              <svg viewBox="0 0 24 24"><path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+            </button>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- 차량 정보 -->
+      <div class="dk-card">
+        <div class="dk-card-body">
+          <h3 style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px;">차량 정보</h3>
+          <div class="specs-list">
+            <div class="spec-row"><span class="spec-key">브랜드/모델</span><span class="spec-val">{{ vehicle.brand }} {{ vehicle.model }}</span></div>
+            <div class="spec-row"><span class="spec-key">연식</span><span class="spec-val">{{ vehicle.year }}년</span></div>
+            {% if vehicle.trim %}
+            <div class="spec-row"><span class="spec-key">트림</span><span class="spec-val">{{ vehicle.trim }}</span></div>
+            {% endif %}
+            <div class="spec-row"><span class="spec-key">주행거리</span><span class="spec-val">{{ "{:,}".format(vehicle.mileage) }}km</span></div>
+            <div class="spec-row"><span class="spec-key">연료</span><span class="spec-val">{{ vehicle.fuel_type }}</span></div>
+            <div class="spec-row"><span class="spec-key">변속기</span><span class="spec-val">{{ vehicle.transmission }}</span></div>
+            {% if vehicle.engine_cc and vehicle.engine_cc > 0 %}
+            <div class="spec-row"><span class="spec-key">배기량</span><span class="spec-val">{{ "{:,}".format(vehicle.engine_cc) }}cc</span></div>
+            {% endif %}
+            {% if vehicle.color %}
+            <div class="spec-row"><span class="spec-key">색상</span><span class="spec-val">{{ vehicle.color }}</span></div>
+            {% endif %}
+            {% if vehicle.region %}
+            <div class="spec-row"><span class="spec-key">지역</span><span class="spec-val">{{ vehicle.region }}</span></div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- 판매자 정보 -->
+      {% if listing %}
+      <div class="dk-card">
+        <div class="dk-card-body">
+          <h3 style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px;">판매자 정보</h3>
+          <div class="seller-row">
+            <div class="seller-avatar">{{ listing.seller.username[0] }}</div>
+            <div>
+              <div class="seller-name">{{ listing.seller.username }}</div>
+              <div class="seller-meta">조회 {{ listing.view_count }}회</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── AI 진단 리포트 ── -->
+  {% if diagnosis %}
+  <div class="report-wrap">
+    <div class="report-header">
+      <div class="report-icon">
+        <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+      </div>
+      <div>
+        <div class="report-title">AI 진단 리포트</div>
+        <div class="report-sub">CarNeRF AI가 분석한 차량 상태 종합 리포트</div>
+      </div>
+    </div>
+
+    <div class="score-grid">
+      <!-- 종합 점수 원형 -->
+      <div class="circle-score">
+        <svg width="88" height="88" viewBox="0 0 36 36">
+          <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="3"/>
+          <circle cx="18" cy="18" r="15.9" fill="none"
+            stroke="{{ '#10B981' if diagnosis.overall_score >= 85 else '#F59E0B' if diagnosis.overall_score >= 70 else '#EF4444' }}"
+            stroke-width="3"
+            stroke-dasharray="{{ diagnosis.overall_score }}, 100"
+            stroke-linecap="round"
+            transform="rotate(-90 18 18)"/>
+          <text x="18" y="18" text-anchor="middle" dominant-baseline="central"
+            fill="#E2E8F0" font-size="8" font-weight="900">{{ diagnosis.overall_score }}</text>
+        </svg>
+        <div class="score-lbl">종합 점수</div>
+      </div>
+
+      <!-- 외관 -->
+      <div class="bar-score">
+        <div class="bar-score-header">
+          <span class="lbl">외관 상태</span>
+          <span class="val">{{ diagnosis.exterior_score }}점</span>
+        </div>
+        <div class="bar-bg">
+          <div class="bar-fill {{ 'bar-green' if diagnosis.exterior_score >= 85 else 'bar-yellow' if diagnosis.exterior_score >= 70 else 'bar-red' }}"
+               style="width:{{ diagnosis.exterior_score }}%"></div>
+        </div>
+      </div>
+
+      <!-- 내부 -->
+      <div class="bar-score">
+        <div class="bar-score-header">
+          <span class="lbl">내부 상태</span>
+          <span class="val">{{ diagnosis.interior_score }}점</span>
+        </div>
+        <div class="bar-bg">
+          <div class="bar-fill {{ 'bar-green' if diagnosis.interior_score >= 85 else 'bar-yellow' if diagnosis.interior_score >= 70 else 'bar-red' }}"
+               style="width:{{ diagnosis.interior_score }}%"></div>
+        </div>
+      </div>
+
+      <!-- 엔진 -->
+      <div class="bar-score">
+        <div class="bar-score-header">
+          <span class="lbl">엔진 상태</span>
+          <span class="val">{{ diagnosis.engine_score }}점</span>
+        </div>
+        <div class="bar-bg">
+          <div class="bar-fill {{ 'bar-green' if diagnosis.engine_score >= 85 else 'bar-yellow' if diagnosis.engine_score >= 70 else 'bar-red' }}"
+               style="width:{{ diagnosis.engine_score }}%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="report-boxes">
+      <div class="report-box">
+        <h4>사고 이력</h4>
+        <p>{{ diagnosis.accident_history or '정보 없음' }}</p>
+      </div>
+      <div class="report-box">
+        <h4>AI 종합 소견</h4>
+        <p>{{ diagnosis.report_summary }}</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-function showTab(tab) {
-    const photoPanel = document.getElementById('panel-photo');
-    const threeDPanel = document.getElementById('panel-3d');
-    const photoTab = document.getElementById('tab-photo');
-    const threeDTab = document.getElementById('tab-3d');
+const VEHICLE_ID = {{ vehicle.id }};
+let priceLoaded = false;
+let defectLoaded = false;
+let _toggleDefectsViewer = null;
 
-    if (tab === 'photo') {
-        photoPanel.classList.remove('hidden');
-        threeDPanel.classList.add('hidden');
-        photoTab.classList.add('text-primary-600', 'border-b-2', 'border-primary-600');
-        photoTab.classList.remove('text-gray-400');
-        threeDTab.classList.remove('text-primary-600', 'border-b-2', 'border-primary-600');
-        threeDTab.classList.add('text-gray-400');
-    } else {
-        photoPanel.classList.add('hidden');
-        threeDPanel.classList.remove('hidden');
-        threeDTab.classList.add('text-primary-600', 'border-b-2', 'border-primary-600');
-        threeDTab.classList.remove('text-gray-400');
-        photoTab.classList.remove('text-primary-600', 'border-b-2', 'border-primary-600');
-        photoTab.classList.add('text-gray-400');
+function showTab(tab) {
+  const photo = document.getElementById('panel-photo');
+  const threed = document.getElementById('panel-3d');
+  const tPhoto = document.getElementById('tab-photo');
+  const t3d    = document.getElementById('tab-3d');
+  if (tab === 'photo') {
+    photo.style.display = ''; threed.style.display = 'none';
+    tPhoto.classList.add('active'); t3d.classList.remove('active');
+  } else {
+    photo.style.display = 'none'; threed.style.display = '';
+    t3d.classList.add('active'); tPhoto.classList.remove('active');
+  }
+}
+
+// AI 가격 예측 토글
+function togglePricePredict() {
+  const panel = document.getElementById('price-predict-panel');
+  const btn = document.querySelector('.price-btn');
+  const isVisible = panel.style.display === 'block';
+
+  if (isVisible) {
+    panel.style.display = 'none';
+    btn.classList.remove('active');
+    return;
+  }
+
+  panel.style.display = 'block';
+  btn.classList.add('active');
+
+  if (!priceLoaded) {
+    priceLoaded = true;
+    fetch(`/api/predict/vehicle/${VEHICLE_ID}`)
+      .then(r => r.json())
+      .then(data => renderPriceResult(data))
+      .catch(e => {
+        document.getElementById('price-predict-content').innerHTML =
+          '<p style="color:#EF4444;font-size:13px;padding:12px;">가격 예측에 실패했습니다.</p>';
+      });
+  }
+}
+
+function renderPriceResult(data) {
+  const el = document.getElementById('price-predict-content');
+  const depChart = data.depreciation_curve.map(d =>
+    `<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted2);padding:4px 0;">
+      <span>${d.year}년</span>
+      <span style="font-weight:600;color:var(--text);">${d.price.toLocaleString()}만원</span>
+    </div>`
+  ).join('');
+
+  const similarHtml = data.similar_listings.length > 0 ?
+    data.similar_listings.map(s =>
+      `<div class="similar-item">
+        <div>
+          <div style="font-weight:600;color:var(--text);">${s.title}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">${s.year}년 / ${s.mileage.toLocaleString()}km</div>
+        </div>
+        <div style="font-weight:700;color:var(--accent);">${s.price.toLocaleString()}만원</div>
+      </div>`
+    ).join('') :
+    '<p style="font-size:12px;color:var(--muted);padding:8px 0;">유사 매물이 없습니다.</p>';
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+      <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:#0EA5E9;fill:none;stroke-width:2;">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+      </svg>
+      <span style="font-size:13px;font-weight:600;color:var(--text);">AI 예측 가격</span>
+      <span class="predict-confidence">신뢰도 ${Math.round(data.confidence * 100)}%</span>
+    </div>
+
+    <div class="predict-result-price">${data.predicted_price.toLocaleString()}만원</div>
+    <div class="predict-range">
+      예측 범위: ${data.price_range_low.toLocaleString()} ~ ${data.price_range_high.toLocaleString()}만원
+    </div>
+
+    ${data.defect_adjusted_price ? `
+    <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:10px;padding:12px;margin-bottom:16px;">
+      <div style="font-size:12px;color:#EF4444;font-weight:600;margin-bottom:4px;">결함 반영 예측가</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:20px;font-weight:800;color:#EF4444;">${data.defect_adjusted_price.toLocaleString()}만원</span>
+        <span style="font-size:12px;color:#EF4444;">-${data.defect_discount.toLocaleString()}만원</span>
+      </div>
+    </div>` : ''}
+
+    <!-- 감가상각 -->
+    <div style="margin-bottom:16px;">
+      <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">감가상각 예측</div>
+      ${depChart}
+    </div>
+
+    <!-- 유사 매물 -->
+    <div>
+      <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">유사 매물 비교</div>
+      ${similarHtml}
+    </div>
+  `;
+}
+
+// AI 파손 진단 패널 토글
+function toggleDefectPanel() {
+  const panel = document.getElementById('defect-summary-panel');
+  const btn = document.querySelector('.defect-btn');
+  const isVisible = panel.style.display === 'block';
+
+  if (isVisible) {
+    panel.style.display = 'none';
+    btn.classList.remove('active');
+    return;
+  }
+
+  panel.style.display = 'block';
+  btn.classList.add('active');
+
+  if (!defectLoaded) {
+    defectLoaded = true;
+    fetch(`/api/defect/vehicles/${VEHICLE_ID}`)
+      .then(r => r.json())
+      .then(data => renderDefectSummary(data))
+      .catch(e => {
+        document.getElementById('defect-summary-content').innerHTML =
+          '<p style="color:#EF4444;font-size:13px;padding:12px;">결함 데이터를 불러올 수 없습니다.</p>';
+      });
+  }
+}
+
+function renderDefectSummary(data) {
+  const el = document.getElementById('defect-summary-content');
+
+  if (!data.defects || data.defects.length === 0) {
+    el.innerHTML = `
+      <div style="text-align:center;padding:20px;">
+        <div style="font-size:32px;margin-bottom:8px;">&#10003;</div>
+        <div style="font-size:15px;font-weight:700;color:#10B981;">결함이 발견되지 않았습니다</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;">AI가 차량 외관을 분석한 결과 양호한 상태입니다.</div>
+      </div>
+    `;
+    return;
+  }
+
+  const sevColors = { '경미': '#10B981', '중간': '#F59E0B', '심각': '#EF4444' };
+  const sevColor = sevColors[data.severity_level] || '#F59E0B';
+
+  const defectItems = data.defects.map(d => `
+    <div class="defect-list-item" onclick="showDefectDetail(${JSON.stringify(d).replace(/"/g, '&quot;')})">
+      <div class="defect-dot" style="background:${d.marker_color};box-shadow:0 0 6px ${d.marker_color};"></div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:600;color:var(--text);">${d.type_kr}</div>
+        <div style="font-size:11px;color:var(--muted);">${d.description}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+        <span style="font-size:11px;padding:2px 8px;border-radius:8px;background:${sevColors[d.severity] || '#F59E0B'}15;color:${sevColors[d.severity] || '#F59E0B'};font-weight:600;">${d.severity}</span>
+        <span style="font-size:10px;color:var(--muted);">${Math.round(d.confidence * 100)}%</span>
+      </div>
+    </div>
+  `).join('');
+
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);">
+          총 <span style="color:${sevColor};font-size:16px;font-weight:800;">${data.defect_count}</span>건 결함 발견
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">
+          종합 점수: <span id="defect-score-value" style="font-weight:700;color:var(--text);">${data.total_defect_score}</span>점
+          &middot;
+          심각도: <span id="defect-severity-level" style="font-weight:700;color:${sevColor};">${data.severity_level}</span>
+        </div>
+      </div>
+      <button onclick="goTo3DAndShowDefects()" style="
+        padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;
+        background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);
+        color:#F59E0B;cursor:pointer;transition:all 0.2s;
+      " onmouseover="this.style.background='rgba(245,158,11,0.2)'" onmouseout="this.style.background='rgba(245,158,11,0.1)'">
+        3D에서 보기
+      </button>
+    </div>
+    ${defectItems}
+  `;
+}
+
+function goTo3DAndShowDefects() {
+  showTab('3d');
+  setTimeout(() => {
+    const btn = document.getElementById('toggle-defects-btn');
+    if (btn && !btn.classList.contains('active')) {
+      toggleDefects();
     }
+  }, 500);
+}
+
+function showDefectDetail(defect) {
+  // viewer.js의 showDefectModal을 직접 호출할 수 없으므로 이벤트 디스패치
+  window._showDefectModalFromList && window._showDefectModalFromList(defect);
+}
+
+function toggleDefects() {
+  if (_toggleDefectsViewer) {
+    _toggleDefectsViewer();
+  }
+}
+
+async function logout() {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  window.location.href = '/';
 }
 </script>
+
 {% if vehicle.model_3d_status == 'ready' and vehicle.model_3d_url %}
 <script type="module">
-    import { initViewer } from '/static/js/viewer.js';
-    let viewerLoaded = false;
-    const origShowTab = window.showTab;
-    window.showTab = function(tab) {
-        origShowTab(tab);
-        if (tab === '3d' && !viewerLoaded) {
-            viewerLoaded = true;
-            initViewer('viewer-container', {
-                modelUrl: '{{ vehicle.model_3d_url }}',
-                autoRotate: false,
-                backgroundColor: 0x111827,
-            });
-        }
-    };
+  import { initViewer, initDefectMarkers, toggleDefectMarkers } from '/static/js/viewer.js';
+
+  let viewerLoaded = false;
+  const origShowTab = window.showTab;
+  window.showTab = function(tab) {
+    origShowTab(tab);
+    if (tab === '3d' && !viewerLoaded) {
+      viewerLoaded = true;
+      initViewer('viewer-container', {
+        modelUrl: '{{ vehicle.model_3d_url }}',
+        autoRotate: false,
+        backgroundColor: 0x07090F,
+      });
+      // 결함 마커 데이터 로드
+      initDefectMarkers({{ vehicle.id }});
+    }
+  };
+
+  // 결함 마커 토글 연결
+  window._toggleDefectsViewer = toggleDefectMarkers;
+
+  // 리스트에서 결함 클릭 시 모달 표시
+  window._showDefectModalFromList = function(defect) {
+    // viewer.js 내부의 showDefectModal을 재구현
+    const severityColors = { '경미': '#10B981', '중간': '#F59E0B', '심각': '#EF4444' };
+    const sevColor = severityColors[defect.severity] || '#F59E0B';
+    let modal = document.getElementById('defect-modal');
+    if (modal) modal.remove();
+    modal = document.createElement('div');
+    modal.id = 'defect-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);';
+    modal.innerHTML = `
+      <div style="background:#0E1117;border:1px solid rgba(255,255,255,0.1);border-radius:20px;max-width:600px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+        <div style="padding:24px 24px 0;display:flex;justify-content:space-between;align-items:center;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:10px;height:10px;background:${defect.marker_color};border-radius:50%;box-shadow:0 0 8px ${defect.marker_color};"></div>
+            <h3 style="font-size:18px;font-weight:800;color:#E2E8F0;margin:0;">결함 발견: ${defect.type_kr}</h3>
+            <span style="font-size:12px;padding:3px 10px;border-radius:12px;background:${sevColor}15;color:${sevColor};border:1px solid ${sevColor}30;font-weight:600;">${defect.severity}</span>
+          </div>
+          <button onclick="document.getElementById('defect-modal').remove()" style="width:32px;height:32px;background:rgba(255,255,255,0.08);border:none;border-radius:8px;color:#94A3B8;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">&times;</button>
+        </div>
+        <div style="padding:16px 24px;">
+          <div style="background:#161B24;border:1px solid rgba(255,255,255,0.08);border-radius:12px;overflow:hidden;aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;">
+            <img src="${defect.annotated_image_url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+            <div style="display:none;flex-direction:column;align-items:center;gap:8px;color:#64748B;">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
+              <span style="font-size:13px;">결함 부위 이미지</span>
+            </div>
+          </div>
+        </div>
+        <div style="padding:0 24px 24px;">
+          <div style="background:#161B24;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+              <div><div style="font-size:11px;color:#64748B;margin-bottom:4px;">결함 유형</div><div style="font-size:14px;font-weight:600;color:#E2E8F0;">${defect.type_kr} (${defect.type})</div></div>
+              <div><div style="font-size:11px;color:#64748B;margin-bottom:4px;">심각도</div><div style="font-size:14px;font-weight:600;color:${sevColor};">${defect.severity}</div></div>
+              <div><div style="font-size:11px;color:#64748B;margin-bottom:4px;">AI 신뢰도</div><div style="font-size:14px;font-weight:600;color:#E2E8F0;">${Math.round(defect.confidence * 100)}%</div></div>
+              <div><div style="font-size:11px;color:#64748B;margin-bottom:4px;">소스 프레임</div><div style="font-size:14px;font-weight:600;color:#E2E8F0;">${defect.source_frame}</div></div>
+            </div>
+            <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:12px;">
+              <div style="font-size:11px;color:#64748B;margin-bottom:4px;">AI 분석 소견</div>
+              <div style="font-size:13px;color:#94A3B8;line-height:1.7;">${defect.description}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+    document.addEventListener('keydown', function esc(e) { if (e.key === 'Escape') { modal.remove(); document.removeEventListener('keydown', esc); } });
+    document.body.appendChild(modal);
+  };
 </script>
 {% endif %}
 {% endblock %}

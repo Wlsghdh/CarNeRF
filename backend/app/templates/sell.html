@@ -1,170 +1,430 @@
 {% extends "base.html" %}
 {% block title %}내 차 팔기{% endblock %}
 
+{% block head %}
+<style>
+:root {
+  --bg:      #07090F;
+  --surface: #0E1117;
+  --sur2:    #161B24;
+  --border:  rgba(255,255,255,0.08);
+  --accent:  #0EA5E9;
+  --text:    #E2E8F0;
+  --muted:   #64748B;
+}
+body { background: var(--bg) !important; color: var(--text) !important; }
+
+.sell-wrap {
+  max-width: 720px; margin: 0 auto;
+  padding: 100px 24px 80px;
+}
+.sell-head { margin-bottom: 32px; }
+.sell-head h1 { font-size: 26px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+.sell-head p  { font-size: 14px; color: var(--muted); }
+
+/* ── STEP CARD ── */
+.step-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 28px;
+  margin-bottom: 16px;
+  transition: border-color 0.2s;
+}
+.step-card:focus-within { border-color: rgba(14,165,233,0.3); }
+
+.step-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 22px;
+}
+.step-num {
+  width: 26px; height: 26px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800; color: #fff;
+  flex-shrink: 0;
+}
+.step-title { font-size: 15px; font-weight: 700; color: var(--text); }
+.step-badge {
+  font-size: 10px; font-weight: 600;
+  background: rgba(14,165,233,0.12);
+  color: var(--accent);
+  border: 1px solid rgba(14,165,233,0.2);
+  padding: 2px 8px; border-radius: 20px;
+  margin-left: 4px;
+}
+
+/* ── FIELD ── */
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 560px) { .field-grid { grid-template-columns: 1fr; } }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label {
+  font-size: 11px; font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.8px;
+}
+.field label .req { color: #EF4444; margin-left: 2px; }
+
+.dk-input {
+  background: var(--sur2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  width: 100%;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  appearance: none;
+  font-family: inherit;
+}
+.dk-input::placeholder { color: var(--muted); }
+.dk-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(14,165,233,0.1);
+}
+.dk-input option { background: #1a1f2e; color: var(--text); }
+
+textarea.dk-input { resize: none; line-height: 1.6; }
+
+/* ── CHECKBOX ── */
+.check-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 0;
+}
+.check-row input[type=checkbox] {
+  width: 16px; height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.check-row label { font-size: 13px; color: var(--muted2, #94A3B8); cursor: pointer; }
+
+/* ── UPLOAD ZONE ── */
+.upload-zone {
+  background: var(--sur2);
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.upload-zone:hover {
+  border-color: rgba(14,165,233,0.4);
+  background: rgba(14,165,233,0.04);
+}
+.upload-zone svg { color: var(--muted); margin-bottom: 10px; }
+.upload-zone p { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.upload-zone span { font-size: 12px; color: var(--muted); }
+
+.img-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 12px; }
+.img-thumb { aspect-ratio: 1; border-radius: 8px; overflow: hidden; background: var(--sur2); border: 1px solid var(--border); }
+.img-thumb img { width:100%;height:100%;object-fit:cover; }
+
+/* ── 3D SCAN ── */
+.scan-upload {
+  background: var(--sur2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+  text-align: center;
+}
+.scan-upload p { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.scan-upload small { font-size: 12px; color: var(--muted); display: block; margin-bottom: 16px; }
+.btn-scan-upload {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(14,165,233,0.1);
+  border: 1px solid rgba(14,165,233,0.3);
+  color: var(--accent);
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-scan-upload:hover { background: rgba(14,165,233,0.18); }
+
+.scan-progress {
+  display: none;
+  margin-top: 16px;
+  background: rgba(14,165,233,0.06);
+  border: 1px solid rgba(14,165,233,0.15);
+  border-radius: 10px;
+  padding: 20px;
+}
+.progress-bar-bg {
+  width: 100%; height: 4px;
+  background: var(--sur2);
+  border-radius: 4px; overflow: hidden;
+  margin: 10px 0 6px;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #6366F1);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+  width: 0%;
+}
+.scan-done {
+  display: none;
+  margin-top: 16px;
+  background: rgba(16,185,129,0.07);
+  border: 1px solid rgba(16,185,129,0.2);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+}
+.scan-done p { color: #10B981; font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+.scan-done a { color: var(--accent); font-size: 13px; text-decoration: none; }
+
+/* ── SUBMIT ── */
+.btn-submit {
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 16px; font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s;
+  box-shadow: 0 0 30px rgba(14,165,233,0.25);
+  margin-top: 8px;
+}
+.btn-submit:hover {
+  background: #38BEF8;
+  transform: translateY(-2px);
+  box-shadow: 0 0 40px rgba(14,165,233,0.4);
+}
+
+.form-msg {
+  display: none;
+  text-align: center;
+  padding: 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  margin-top: 12px;
+}
+.form-msg.success { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); color: #10B981; }
+.form-msg.error   { background: rgba(239,68,68,0.08);  border: 1px solid rgba(239,68,68,0.2);  color: #EF4444; }
+</style>
+{% endblock %}
+
+{% block navbar %}{% endblock %}
+
 {% block content %}
-<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <h1 class="text-2xl font-bold mb-2">내 차 팔기</h1>
-    <p class="text-gray-500 mb-8">차량 정보를 입력하고 매물을 등록하세요</p>
+<!-- NAV -->
+<nav style="position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(7,9,15,0.85);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,0.07);padding:0 32px;height:60px;display:flex;align-items:center;justify-content:space-between;">
+  <a href="/" style="display:flex;align-items:center;gap:8px;text-decoration:none;font-size:18px;font-weight:700;color:#fff;">
+    <div style="width:30px;height:30px;background:linear-gradient(135deg,#0EA5E9,#6366F1);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;">3D</div>
+    Car<span style="color:#0EA5E9">NeRF</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <a href="/listings" style="font-size:13px;color:#64748B;text-decoration:none;">매물 검색</a>
+    <a href="/sell"     style="font-size:13px;font-weight:600;color:#0EA5E9;text-decoration:none;">내 차 팔기</a>
+    {% if user %}
+    <span style="font-size:13px;color:#64748B;">{{ user.username }}님</span>
+    <button onclick="logout()" style="font-size:12px;color:#64748B;background:none;border:none;cursor:pointer;">로그아웃</button>
+    {% else %}
+    <a href="/login" style="padding:7px 16px;border:1px solid rgba(255,255,255,0.12);border-radius:8px;font-size:13px;color:#94A3B8;text-decoration:none;">로그인</a>
+    {% endif %}
+  </div>
+</nav>
+<div class="sell-wrap">
+  <div class="sell-head">
+    <h1>내 차 팔기</h1>
+    <p>차량 정보를 입력하고 3D 스캔으로 신뢰도를 높이세요</p>
+  </div>
 
-    <form id="sell-form" class="space-y-8">
-        <!-- Step 1: Basic Info -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 class="font-semibold text-lg mb-4 flex items-center gap-2">
-                <span class="w-6 h-6 bg-primary-600 text-white rounded-full flex items-center justify-center text-xs font-bold">1</span>
-                기본 정보
-            </h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">브랜드 <span class="text-red-500">*</span></label>
-                    <select name="brand" required class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                        <option value="">선택</option>
-                        <option>현대</option><option>기아</option><option>제네시스</option>
-                        <option>쉐보레</option><option>르노</option><option>쌍용</option>
-                        <option>BMW</option><option>벤츠</option><option>아우디</option><option>기타</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">모델 <span class="text-red-500">*</span></label>
-                    <input type="text" name="model" required placeholder="예: 그랜저" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">연식 <span class="text-red-500">*</span></label>
-                    <input type="number" name="year" required min="2000" max="2026" placeholder="2023" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">트림</label>
-                    <input type="text" name="trim" placeholder="예: 프리미엄" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">연료 <span class="text-red-500">*</span></label>
-                    <select name="fuel_type" required class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                        <option value="">선택</option>
-                        <option>가솔린</option><option>디젤</option><option>전기</option><option>하이브리드</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">변속기 <span class="text-red-500">*</span></label>
-                    <select name="transmission" required class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                        <option value="">선택</option>
-                        <option>자동</option><option>수동</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">주행거리 (km) <span class="text-red-500">*</span></label>
-                    <input type="number" name="mileage" required min="0" placeholder="32000" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">색상</label>
-                    <input type="text" name="color" placeholder="예: 화이트" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">배기량 (cc)</label>
-                    <input type="number" name="engine_cc" min="0" placeholder="2000" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">지역</label>
-                    <input type="text" name="region" placeholder="예: 서울" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                </div>
-            </div>
+  <form id="sell-form">
+
+    <!-- 1. 기본 정보 -->
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num">1</div>
+        <div class="step-title">기본 정보</div>
+      </div>
+      <div class="field-grid">
+        <div class="field">
+          <label>브랜드<span class="req">*</span></label>
+          <select name="brand" required class="dk-input">
+            <option value="">선택</option>
+            <option>현대</option><option>기아</option><option>제네시스</option>
+            <option>쉐보레</option><option>르노</option><option>쌍용</option>
+            <option>BMW</option><option>벤츠</option><option>아우디</option><option>기타</option>
+          </select>
         </div>
-
-        <!-- Step 2: Price -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 class="font-semibold text-lg mb-4 flex items-center gap-2">
-                <span class="w-6 h-6 bg-primary-600 text-white rounded-full flex items-center justify-center text-xs font-bold">2</span>
-                가격 정보
-            </h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">판매 가격 (만원) <span class="text-red-500">*</span></label>
-                    <input type="number" name="price" required min="0" placeholder="3000" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                </div>
-                <div class="flex items-end pb-1">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" name="is_negotiable" checked class="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500">
-                        <span class="text-sm text-gray-700">가격 협의 가능</span>
-                    </label>
-                </div>
-            </div>
+        <div class="field">
+          <label>모델<span class="req">*</span></label>
+          <input type="text" name="model" required placeholder="예: 그랜저" class="dk-input">
         </div>
-
-        <!-- Step 3: Photos -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 class="font-semibold text-lg mb-4 flex items-center gap-2">
-                <span class="w-6 h-6 bg-primary-600 text-white rounded-full flex items-center justify-center text-xs font-bold">3</span>
-                사진
-            </h2>
-            <div id="image-preview" class="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-4"></div>
-            <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-primary-400 hover:bg-primary-50/50 transition">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-gray-400 mb-2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91M6.75 7.5l.75-.75M18 3v4.5m0 0V12m0-4.5h4.5m-4.5 0H13.5" /></svg>
-                <span class="text-sm text-gray-500">사진을 선택하세요 (최대 10장)</span>
-                <input type="file" id="image-input" accept="image/*" multiple class="hidden">
-            </label>
+        <div class="field">
+          <label>연식<span class="req">*</span></label>
+          <input type="number" name="year" required min="2000" max="2026" placeholder="2023" class="dk-input">
         </div>
-
-        <!-- Step 4: Description -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 class="font-semibold text-lg mb-4 flex items-center gap-2">
-                <span class="w-6 h-6 bg-primary-600 text-white rounded-full flex items-center justify-center text-xs font-bold">4</span>
-                상세 설명
-            </h2>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">제목 <span class="text-red-500">*</span></label>
-                <input type="text" name="title" required placeholder="예: 그랜저 르블랑 풀옵 무사고" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent mb-4">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">상세 설명</label>
-                <textarea name="description" rows="5" placeholder="차량 상태, 옵션, 특이사항 등을 자세히 적어주세요" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"></textarea>
-            </div>
+        <div class="field">
+          <label>트림</label>
+          <input type="text" name="trim" placeholder="예: 프리미엄" class="dk-input">
         </div>
-
-        <!-- Step 5: 3D Scan -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 class="font-semibold text-lg mb-4 flex items-center gap-2">
-                <span class="w-6 h-6 bg-primary-600 text-white rounded-full flex items-center justify-center text-xs font-bold">5</span>
-                3D 스캔 <span class="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full ml-1">선택</span>
-            </h2>
-            <div id="scan-upload-area" class="bg-gray-50 rounded-xl p-6 text-center">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-10 h-10 text-primary-400 mx-auto mb-3"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25" /></svg>
-                <p class="font-medium text-gray-700 mb-1">3D 스캔 서비스</p>
-                <p class="text-sm text-gray-500 mb-3">차량 주위를 천천히 한 바퀴 도는 영상(30초~1분)을 업로드하세요</p>
-                <label class="inline-flex items-center gap-2 bg-primary-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium cursor-pointer hover:bg-primary-700 transition">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
-                    영상 선택
-                    <input type="file" id="video-input" accept="video/mp4,video/quicktime,video/x-msvideo,video/webm,.mp4,.mov,.avi,.mkv,.webm" class="hidden">
-                </label>
-                <p id="video-filename" class="text-xs text-gray-400 mt-2 hidden"></p>
-            </div>
-            <!-- Progress area (hidden by default) -->
-            <div id="scan-progress" class="hidden mt-4 bg-blue-50 rounded-xl p-6">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="w-5 h-5 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
-                    <span id="scan-status-text" class="text-sm font-medium text-primary-700">처리 중...</span>
-                </div>
-                <div class="w-full bg-blue-200 rounded-full h-2">
-                    <div id="scan-progress-bar" class="bg-primary-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
-                </div>
-                <p id="scan-message" class="text-xs text-gray-500 mt-2"></p>
-            </div>
-            <!-- Done area -->
-            <div id="scan-done" class="hidden mt-4 bg-green-50 rounded-xl p-4 text-center">
-                <p class="text-green-700 font-medium">3D 모델 생성 완료!</p>
-                <a id="scan-view-link" href="#" class="text-sm text-primary-600 hover:underline mt-1 inline-block">3D 모델 보기 →</a>
-            </div>
+        <div class="field">
+          <label>연료<span class="req">*</span></label>
+          <select name="fuel_type" required class="dk-input">
+            <option value="">선택</option>
+            <option>가솔린</option><option>디젤</option><option>전기</option><option>하이브리드</option>
+          </select>
         </div>
-
-        <!-- Submit -->
-        <div class="flex gap-4">
-            <button type="submit" class="flex-1 bg-primary-600 text-white py-3 rounded-xl font-semibold hover:bg-primary-700 transition text-lg">
-                매물 등록하기
-            </button>
+        <div class="field">
+          <label>변속기<span class="req">*</span></label>
+          <select name="transmission" required class="dk-input">
+            <option value="">선택</option>
+            <option>자동</option><option>수동</option>
+          </select>
         </div>
+        <div class="field">
+          <label>주행거리 (km)<span class="req">*</span></label>
+          <input type="number" name="mileage" required min="0" placeholder="32000" class="dk-input">
+        </div>
+        <div class="field">
+          <label>색상</label>
+          <input type="text" name="color" placeholder="예: 화이트" class="dk-input">
+        </div>
+        <div class="field">
+          <label>배기량 (cc)</label>
+          <input type="number" name="engine_cc" min="0" placeholder="2000" class="dk-input">
+        </div>
+        <div class="field">
+          <label>지역</label>
+          <input type="text" name="region" placeholder="예: 서울" class="dk-input">
+        </div>
+      </div>
+    </div>
 
-        <div id="form-message" class="hidden text-center p-4 rounded-xl"></div>
-    </form>
+    <!-- 2. 가격 -->
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <div class="step-title">가격 정보</div>
+      </div>
+      <div class="field" style="max-width:280px;">
+        <label>판매 가격 (만원)<span class="req">*</span></label>
+        <input type="number" name="price" required min="0" placeholder="3000" class="dk-input">
+      </div>
+      <div class="check-row" style="margin-top:12px;">
+        <input type="checkbox" name="is_negotiable" id="neg" checked>
+        <label for="neg">가격 협의 가능</label>
+      </div>
+    </div>
+
+    <!-- 3. 사진 -->
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <div class="step-title">사진</div>
+      </div>
+      <div id="image-preview" class="img-grid"></div>
+      <label class="upload-zone" for="image-input">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:36px;height:36px;display:block;margin:0 auto 10px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91M6.75 7.5l.75-.75M18 3v4.5m0 0V12m0-4.5h4.5m-4.5 0H13.5"/>
+        </svg>
+        <p>사진을 선택하세요</p>
+        <span>최대 10장 · JPG, PNG</span>
+        <input type="file" id="image-input" accept="image/*" multiple class="hidden" style="display:none;">
+      </label>
+    </div>
+
+    <!-- 4. 설명 -->
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num">4</div>
+        <div class="step-title">상세 설명</div>
+      </div>
+      <div class="field" style="margin-bottom:14px;">
+        <label>제목<span class="req">*</span></label>
+        <input type="text" name="title" required placeholder="예: 그랜저 르블랑 풀옵 무사고" class="dk-input">
+      </div>
+      <div class="field">
+        <label>상세 설명</label>
+        <textarea name="description" rows="5" placeholder="차량 상태, 옵션, 특이사항 등을 자세히 적어주세요" class="dk-input"></textarea>
+      </div>
+    </div>
+
+    <!-- 5. 3D 스캔 -->
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num">5</div>
+        <div class="step-title">3D 스캔<span class="step-badge">선택</span></div>
+      </div>
+      <div id="scan-upload-area" class="scan-upload">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="#0EA5E9" style="width:44px;height:44px;display:block;margin:0 auto 12px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25"/>
+        </svg>
+        <p>3D 스캔 영상 업로드</p>
+        <small>차량 주위를 한 바퀴 도는 영상(30초~2분)을 업로드하면<br>자동으로 3D 모델이 생성됩니다</small>
+        <label class="btn-scan-upload" for="video-input">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="width:16px;height:16px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"/>
+          </svg>
+          영상 선택
+          <input type="file" id="video-input" accept="video/*,.mp4,.mov,.avi,.mkv" style="display:none;">
+        </label>
+        <p id="video-filename" style="font-size:12px;color:#64748B;margin-top:10px;display:none;"></p>
+      </div>
+
+      <div id="scan-progress" class="scan-progress">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <div style="width:16px;height:16px;border:2px solid #0EA5E9;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;"></div>
+          <span id="scan-status-text" style="font-size:13px;font-weight:600;color:#0EA5E9;">처리 중...</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div id="scan-progress-bar" class="progress-bar-fill"></div>
+        </div>
+        <p id="scan-message" style="font-size:12px;color:#64748B;"></p>
+      </div>
+
+      <div id="scan-done" class="scan-done">
+        <p>3D 모델 생성 완료!</p>
+        <a id="scan-view-link" href="#">3D 모델 보기 →</a>
+      </div>
+    </div>
+
+    <!-- SUBMIT -->
+    <button type="submit" class="btn-submit">매물 등록하기</button>
+    <div id="form-message" class="form-msg"></div>
+  </form>
 </div>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
 {% endblock %}
 
 {% block scripts %}
 <script src="/static/js/sell.js"></script>
+<script>
+async function logout() {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  window.location.href = '/';
+}
+// 이미지 미리보기
+document.getElementById('image-input').addEventListener('change', function() {
+  const grid = document.getElementById('image-preview');
+  grid.innerHTML = '';
+  Array.from(this.files).slice(0,10).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const div = document.createElement('div');
+      div.className = 'img-thumb';
+      div.innerHTML = `<img src="${e.target.result}">`;
+      grid.appendChild(div);
+    };
+    reader.readAsDataURL(file);
+  });
+});
+</script>
 {% endblock %}

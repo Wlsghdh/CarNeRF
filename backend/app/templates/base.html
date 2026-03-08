@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,9 +22,10 @@
     </script>
     {% block head %}{% endblock %}
 </head>
-<body class="bg-gray-50 font-sans text-gray-900 min-h-screen flex flex-col">
+<body class="bg-gray-50 dark:bg-[#07090F] font-sans text-gray-900 dark:text-gray-100 min-h-screen flex flex-col transition-colors duration-300">
+    {% block navbar %}
     <!-- Navbar -->
-    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+    <nav class="bg-white dark:bg-[#0E1117] shadow-sm border-b border-gray-200 dark:border-white/5 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center space-x-8">
@@ -51,6 +52,7 @@
             </div>
         </div>
     </nav>
+    {% endblock %}
 
     <!-- Content -->
     <main class="flex-1">
