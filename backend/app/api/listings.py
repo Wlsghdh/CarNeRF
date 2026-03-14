@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload
 
-from app.dependencies import get_db, require_user
+from app.dependencies import get_db, require_user, get_current_user
 from app.models import Listing, Vehicle, User
 from app.schemas import ListingOut, ListingBrief, ListingCreate
 
@@ -14,14 +14,16 @@ router = APIRouter(prefix="/api/listings", tags=["listings"])
 def list_listings(
     brand: Optional[str] = None,
     fuel_type: Optional[str] = None,
+    region: Optional[str] = None,
     price_min: Optional[int] = None,
     price_max: Optional[int] = None,
     year_min: Optional[int] = None,
     year_max: Optional[int] = None,
-    sort: Optional[str] = Query("newest", pattern="^(newest|price_asc|price_desc|mileage)$"),
+    sort: Optional[str] = Query("newest", pattern="^(newest|price_asc|price_desc|mileage|region_match)$"),
     page: int = Query(1, ge=1),
     size: int = Query(12, ge=1, le=50),
     db: Session = Depends(get_db),
+    user: Optional[User] = Depends(get_current_user),
 ):
     q = db.query(Listing).options(joinedload(Listing.vehicle)).filter(Listing.status == "active")
 
@@ -30,6 +32,8 @@ def list_listings(
     else:
         q = q.join(Vehicle)
 
+    if region:
+        q = q.filter(Vehicle.region == region)
     if fuel_type:
         q = q.filter(Vehicle.fuel_type == fuel_type)
     if price_min is not None:
@@ -41,7 +45,14 @@ def list_listings(
     if year_max is not None:
         q = q.filter(Vehicle.year <= year_max)
 
-    if sort == "newest":
+    if sort == "region_match" and user and user.region:
+        # 사용자 지역과 같은 매물 먼저
+        from sqlalchemy import case
+        q = q.order_by(
+            case((Vehicle.region == user.region, 0), else_=1),
+            Listing.created_at.desc(),
+        )
+    elif sort == "newest":
         q = q.order_by(Listing.created_at.desc())
     elif sort == "price_asc":
         q = q.order_by(Listing.price.asc())

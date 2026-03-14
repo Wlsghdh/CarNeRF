@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+{% block title %}마이페이지{% endblock %}
+
+{% block head %}
+<style>
+:root {
+  --bg:      #07090F;
+  --surface: #0E1117;
+  --sur2:    #161B24;
+  --border:  rgba(255,255,255,0.08);
+  --accent:  #0EA5E9;
+  --text:    #E2E8F0;
+  --muted:   #64748B;
+  --muted2:  #94A3B8;
+}
+body { background: var(--bg) !important; color: var(--text) !important; }
+.mypage-wrap { max-width: 800px; margin: 0 auto; padding: 100px 24px 60px; }
+.mp-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 24px; margin-bottom: 20px;
+}
+.mp-card h3 { font-size: 17px; font-weight: 800; color: var(--text); margin-bottom: 20px; }
+.mp-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+@media (max-width: 640px) { .mp-grid { grid-template-columns: 1fr; } }
+.mp-stat {
+  background: var(--sur2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px; text-align: center;
+}
+.mp-stat .num { font-size: 28px; font-weight: 900; color: var(--accent); }
+.mp-stat .lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.mp-btn {
+  padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 600;
+  border: none; cursor: pointer; transition: all 0.2s; width: 100%;
+}
+.mp-btn-primary { background: var(--accent); color: #fff; }
+.mp-btn-primary:hover { background: #38BEF8; }
+.mp-btn-outline { background: none; border: 1px solid var(--border); color: var(--muted2); }
+.mp-btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+.mp-input {
+  width: 100%; padding: 10px 14px; border-radius: 8px;
+  background: var(--sur2); border: 1px solid var(--border);
+  color: var(--text); font-size: 13px; font-family: inherit;
+}
+.mp-input:focus { outline: none; border-color: var(--accent); }
+.role-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 12px; border-radius: 10px; font-size: 12px; font-weight: 600;
+}
+.role-buyer { background: rgba(14,165,233,0.1); color: #0EA5E9; border: 1px solid rgba(14,165,233,0.2); }
+.role-seller { background: rgba(16,185,129,0.1); color: #10B981; border: 1px solid rgba(16,185,129,0.2); }
+.tx-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+}
+.tx-item:last-child { border-bottom: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mypage-wrap">
+  <h2 style="font-size:24px;font-weight:900;margin-bottom:24px;">마이페이지</h2>
+
+  <!-- 사용자 정보 -->
+  <div class="mp-card">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+      <div style="width:56px;height:56px;background:linear-gradient(135deg,#0EA5E9,#6366F1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;flex-shrink:0;">
+        {{ user.username[0] }}
+      </div>
+      <div>
+        <div style="font-size:18px;font-weight:700;color:var(--text);">{{ user.username }}</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:2px;">{{ user.email }}</div>
+        <div style="margin-top:6px;">
+          <span class="role-badge {{ 'role-seller' if user.role == 'seller' else 'role-buyer' }}">
+            {{ '인증 판매자' if user.is_verified else ('판매자' if user.role == 'seller' else '구매자') }}
+          </span>
+          {% if user.region %}
+          <span style="font-size:12px;color:var(--muted);margin-left:6px;">📍 {{ user.region }}</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="mp-grid">
+      <div class="mp-stat">
+        <div class="num" id="point-balance">{{ user.points | default(0) }}</div>
+        <div class="lbl">보유 포인트</div>
+      </div>
+      <div class="mp-stat">
+        <div class="num" style="color:#10B981;">{{ user.role }}</div>
+        <div class="lbl">회원 등급</div>
+      </div>
+      <div class="mp-stat">
+        <div class="num" style="color:{{ '#10B981' if user.is_verified else '#F59E0B' }};">{{ '완료' if user.is_verified else '미인증' }}</div>
+        <div class="lbl">본인 인증</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 포인트 충전 -->
+  <div class="mp-card">
+    <h3>포인트 충전</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">1,000원 = 1,000포인트 (최소 1,000P ~ 최대 1,000,000P)</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+      <button onclick="setChargeAmount(1000)" class="mp-btn mp-btn-outline" style="width:auto;padding:8px 16px;font-size:13px;">1,000P</button>
+      <button onclick="setChargeAmount(5000)" class="mp-btn mp-btn-outline" style="width:auto;padding:8px 16px;font-size:13px;">5,000P</button>
+      <button onclick="setChargeAmount(10000)" class="mp-btn mp-btn-outline" style="width:auto;padding:8px 16px;font-size:13px;">10,000P</button>
+      <button onclick="setChargeAmount(50000)" class="mp-btn mp-btn-outline" style="width:auto;padding:8px 16px;font-size:13px;">50,000P</button>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <input type="number" id="charge-amount" class="mp-input" placeholder="충전할 포인트" min="1000" step="1000">
+      <button onclick="chargePoints()" class="mp-btn mp-btn-primary" style="width:auto;padding:10px 24px;">충전하기</button>
+    </div>
+    <div id="charge-result" style="margin-top:10px;font-size:13px;"></div>
+  </div>
+
+  <!-- 포인트 사용 내역 -->
+  <div class="mp-card">
+    <h3>포인트 내역</h3>
+    <div id="point-history">
+      <p style="font-size:13px;color:var(--muted);text-align:center;">로딩 중...</p>
+    </div>
+  </div>
+
+  <!-- 판매자 전환 -->
+  {% if user.role != 'seller' or not user.is_verified %}
+  <div class="mp-card">
+    <h3>판매자 전환 신청</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">
+      차량을 판매하려면 판매자 인증이 필요합니다. 본인인증과 차량등록증 확인을 진행합니다.
+    </p>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+      <input type="text" id="seller-name" class="mp-input" placeholder="실명">
+      <input type="tel" id="seller-phone" class="mp-input" placeholder="전화번호 (010-0000-0000)">
+      <input type="text" id="seller-reg" class="mp-input" placeholder="차량등록증 번호">
+      <select id="seller-region" class="mp-input">
+        <option value="">지역 선택</option>
+        <option value="서울">서울</option>
+        <option value="경기">경기</option>
+        <option value="인천">인천</option>
+        <option value="부산">부산</option>
+        <option value="대구">대구</option>
+        <option value="대전">대전</option>
+        <option value="광주">광주</option>
+        <option value="울산">울산</option>
+        <option value="세종">세종</option>
+        <option value="강원">강원</option>
+        <option value="충북">충북</option>
+        <option value="충남">충남</option>
+        <option value="전북">전북</option>
+        <option value="전남">전남</option>
+        <option value="경북">경북</option>
+        <option value="경남">경남</option>
+        <option value="제주">제주</option>
+      </select>
+    </div>
+    <button onclick="upgradeSeller()" class="mp-btn mp-btn-primary">판매자 인증 신청</button>
+    <div id="seller-result" style="margin-top:10px;font-size:13px;"></div>
+  </div>
+  {% endif %}
+
+  <!-- AI 사용 수수료 안내 -->
+  <div class="mp-card">
+    <h3>AI 서비스 이용 요금</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div style="background:var(--sur2);border:1px solid var(--border);border-radius:10px;padding:16px;">
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">AI 차량 분석</div>
+        <div style="font-size:20px;font-weight:800;color:var(--accent);">500P</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">장단점 요약, 고질병 분석</div>
+      </div>
+      <div style="background:var(--sur2);border:1px solid var(--border);border-radius:10px;padding:16px;">
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">AI 가격 진단</div>
+        <div style="font-size:20px;font-weight:800;color:var(--accent);">300P</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">시세 분석, 감가상각 예측</div>
+      </div>
+      <div style="background:var(--sur2);border:1px solid var(--border);border-radius:10px;padding:16px;">
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">AI 파손 진단</div>
+        <div style="font-size:20px;font-weight:800;color:var(--accent);">1,000P</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">3D 결함 분석, 수리비 예측</div>
+      </div>
+      <div style="background:var(--sur2);border:1px solid var(--border);border-radius:10px;padding:16px;">
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">프리미엄 상단 배치</div>
+        <div style="font-size:20px;font-weight:800;color:var(--accent);">5,000P</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">7일간 검색결과 최상단 노출</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function setChargeAmount(amount) {
+  document.getElementById('charge-amount').value = amount;
+}
+
+async function chargePoints() {
+  const amount = parseInt(document.getElementById('charge-amount').value);
+  if (!amount || amount < 1000) {
+    document.getElementById('charge-result').innerHTML = '<span style="color:#EF4444;">최소 1,000포인트부터 충전 가능합니다.</span>';
+    return;
+  }
+  try {
+    const res = await fetch('/api/points/charge', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ amount }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      document.getElementById('charge-result').innerHTML = `<span style="color:#10B981;">${data.charged.toLocaleString()}P 충전 완료! 잔액: ${data.points.toLocaleString()}P</span>`;
+      document.getElementById('point-balance').textContent = data.points.toLocaleString();
+      loadPointHistory();
+    } else {
+      document.getElementById('charge-result').innerHTML = `<span style="color:#EF4444;">${data.detail}</span>`;
+    }
+  } catch { document.getElementById('charge-result').innerHTML = '<span style="color:#EF4444;">충전에 실패했습니다.</span>'; }
+}
+
+async function loadPointHistory() {
+  try {
+    const res = await fetch('/api/points/history');
+    const data = await res.json();
+    const el = document.getElementById('point-history');
+    if (data.items.length === 0) {
+      el.innerHTML = '<p style="font-size:13px;color:var(--muted);text-align:center;">포인트 내역이 없습니다.</p>';
+      return;
+    }
+    el.innerHTML = data.items.map(t => `
+      <div class="tx-item">
+        <div>
+          <div style="color:var(--text);font-weight:600;">${t.description}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">${new Date(t.created_at).toLocaleDateString('ko-KR')}</div>
+        </div>
+        <div>
+          <span style="font-weight:700;color:${t.amount > 0 ? '#10B981' : '#EF4444'};">${t.amount > 0 ? '+' : ''}${t.amount.toLocaleString()}P</span>
+          <div style="font-size:11px;color:var(--muted);text-align:right;">${t.balance_after.toLocaleString()}P</div>
+        </div>
+      </div>
+    `).join('');
+  } catch { document.getElementById('point-history').innerHTML = '<p style="color:var(--muted);font-size:13px;">내역을 불러올 수 없습니다.</p>'; }
+}
+
+async function upgradeSeller() {
+  const name = document.getElementById('seller-name').value;
+  const phone = document.getElementById('seller-phone').value;
+  const reg = document.getElementById('seller-reg').value;
+  const region = document.getElementById('seller-region').value;
+
+  try {
+    const res = await fetch('/api/seller/upgrade', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        name, phone,
+        vehicle_registration: reg,
+        region,
+      }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      document.getElementById('seller-result').innerHTML = `<span style="color:#10B981;">${data.message}</span>`;
+      setTimeout(() => location.reload(), 1500);
+    } else {
+      document.getElementById('seller-result').innerHTML = `<span style="color:#EF4444;">${data.detail}</span>`;
+    }
+  } catch { document.getElementById('seller-result').innerHTML = '<span style="color:#EF4444;">인증에 실패했습니다.</span>'; }
+}
+
+document.addEventListener('DOMContentLoaded', loadPointHistory);
+</script>
+{% endblock %}

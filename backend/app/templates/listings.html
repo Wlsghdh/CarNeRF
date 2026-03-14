@@ -231,6 +231,16 @@ body { background: var(--bg) !important; color: var(--text) !important; }
         </div>
 
         <div class="filter-group">
+          <label class="filter-label">지역</label>
+          <select name="region" class="dk-input">
+            <option value="">전체</option>
+            {% for r in regions|default([]) %}
+            <option value="{{ r }}" {{ 'selected' if filters.region == r }}>{{ r }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="filter-group">
           <label class="filter-label">가격 (만원)</label>
           <div class="filter-row">
             <input type="number" name="price_min" placeholder="최소" value="{{ filters.price_min or '' }}" class="dk-input">
@@ -267,6 +277,7 @@ body { background: var(--bg) !important; color: var(--text) !important; }
           <option value="price_asc"  {{ 'selected' if filters.sort == 'price_asc' }}>가격 낮은순</option>
           <option value="price_desc" {{ 'selected' if filters.sort == 'price_desc' }}>가격 높은순</option>
           <option value="mileage"    {{ 'selected' if filters.sort == 'mileage' }}>주행거리순</option>
+          <option value="region_match" {{ 'selected' if filters.sort == 'region_match' }}>내 지역 우선</option>
         </select>
       </div>
     </div>

@@ -6,7 +6,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, joinedload
 
 from app.dependencies import get_db, get_current_user
-from app.models import Listing, Vehicle, User, DiagnosisReport
+from app.models import Listing, Vehicle, User, DiagnosisReport, UserReview, TransactionHistory
 
 router = APIRouter(tags=["pages"])
 templates = Jinja2Templates(directory="app/templates")
@@ -34,6 +34,7 @@ def listings_page(
     request: Request,
     brand: Optional[str] = None,
     fuel_type: Optional[str] = None,
+    region: Optional[str] = None,
     price_min: Optional[int] = None,
     price_max: Optional[int] = None,
     year_min: Optional[int] = None,
@@ -51,6 +52,8 @@ def listings_page(
         q = q.filter(Vehicle.brand == brand)
     if fuel_type:
         q = q.filter(Vehicle.fuel_type == fuel_type)
+    if region:
+        q = q.filter(Vehicle.region == region)
     if price_min is not None:
         q = q.filter(Listing.price >= price_min)
     if price_max is not None:
@@ -62,7 +65,13 @@ def listings_page(
 
     total = q.count()
 
-    if sort == "price_asc":
+    if sort == "region_match" and user and user.region:
+        from sqlalchemy import case
+        q = q.order_by(
+            case((Vehicle.region == user.region, 0), else_=1),
+            Listing.created_at.desc(),
+        )
+    elif sort == "price_asc":
         q = q.order_by(Listing.price.asc())
     elif sort == "price_desc":
         q = q.order_by(Listing.price.desc())
@@ -75,6 +84,7 @@ def listings_page(
     listings = q.offset((page - 1) * PAGE_SIZE).limit(PAGE_SIZE).all()
 
     brands = [r[0] for r in db.query(Vehicle.brand).distinct().order_by(Vehicle.brand).all()]
+    regions = [r[0] for r in db.query(Vehicle.region).filter(Vehicle.region.isnot(None)).distinct().order_by(Vehicle.region).all()]
 
     return templates.TemplateResponse("listings.html", {
         "request": request,
@@ -84,9 +94,11 @@ def listings_page(
         "total_pages": total_pages,
         "current_page": page,
         "brands": brands,
+        "regions": regions,
         "filters": {
             "brand": brand,
             "fuel_type": fuel_type,
+            "region": region,
             "price_min": price_min,
             "price_max": price_max,
             "year_min": year_min,
@@ -120,6 +132,8 @@ def vehicle_detail(
         db.commit()
 
     diagnosis = db.query(DiagnosisReport).filter(DiagnosisReport.vehicle_id == vehicle_id).first()
+    review_count = db.query(UserReview).filter(UserReview.vehicle_id == vehicle_id).count()
+    transaction_count = db.query(TransactionHistory).filter(TransactionHistory.vehicle_id == vehicle_id).count()
 
     return templates.TemplateResponse("vehicle_detail.html", {
         "request": request,
@@ -127,6 +141,8 @@ def vehicle_detail(
         "vehicle": vehicle,
         "listing": listing,
         "diagnosis": diagnosis,
+        "review_count": review_count,
+        "transaction_count": transaction_count,
     })
 
 
@@ -144,6 +160,13 @@ def login_page(request: Request, user: Optional[User] = Depends(get_current_user
         "request": request,
         "user": user,
     })
+
+
+@router.get("/mypage")
+def mypage(request: Request, db: Session = Depends(get_db), user: Optional[User] = Depends(get_current_user)):
+    if not user:
+        return templates.TemplateResponse("login.html", {"request": request, "user": None})
+    return templates.TemplateResponse("mypage.html", {"request": request, "user": user})
 
 
 @router.get("/viewer/{vehicle_id}")

@@ -4,8 +4,9 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.database import engine, SessionLocal, Base
-from app.models import User, Vehicle, Listing, DiagnosisReport  # noqa: F401
+from app.models import User, Vehicle, Listing, DiagnosisReport, PointTransaction, UserReview, TransactionHistory  # noqa: F401
 from app.api import pages, vehicles, listings, auth, upload, pipeline, predict, defect
+from app.api import ai_summary, points, reviews, transactions, seller
 from app.services.seed_data import seed_database
 
 
@@ -39,6 +40,11 @@ app.include_router(upload.router)
 app.include_router(pipeline.router)
 app.include_router(predict.router)
 app.include_router(defect.router)
+app.include_router(ai_summary.router)
+app.include_router(points.router)
+app.include_router(reviews.router)
+app.include_router(transactions.router)
+app.include_router(seller.router)
 
 # Page routes
 app.include_router(pages.router)

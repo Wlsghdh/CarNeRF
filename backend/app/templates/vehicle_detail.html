@@ -2,6 +2,7 @@
 {% block title %}{{ vehicle.brand }} {{ vehicle.model }}{% endblock %}
 
 {% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script type="importmap">
 {
     "imports": {
@@ -408,6 +409,7 @@ body { background: var(--bg) !important; color: var(--text) !important; }
     <a href="/listings" style="font-size:13px;color:#64748B;text-decoration:none;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#64748B'">매물 검색</a>
     <a href="/sell"     style="font-size:13px;color:#64748B;text-decoration:none;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#64748B'">내 차 팔기</a>
     {% if user %}
+    <a href="/mypage" style="font-size:13px;color:#64748B;text-decoration:none;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#64748B'">마이페이지</a>
     <span style="font-size:13px;color:#64748B;">{{ user.username }}님</span>
     <button onclick="logout()" style="font-size:12px;color:#64748B;background:none;border:none;cursor:pointer;">로그아웃</button>
     {% else %}
@@ -596,6 +598,81 @@ body { background: var(--bg) !important; color: var(--text) !important; }
         </div>
       </div>
 
+      <!-- AI 차량 요약 -->
+      <div class="dk-card">
+        <div class="dk-card-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <h3 style="font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;">
+              <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:#8B5CF6;fill:none;stroke-width:2;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+              </svg>
+              AI 차량 분석
+            </h3>
+            <button id="ai-summary-btn" onclick="loadAISummary()" style="font-size:12px;padding:6px 14px;border-radius:8px;background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);color:#8B5CF6;cursor:pointer;font-weight:600;transition:all 0.2s;" onmouseover="this.style.background='rgba(139,92,246,0.2)'" onmouseout="this.style.background='rgba(139,92,246,0.1)'">
+              요약 보기
+            </button>
+          </div>
+          <div id="ai-summary-content" style="display:none;"></div>
+        </div>
+      </div>
+
+      <!-- 거래기록 / 시세 -->
+      <div class="dk-card">
+        <div class="dk-card-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <h3 style="font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;">
+              <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:#10B981;fill:none;stroke-width:2;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/>
+              </svg>
+              거래기록 / 시세
+            </h3>
+            <button onclick="loadMarketPrice()" style="font-size:12px;padding:6px 14px;border-radius:8px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:#10B981;cursor:pointer;font-weight:600;transition:all 0.2s;" onmouseover="this.style.background='rgba(16,185,129,0.2)'" onmouseout="this.style.background='rgba(16,185,129,0.1)'">
+              시세 보기
+            </button>
+          </div>
+          <div id="market-price-content" style="display:none;"></div>
+          <div id="transaction-content" style="display:none;"></div>
+        </div>
+      </div>
+
+      <!-- 이용자 후기 -->
+      <div class="dk-card">
+        <div class="dk-card-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <h3 style="font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;">
+              <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:#F59E0B;fill:none;stroke-width:2;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/>
+              </svg>
+              이용자 후기
+              {% if review_count > 0 %}
+              <span style="font-size:11px;background:rgba(245,158,11,0.1);color:#F59E0B;padding:2px 8px;border-radius:10px;font-weight:600;">{{ review_count }}건</span>
+              {% endif %}
+            </h3>
+          </div>
+          <div id="reviews-content">
+            <div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">
+              <div class="spinner" style="margin:0 auto 8px;"></div>
+              후기를 불러오는 중...
+            </div>
+          </div>
+          <!-- 후기 작성 -->
+          {% if user %}
+          <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px;">
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;">후기 작성</div>
+            <div style="display:flex;gap:4px;margin-bottom:10px;" id="star-rating">
+              {% for i in range(1, 6) %}
+              <button onclick="setRating({{ i }})" class="star-btn" data-rating="{{ i }}" style="background:none;border:none;cursor:pointer;font-size:22px;color:var(--muted);transition:color 0.2s;">&#9733;</button>
+              {% endfor %}
+            </div>
+            <textarea id="review-text" placeholder="이 차량에 대한 솔직한 후기를 남겨주세요 (최소 10자)" style="width:100%;min-height:70px;background:var(--sur2);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:13px;color:var(--text);resize:vertical;font-family:inherit;"></textarea>
+            <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+              <button onclick="submitReview()" style="padding:8px 20px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;">후기 등록</button>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
       <!-- 판매자 정보 -->
       {% if listing %}
       <div class="dk-card">
@@ -604,8 +681,16 @@ body { background: var(--bg) !important; color: var(--text) !important; }
           <div class="seller-row">
             <div class="seller-avatar">{{ listing.seller.username[0] }}</div>
             <div>
-              <div class="seller-name">{{ listing.seller.username }}</div>
-              <div class="seller-meta">조회 {{ listing.view_count }}회</div>
+              <div class="seller-name">
+                {{ listing.seller.username }}
+                {% if listing.seller.is_verified %}
+                <span style="font-size:11px;background:rgba(16,185,129,0.1);color:#10B981;padding:2px 8px;border-radius:10px;font-weight:600;margin-left:6px;">인증판매자</span>
+                {% endif %}
+              </div>
+              <div class="seller-meta">
+                조회 {{ listing.view_count }}회
+                {% if listing.seller.region %} · {{ listing.seller.region }}{% endif %}
+              </div>
             </div>
           </div>
         </div>
@@ -910,6 +995,315 @@ async function logout() {
   await fetch('/api/auth/logout', { method: 'POST' });
   window.location.href = '/';
 }
+
+// ── AI 차량 요약 ──
+let aiSummaryLoaded = false;
+function loadAISummary() {
+  const content = document.getElementById('ai-summary-content');
+  const btn = document.getElementById('ai-summary-btn');
+  if (content.style.display === 'block') {
+    content.style.display = 'none';
+    btn.textContent = '요약 보기';
+    return;
+  }
+  content.style.display = 'block';
+  btn.textContent = '접기';
+
+  if (aiSummaryLoaded) return;
+  aiSummaryLoaded = true;
+
+  content.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:12px;"><div class="spinner"></div><span style="font-size:13px;color:var(--muted);">AI가 차량을 분석하고 있습니다...</span></div>';
+
+  fetch(`/api/ai/vehicle-summary/${VEHICLE_ID}`)
+    .then(r => r.json())
+    .then(data => {
+      const prosHtml = data.pros.map(p => `<li style="font-size:13px;color:#10B981;padding:4px 0;">✓ ${p}</li>`).join('');
+      const consHtml = data.cons.map(c => `<li style="font-size:13px;color:#EF4444;padding:4px 0;">✗ ${c}</li>`).join('');
+
+      content.innerHTML = `
+        <div style="font-size:13px;color:var(--muted2);line-height:1.8;margin-bottom:16px;">${data.summary}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div style="background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.15);border-radius:10px;padding:14px;">
+            <div style="font-size:12px;font-weight:700;color:#10B981;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">장점</div>
+            <ul style="list-style:none;padding:0;margin:0;">${prosHtml}</ul>
+          </div>
+          <div style="background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.15);border-radius:10px;padding:14px;">
+            <div style="font-size:12px;font-weight:700;color:#EF4444;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">단점</div>
+            <ul style="list-style:none;padding:0;margin:0;">${consHtml}</ul>
+          </div>
+        </div>
+        ${data.known_issues ? `
+        <div style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.15);border-radius:10px;padding:14px;">
+          <div style="font-size:12px;font-weight:700;color:#F59E0B;margin-bottom:6px;">알려진 고질병 / 주의사항</div>
+          <div style="font-size:13px;color:var(--muted2);line-height:1.7;">${data.known_issues}</div>
+        </div>` : ''}
+        <div style="font-size:10px;color:var(--muted);margin-top:10px;text-align:right;">
+          ${data.source === 'chatgpt' ? 'Powered by ChatGPT' : 'AI 모의 분석'}
+        </div>
+      `;
+    })
+    .catch(() => {
+      content.innerHTML = '<p style="color:#EF4444;font-size:13px;">AI 분석에 실패했습니다.</p>';
+    });
+}
+
+// ── 거래기록 / 시세 ──
+let marketLoaded = false;
+function loadMarketPrice() {
+  const priceContent = document.getElementById('market-price-content');
+  const txContent = document.getElementById('transaction-content');
+
+  if (priceContent.style.display === 'block') {
+    priceContent.style.display = 'none';
+    txContent.style.display = 'none';
+    return;
+  }
+  priceContent.style.display = 'block';
+  txContent.style.display = 'block';
+
+  if (marketLoaded) return;
+  marketLoaded = true;
+
+  priceContent.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:12px;"><div class="spinner"></div><span style="font-size:13px;color:var(--muted);">시세 데이터를 불러오는 중...</span></div>';
+
+  Promise.all([
+    fetch(`/api/transactions/market-price/${VEHICLE_ID}`).then(r => r.json()),
+    fetch(`/api/transactions/vehicle/${VEHICLE_ID}`).then(r => r.json()),
+  ]).then(([market, txData]) => {
+    const trendIcon = market.price_trend === 'increasing' ? '📈' : market.price_trend === 'decreasing' ? '📉' : '➡️';
+    const trendText = market.price_trend === 'increasing' ? '상승세' : market.price_trend === 'decreasing' ? '하락세' : '보합';
+    const trendColor = market.price_trend === 'increasing' ? '#EF4444' : market.price_trend === 'decreasing' ? '#10B981' : 'var(--muted2)';
+
+    priceContent.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+        <div style="background:var(--sur2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">평균 시세</div>
+          <div style="font-size:20px;font-weight:800;color:var(--accent);">${market.avg_price.toLocaleString()}</div>
+          <div style="font-size:11px;color:var(--muted);">만원</div>
+        </div>
+        <div style="background:var(--sur2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">가격 범위</div>
+          <div style="font-size:14px;font-weight:700;color:var(--text);">${market.min_price.toLocaleString()} ~ ${market.max_price.toLocaleString()}</div>
+          <div style="font-size:11px;color:var(--muted);">만원</div>
+        </div>
+        <div style="background:var(--sur2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">시세 추세</div>
+          <div style="font-size:18px;font-weight:700;color:${trendColor};">${trendIcon} ${trendText}</div>
+          <div style="font-size:11px;color:var(--muted);">${market.sample_count}건 기준</div>
+        </div>
+      </div>
+
+      <!-- 시세 그래프 -->
+      <div style="background:var(--sur2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;">월별 시세 추이</div>
+        <div style="position:relative;height:220px;">
+          <canvas id="price-chart"></canvas>
+        </div>
+      </div>
+    `;
+
+    // Chart.js 그래프 렌더링
+    if (market.monthly_prices && market.monthly_prices.length > 0) {
+      const ctx = document.getElementById('price-chart').getContext('2d');
+      const labels = market.monthly_prices.map(m => {
+        const [y, mon] = m.month.split('-');
+        return mon + '월';
+      });
+      const prices = market.monthly_prices.map(m => m.avg_price);
+      const counts = market.monthly_prices.map(m => m.count);
+
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: '평균 시세 (만원)',
+              data: prices,
+              borderColor: '#0EA5E9',
+              backgroundColor: 'rgba(14,165,233,0.1)',
+              borderWidth: 2.5,
+              pointBackgroundColor: '#0EA5E9',
+              pointBorderColor: '#0E1117',
+              pointBorderWidth: 2,
+              pointRadius: counts.map(c => c > 0 ? 5 : 3),
+              pointHoverRadius: 7,
+              fill: true,
+              tension: 0.35,
+            },
+            {
+              label: '거래 건수',
+              data: counts,
+              borderColor: '#6366F1',
+              backgroundColor: 'rgba(99,102,241,0.5)',
+              borderWidth: 0,
+              pointRadius: 0,
+              type: 'bar',
+              yAxisID: 'y1',
+              barThickness: 14,
+              borderRadius: 4,
+            }
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: {
+              labels: { color: '#94A3B8', font: { size: 11 }, boxWidth: 12, padding: 16 },
+            },
+            tooltip: {
+              backgroundColor: '#0E1117',
+              borderColor: 'rgba(255,255,255,0.1)',
+              borderWidth: 1,
+              titleColor: '#E2E8F0',
+              bodyColor: '#94A3B8',
+              padding: 10,
+              callbacks: {
+                label: function(ctx) {
+                  if (ctx.datasetIndex === 0) return ' ' + ctx.parsed.y.toLocaleString() + '만원';
+                  return ' ' + ctx.parsed.y + '건 거래';
+                }
+              }
+            },
+          },
+          scales: {
+            x: {
+              ticks: { color: '#64748B', font: { size: 11 } },
+              grid: { color: 'rgba(255,255,255,0.04)' },
+            },
+            y: {
+              position: 'left',
+              ticks: {
+                color: '#64748B',
+                font: { size: 11 },
+                callback: v => v.toLocaleString(),
+              },
+              grid: { color: 'rgba(255,255,255,0.04)' },
+            },
+            y1: {
+              position: 'right',
+              ticks: { color: '#6366F1', font: { size: 11 }, stepSize: 1 },
+              grid: { display: false },
+              title: { display: true, text: '거래 건수', color: '#6366F1', font: { size: 10 } },
+            },
+          },
+        },
+      });
+    }
+
+    // 개별 거래 산점도 (직접 거래 + 유사 거래)
+    const allTx = [...txData.direct_transactions, ...txData.similar_transactions];
+    if (allTx.length > 0) {
+      const txRows = allTx.slice(0, 10).map(t => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;">
+          <div>
+            <span style="color:var(--text);font-weight:600;">${t.price.toLocaleString()}만원</span>
+            <span style="color:var(--muted);margin-left:8px;">${t.mileage ? t.mileage.toLocaleString() + 'km' : ''}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:10px;padding:2px 6px;border-radius:6px;background:${t.source === 'carnerf' ? 'rgba(14,165,233,0.1)' : 'rgba(148,163,184,0.1)'};color:${t.source === 'carnerf' ? '#0EA5E9' : '#94A3B8'};font-weight:600;">${t.source === 'carnerf' ? 'CarNeRF' : '외부'}</span>
+            ${t.buyer_region ? `<span style="font-size:11px;background:rgba(16,185,129,0.1);color:#10B981;padding:2px 8px;border-radius:8px;">${t.buyer_region}</span>` : ''}
+            <span style="color:var(--muted);font-size:12px;">${t.date}</span>
+          </div>
+        </div>
+      `).join('');
+      txContent.innerHTML = `
+        <div style="margin-top:12px;">
+          <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">최근 거래 내역 (${allTx.length}건)</div>
+          ${txRows}
+        </div>
+      `;
+    } else {
+      txContent.innerHTML = '<p style="font-size:12px;color:var(--muted);padding:8px 0;">거래 기록이 없습니다.</p>';
+    }
+  }).catch(() => {
+    priceContent.innerHTML = '<p style="color:#EF4444;font-size:13px;">시세 데이터를 불러올 수 없습니다.</p>';
+  });
+}
+
+// ── 이용자 후기 ──
+let selectedRating = 0;
+function setRating(rating) {
+  selectedRating = rating;
+  document.querySelectorAll('.star-btn').forEach(btn => {
+    const r = parseInt(btn.dataset.rating);
+    btn.style.color = r <= rating ? '#F59E0B' : 'var(--muted)';
+  });
+}
+
+function submitReview() {
+  if (selectedRating === 0) { alert('평점을 선택해주세요.'); return; }
+  const content = document.getElementById('review-text').value.trim();
+  if (content.length < 10) { alert('후기는 10자 이상 작성해주세요.'); return; }
+
+  fetch('/api/reviews/', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      vehicle_id: VEHICLE_ID,
+      rating: selectedRating,
+      content: content,
+      review_type: 'buyer',
+    }),
+  })
+  .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+  .then(() => {
+    document.getElementById('review-text').value = '';
+    setRating(0);
+    loadReviews();
+  })
+  .catch(() => alert('후기 등록에 실패했습니다. 로그인이 필요합니다.'));
+}
+
+function loadReviews() {
+  fetch(`/api/reviews/vehicle/${VEHICLE_ID}`)
+    .then(r => r.json())
+    .then(data => {
+      const el = document.getElementById('reviews-content');
+      if (data.reviews.length === 0) {
+        el.innerHTML = '<p style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">아직 후기가 없습니다. 첫 번째 후기를 남겨보세요!</p>';
+        return;
+      }
+
+      const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
+      const typeLabel = t => t === 'buyer' ? '구매자' : '판매자';
+      const typeBg = t => t === 'buyer' ? 'rgba(14,165,233,0.1)' : 'rgba(16,185,129,0.1)';
+      const typeColor = t => t === 'buyer' ? '#0EA5E9' : '#10B981';
+
+      const reviewsHtml = data.reviews.map(r => `
+        <div style="padding:12px 0;border-bottom:1px solid var(--border);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:14px;color:#F59E0B;">${stars(r.rating)}</span>
+              <span style="font-size:13px;font-weight:600;color:var(--text);">${r.author_name}</span>
+              <span style="font-size:10px;padding:2px 6px;border-radius:6px;background:${typeBg(r.review_type)};color:${typeColor(r.review_type)};font-weight:600;">${typeLabel(r.review_type)}</span>
+            </div>
+            <span style="font-size:11px;color:var(--muted);">${new Date(r.created_at).toLocaleDateString('ko-KR')}</span>
+          </div>
+          <p style="font-size:13px;color:var(--muted2);line-height:1.7;margin:0;">${r.content}</p>
+        </div>
+      `).join('');
+
+      el.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <span style="font-size:24px;font-weight:900;color:#F59E0B;">${data.avg_rating}</span>
+          <div>
+            <div style="font-size:16px;color:#F59E0B;">${stars(Math.round(data.avg_rating))}</div>
+            <div style="font-size:12px;color:var(--muted);">${data.total}건의 후기</div>
+          </div>
+        </div>
+        ${reviewsHtml}
+      `;
+    })
+    .catch(() => {
+      document.getElementById('reviews-content').innerHTML = '<p style="color:var(--muted);font-size:13px;">후기를 불러올 수 없습니다.</p>';
+    });
+}
+
+// 페이지 로드 시 후기 자동 로드
+document.addEventListener('DOMContentLoaded', loadReviews);
 </script>
 
 {% if vehicle.model_3d_status == 'ready' and vehicle.model_3d_url %}
