@@ -3,6 +3,7 @@
 
 {% block head %}
 <style>
+/* 다크 모드 */
 :root {
   --bg:      #07090F;
   --surface: #0E1117;
@@ -12,6 +13,16 @@
   --text:    #E2E8F0;
   --muted:   #64748B;
 }
+/* 라이트 모드 */
+html:not(.dark) {
+  --bg:      #F8FAFC;
+  --surface: #FFFFFF;
+  --sur2:    #F1F5F9;
+  --border:  rgba(0,0,0,0.08);
+  --text:    #1E293B;
+  --muted:   #64748B;
+}
+html:not(.dark) .dk-input option { background: #fff; color: #1E293B; }
 body { background: var(--bg) !important; color: var(--text) !important; }
 
 .sell-wrap {
@@ -216,27 +227,8 @@ textarea.dk-input { resize: none; line-height: 1.6; }
 </style>
 {% endblock %}
 
-{% block navbar %}{% endblock %}
-
 {% block content %}
-<!-- NAV -->
-<nav style="position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(7,9,15,0.85);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,0.07);padding:0 32px;height:60px;display:flex;align-items:center;justify-content:space-between;">
-  <a href="/" style="display:flex;align-items:center;gap:8px;text-decoration:none;font-size:18px;font-weight:700;color:#fff;">
-    <div style="width:30px;height:30px;background:linear-gradient(135deg,#0EA5E9,#6366F1);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;">3D</div>
-    Car<span style="color:#0EA5E9">NeRF</span>
-  </a>
-  <div style="display:flex;align-items:center;gap:16px;">
-    <a href="/listings" style="font-size:13px;color:#64748B;text-decoration:none;">매물 검색</a>
-    <a href="/sell"     style="font-size:13px;font-weight:600;color:#0EA5E9;text-decoration:none;">내 차 팔기</a>
-    {% if user %}
-    <span style="font-size:13px;color:#64748B;">{{ user.username }}님</span>
-    <button onclick="logout()" style="font-size:12px;color:#64748B;background:none;border:none;cursor:pointer;">로그아웃</button>
-    {% else %}
-    <a href="/login" style="padding:7px 16px;border:1px solid rgba(255,255,255,0.12);border-radius:8px;font-size:13px;color:#94A3B8;text-decoration:none;">로그인</a>
-    {% endif %}
-  </div>
-</nav>
-<div class="sell-wrap">
+<div class="sell-wrap" style="padding-top:80px;">
   <div class="sell-head">
     <h1>내 차 팔기</h1>
     <p>차량 정보를 입력하고 3D 스캔으로 신뢰도를 높이세요</p>
@@ -406,25 +398,4 @@ textarea.dk-input { resize: none; line-height: 1.6; }
 
 {% block scripts %}
 <script src="/static/js/sell.js"></script>
-<script>
-async function logout() {
-  await fetch('/api/auth/logout', { method: 'POST' });
-  window.location.href = '/';
-}
-// 이미지 미리보기
-document.getElementById('image-input').addEventListener('change', function() {
-  const grid = document.getElementById('image-preview');
-  grid.innerHTML = '';
-  Array.from(this.files).slice(0,10).forEach(file => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      const div = document.createElement('div');
-      div.className = 'img-thumb';
-      div.innerHTML = `<img src="${e.target.result}">`;
-      grid.appendChild(div);
-    };
-    reader.readAsDataURL(file);
-  });
-});
-</script>
 {% endblock %}

@@ -1,958 +1,416 @@
 {% extends "base.html" %}
-{% block title %}홈{% endblock %}
-
+{% block title %}CarNeRF - AI 중고차 거래 플랫폼{% endblock %}
 {% block navbar %}{% endblock %}
 
 {% block head %}
 <style>
-:root {
-  --bg:       #07090F;
-  --surface:  #0E1117;
-  --surface2: #161B24;
-  --border:   rgba(255,255,255,0.07);
-  --accent:   #0EA5E9;
-  --accent2:  #6366F1;
-  --text:     #E2E8F0;
-  --muted:    #64748B;
-}
+:root{--bg:#07090F;--surface:#0F1218;--border:rgba(255,255,255,0.06);--accent:#0EA5E9;--accent2:#6366F1;--text:#E2E8F0;--muted:#64748B;--heading:#fff}
+html:not(.dark){--bg:#FAFBFC;--surface:#FFFFFF;--border:rgba(0,0,0,0.06);--text:#1E293B;--muted:#64748B;--heading:#0F172A}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg)!important;color:var(--text)!important;font-family:'Pretendard',sans-serif;overflow-x:hidden}
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+/* NAV */
+.nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:60px;transition:all 0.4s}
+.nav.scrolled{background:color-mix(in srgb,var(--bg) 85%,transparent);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.nav-logo{display:flex;align-items:center;gap:8px;text-decoration:none;font-size:18px;font-weight:800;color:var(--heading)}
+.nav-logo em{font-style:normal;color:var(--accent)}
+.nav-logo div{width:28px;height:28px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:#fff}
+.nav-links{display:flex;gap:28px}
+.nav-links a{font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;transition:color 0.2s}
+.nav-links a:hover{color:var(--heading)}
+.nav-right{display:flex;gap:8px;align-items:center}
+.btn{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;border:none;cursor:pointer;transition:all 0.2s}
+.btn-o{color:var(--muted);border:1px solid var(--border);background:none}
+.btn-o:hover{color:var(--heading);border-color:var(--heading)}
+.btn-f{background:var(--accent);color:#fff}
+.btn-f:hover{background:#38BEF8}
+@media(max-width:768px){.nav-links{display:none}.nav{padding:0 20px}}
 
-html { scroll-behavior: smooth; }
+/* ═══ SECTION 1 : HERO (영상 배경) ═══ */
+.hero{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden}
+.hero-video{position:absolute;inset:0;z-index:0}
+.hero-video video{width:100%;height:100%;object-fit:cover}
+.hero-video::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,9,15,0.7) 0%,rgba(7,9,15,0.85) 100%)}
+html:not(.dark) .hero-video::after{background:linear-gradient(180deg,rgba(250,251,252,0.7) 0%,rgba(250,251,252,0.85) 100%)}
+.hero-inner{position:relative;z-index:2;padding:0 24px;max-width:700px}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:50px;background:rgba(14,165,233,0.1);border:1px solid rgba(14,165,233,0.2);font-size:13px;font-weight:600;color:var(--accent);margin-bottom:28px}
+.hero h1{font-size:clamp(32px,6vw,56px);font-weight:900;letter-spacing:-2px;line-height:1.15;color:var(--heading);margin-bottom:16px}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero h1 small{display:block;font-size:clamp(16px,2.5vw,22px);font-weight:500;color:var(--muted);letter-spacing:0;margin-top:12px}
+.hero>p{font-size:16px;color:var(--muted);line-height:1.8;margin-bottom:40px}
+.hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.hero-cta a{padding:14px 36px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;transition:all 0.3s}
+.cta-main{background:var(--accent);color:#fff;box-shadow:0 0 40px rgba(14,165,233,0.25)}
+.cta-main:hover{background:#38BEF8;transform:translateY(-2px);box-shadow:0 0 60px rgba(14,165,233,0.4)}
+.cta-ghost{background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--muted)}
+.cta-ghost:hover{color:var(--heading);border-color:rgba(255,255,255,0.15)}
+.scroll-hint{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--muted);font-size:10px;letter-spacing:2px}
+.scroll-hint div{width:16px;height:16px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(45deg);animation:bounce 2s infinite}
+@keyframes bounce{0%,100%{transform:rotate(45deg) translateY(0);opacity:0.3}50%{transform:rotate(45deg) translateY(4px);opacity:1}}
 
-body {
-  background: var(--bg) !important;
-  color: var(--text) !important;
-  font-family: 'Pretendard', sans-serif;
-  overflow-x: hidden;
-}
+/* ═══ SECTION 2 : 핵심 메시지 (대문구) ═══ */
+.msg-sec{padding:140px 24px 80px;text-align:center}
+.msg-sec h2{font-size:clamp(22px,4vw,38px);font-weight:800;letter-spacing:-1px;color:var(--heading);line-height:1.6;margin-bottom:28px}
+.msg-sec h2 em{font-style:normal;color:var(--accent)}
+.msg-sec p{font-size:16px;color:var(--muted);line-height:2;max-width:520px;margin:0 auto}
 
-/* ── CANVAS BG ── */
-#particle-canvas {
-  position: fixed; inset: 0;
-  z-index: 0; pointer-events: none;
-  opacity: 0.5;
-}
+/* ═══ 3D SCAN ═══ */
+@keyframes ringRotate{to{transform:rotate(360deg)}}
+@keyframes beamDown{0%{top:0;opacity:0}5%{opacity:1}95%{opacity:1}100%{top:100%;opacity:0}}
+.scan-marker{position:absolute;display:flex;align-items:center;gap:5px;padding:4px 10px;border:1.5px solid;border-radius:8px;font-size:10px;font-weight:700;opacity:0;transform:scale(0.8);transition:all 0.5s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;backdrop-filter:blur(6px)}
+.scan-marker.show{opacity:1;transform:scale(1)}
+.scan-marker .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.scan-marker.warn{border-color:#F59E0B;color:#F59E0B;background:rgba(245,158,11,0.1)}.scan-marker.warn .dot{background:#F59E0B}
+.scan-marker.bad{border-color:#EF4444;color:#EF4444;background:rgba(239,68,68,0.1)}.scan-marker.bad .dot{background:#EF4444}
+.scan-marker.ok{border-color:#10B981;color:#10B981;background:rgba(16,185,129,0.1)}.scan-marker.ok .dot{background:#10B981}
+.hud-line{font-size:11px;color:var(--muted);margin-bottom:5px;opacity:0;transition:opacity 0.4s}
+.hud-line.show{opacity:1}
+.hud-line em{font-style:normal;font-weight:700}
+.hud-line.c-accent em{color:var(--accent)}
+.hud-line.c-green em{color:#10B981}
+.hud-line.c-red em{color:#EF4444}
 
-/* ── TOP MINIMAL NAV ── */
-#top-nav {
-  position: fixed; top: 0; left: 0; right: 0;
-  z-index: 100;
-  padding: 20px 40px;
-  display: flex; align-items: center; justify-content: space-between;
-  transition: all 0.4s ease;
-}
-#top-nav.scrolled {
-  background: rgba(7,9,15,0.6);
-  backdrop-filter: blur(16px);
-  padding: 14px 40px;
-  border-bottom: 1px solid var(--border);
-}
-.nav-logo {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 20px; font-weight: 700; color: #fff;
-  text-decoration: none;
-}
-.nav-logo-badge {
-  width: 32px; height: 32px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 800; color: #fff;
-}
-.nav-logo span { color: var(--accent); }
+/* ═══ SECTION 3 : 서비스 카드 ═══ */
+.svc-sec{padding:100px 24px 120px;max-width:1100px;margin:0 auto}
+.svc-tag{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:12px;text-align:center}
+.svc-title{font-size:clamp(24px,3.5vw,36px);font-weight:800;letter-spacing:-1px;color:var(--heading);text-align:center;margin-bottom:56px}
+.svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.svc-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px 28px;transition:all 0.3s;text-align:center}
+.svc-card:hover{border-color:rgba(14,165,233,0.15);transform:translateY(-4px)}
+.svc-icon{font-size:44px;margin-bottom:20px;line-height:1}
+.svc-card h3{font-size:18px;font-weight:800;color:var(--heading);margin-bottom:10px}
+.svc-card p{font-size:13px;color:var(--muted);line-height:1.8}
+.svc-divider{width:32px;height:3px;background:var(--accent);border-radius:2px;margin:16px auto 0;opacity:0.5}
+@media(max-width:768px){.svc-grid{grid-template-columns:1fr}}
 
-.nav-right {
-  display: flex; align-items: center; gap: 12px;
-}
-.nav-login-btn {
-  padding: 8px 18px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-size: 13px; color: var(--muted);
-  text-decoration: none;
-  transition: all 0.2s;
-  background: transparent;
-}
-.nav-login-btn:hover { border-color: var(--accent); color: var(--accent); }
+/* ═══ SECTION 4 : 신뢰 포인트 ═══ */
+.trust-sec{padding:120px 24px;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.trust-inner{max-width:1000px;margin:0 auto}
+.trust-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-top:48px}
+.trust-card{background:var(--bg);padding:36px 20px;text-align:center}
+html:not(.dark) .trust-card{background:var(--surface)}
+.trust-card .num{font-size:28px;font-weight:900;color:var(--accent);margin-bottom:4px}
+.trust-card .label{font-size:12px;color:var(--muted);line-height:1.6}
+@media(max-width:640px){.trust-grid{grid-template-columns:repeat(2,1fr)}}
 
-/* ── FLOATING PILL NAV ── */
-#float-nav {
-  position: fixed;
-  top: 20px; left: 50%; transform: translateX(-50%) translateY(-80px);
-  z-index: 200;
-  background: rgba(14,17,23,0.85);
-  backdrop-filter: blur(20px);
-  border: 1px solid var(--border);
-  border-radius: 50px;
-  padding: 10px 6px;
-  display: flex; align-items: center; gap: 2px;
-  transition: transform 0.5s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s;
-  opacity: 0;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-}
-#float-nav.visible {
-  transform: translateX(-50%) translateY(0);
-  opacity: 1;
-}
-.fnav-item {
-  padding: 7px 16px;
-  border-radius: 50px;
-  font-size: 13px; font-weight: 500;
-  color: var(--muted);
-  text-decoration: none;
-  transition: all 0.2s;
-  cursor: pointer;
-  border: none; background: transparent;
-}
-.fnav-item:hover { color: #fff; background: rgba(255,255,255,0.07); }
-.fnav-item.active { color: #fff; background: rgba(14,165,233,0.15); }
-.fnav-divider { width: 1px; height: 18px; background: var(--border); margin: 0 4px; }
-.fnav-cta {
-  padding: 7px 18px;
-  border-radius: 50px;
-  background: var(--accent);
-  color: #fff; font-size: 13px; font-weight: 600;
-  text-decoration: none;
-  transition: all 0.2s;
-  margin-left: 4px;
-}
-.fnav-cta:hover { background: #38BEF8; transform: scale(1.03); }
+/* ═══ SECTION 5 : 프로세스 ═══ */
+.proc-sec{padding:120px 24px;max-width:1000px;margin:0 auto}
+.proc-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:48px}
+.proc-step{background:var(--surface);border:1px solid var(--border);padding:36px 24px;text-align:center;transition:all 0.3s}
+.proc-step:first-child{border-radius:16px 0 0 16px}
+.proc-step:last-child{border-radius:0 16px 16px 0}
+.proc-step:hover{background:var(--bg);border-color:rgba(14,165,233,0.15)}
+.proc-num{font-size:40px;font-weight:900;background:linear-gradient(135deg,var(--accent),transparent);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px;line-height:1}
+.proc-step h3{font-size:15px;font-weight:700;color:var(--heading);margin-bottom:8px}
+.proc-step p{font-size:13px;color:var(--muted);line-height:1.8}
+@media(max-width:640px){.proc-steps{grid-template-columns:1fr}.proc-step:first-child,.proc-step:last-child{border-radius:16px}}
 
-/* ── SECTIONS ── */
-section { position: relative; z-index: 1; }
+/* ═══ CTA ═══ */
+.cta-sec{padding:120px 24px;text-align:center;position:relative}
+.cta-glow{position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(14,165,233,0.06),transparent);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+.cta-sec h2{font-size:clamp(26px,4vw,42px);font-weight:800;letter-spacing:-1px;color:var(--heading);margin-bottom:12px}
+.cta-sec p{font-size:15px;color:var(--muted);margin-bottom:36px}
 
-/* ── HERO ── */
-#hero {
-  min-height: 100vh;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  text-align: center;
-  padding: 120px 24px 80px;
-  position: relative; overflow: hidden;
-}
+/* ═══ FOOTER ═══ */
+.ft{background:var(--surface);border-top:1px solid var(--border);padding:48px 24px 24px;color:var(--muted)}
+.ft-inner{max-width:1000px;margin:0 auto;display:flex;justify-content:space-between;font-size:13px}
+.ft-left{display:flex;flex-direction:column;gap:6px}
+.ft-right{display:flex;gap:28px}
+.ft-right a{color:var(--muted);text-decoration:none}.ft-right a:hover{color:var(--heading)}
+.ft-copy{text-align:center;padding:16px;font-size:11px;color:var(--muted)}
+@media(max-width:640px){.ft-inner{flex-direction:column;gap:20px}}
 
-.hero-eyebrow {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 6px 14px;
-  border: 1px solid rgba(14,165,233,0.3);
-  border-radius: 50px;
-  font-size: 12px; font-weight: 500;
-  color: var(--accent);
-  background: rgba(14,165,233,0.08);
-  margin-bottom: 28px;
-  animation: fadeUp 0.8s ease 0.2s both;
-}
-.eyebrow-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--accent);
-  animation: pulse 2s infinite;
-}
-@keyframes pulse {
-  0%,100% { opacity:1; transform:scale(1); }
-  50%      { opacity:0.5; transform:scale(1.4); }
-}
-
-.hero-title {
-  font-size: clamp(40px,7vw,80px);
-  font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: -2px;
-  color: #fff;
-  margin-bottom: 24px;
-  animation: fadeUp 0.8s ease 0.4s both;
-}
-.hero-title .accent { 
-  background: linear-gradient(90deg, var(--accent), var(--accent2));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-.hero-title .line2 { display: block; }
-
-.hero-sub {
-  font-size: clamp(15px,2vw,18px);
-  color: var(--muted);
-  line-height: 1.8;
-  max-width: 560px;
-  margin: 0 auto 40px;
-  animation: fadeUp 0.8s ease 0.6s both;
-}
-
-.hero-btns {
-  display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
-  animation: fadeUp 0.8s ease 0.8s both;
-}
-.btn-primary {
-  padding: 14px 32px;
-  background: var(--accent);
-  color: #fff; font-weight: 600; font-size: 15px;
-  border-radius: 12px; text-decoration: none;
-  border: none; cursor: pointer;
-  transition: all 0.25s;
-  box-shadow: 0 0 30px rgba(14,165,233,0.35);
-}
-.btn-primary:hover {
-  background: #38BEF8;
-  transform: translateY(-2px);
-  box-shadow: 0 0 40px rgba(14,165,233,0.5);
-}
-.btn-ghost {
-  padding: 14px 32px;
-  border: 1px solid var(--border);
-  color: var(--muted); font-size: 15px; font-weight: 500;
-  border-radius: 12px; text-decoration: none;
-  transition: all 0.25s;
-  background: rgba(255,255,255,0.03);
-}
-.btn-ghost:hover {
-  border-color: rgba(255,255,255,0.2);
-  color: #fff;
-  background: rgba(255,255,255,0.06);
-}
-
-/* 3D 와이어프레임 카 */
-.hero-visual {
-  margin-top: 60px;
-  width: 100%; max-width: 700px;
-  height: 220px;
-  position: relative;
-  animation: fadeUp 0.8s ease 1s both;
-}
-.hero-car-svg {
-  width: 100%; height: 100%;
-  opacity: 0.25;
-  animation: floatCar 6s ease-in-out infinite;
-}
-@keyframes floatCar {
-  0%,100% { transform: translateY(0); }
-  50%      { transform: translateY(-12px); }
-}
-
-.scroll-hint {
-  position: absolute; bottom: 36px; left: 50%;
-  transform: translateX(-50%);
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  color: var(--muted); font-size: 11px; letter-spacing: 2px;
-  text-transform: uppercase;
-  animation: fadeIn 1s ease 1.5s both;
-}
-.scroll-arrow {
-  width: 20px; height: 20px;
-  border-right: 1.5px solid var(--muted);
-  border-bottom: 1.5px solid var(--muted);
-  transform: rotate(45deg);
-  animation: scrollBounce 2s ease-in-out infinite;
-}
-@keyframes scrollBounce {
-  0%,100% { transform: rotate(45deg) translateY(0); opacity:0.4; }
-  50%      { transform: rotate(45deg) translateY(4px); opacity:1; }
-}
-
-/* ── STATS ── */
-#stats {
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  padding: 48px 24px;
-}
-.stats-inner {
-  max-width: 900px; margin: 0 auto;
-  display: grid; grid-template-columns: repeat(3,1fr);
-  gap: 0;
-}
-.stat-item {
-  text-align: center;
-  padding: 0 24px;
-  border-right: 1px solid var(--border);
-}
-.stat-item:last-child { border-right: none; }
-.stat-num {
-  font-size: clamp(32px,5vw,52px);
-  font-weight: 800;
-  background: linear-gradient(90deg,#fff,var(--muted));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  line-height: 1;
-  margin-bottom: 8px;
-}
-.stat-label { font-size: 13px; color: var(--muted); font-weight: 400; }
-
-/* ── HOW IT WORKS ── */
-#how-it-works {
-  padding: 100px 24px;
-  max-width: 1100px; margin: 0 auto;
-}
-.section-tag {
-  font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
-  color: var(--accent); font-weight: 600;
-  margin-bottom: 12px;
-}
-.section-title {
-  font-size: clamp(28px,4vw,44px);
-  font-weight: 800; line-height: 1.2;
-  letter-spacing: -1px;
-  margin-bottom: 60px;
-  color: #fff;
-}
-
-.steps {
-  display: grid;
-  grid-template-columns: repeat(3,1fr);
-  gap: 2px;
-}
-.step {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  padding: 40px 32px;
-  position: relative;
-  transition: all 0.35s;
-  opacity: 0; transform: translateY(30px);
-}
-.step:first-child { border-radius: 16px 0 0 16px; }
-.step:last-child  { border-radius: 0 16px 16px 0; }
-.step.in-view { opacity: 1; transform: translateY(0); }
-.step:hover {
-  background: var(--surface2);
-  border-color: rgba(14,165,233,0.2);
-  z-index: 1;
-}
-
-.step-num {
-  font-size: 52px; font-weight: 900;
-  line-height: 1;
-  background: linear-gradient(135deg, var(--accent), transparent);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 20px;
-}
-.step-icon {
-  width: 44px; height: 44px;
-  background: rgba(14,165,233,0.1);
-  border: 1px solid rgba(14,165,233,0.2);
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  margin-bottom: 20px;
-  color: var(--accent);
-}
-.step-icon svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; }
-.step h3 { font-size: 17px; font-weight: 700; margin-bottom: 10px; color: #fff; }
-.step p  { font-size: 13px; color: var(--muted); line-height: 1.8; }
-
-.step-connector {
-  position: absolute; right: -1px; top: 50%;
-  transform: translateY(-50%);
-  width: 2px; height: 40px;
-  background: linear-gradient(to bottom, transparent, var(--accent), transparent);
-  display: none;
-}
-
-/* ── FEATURED LISTINGS ── */
-#featured {
-  padding: 80px 24px;
-  max-width: 1200px; margin: 0 auto;
-}
-.featured-header {
-  display: flex; align-items: flex-end;
-  justify-content: space-between;
-  margin-bottom: 40px;
-}
-.all-link {
-  font-size: 13px; color: var(--muted);
-  text-decoration: none; display: flex; align-items: center; gap: 4px;
-  transition: color 0.2s;
-  padding-bottom: 4px;
-}
-.all-link:hover { color: var(--accent); }
-
-.car-grid {
-  display: grid;
-  grid-template-columns: repeat(4,1fr);
-  gap: 16px;
-}
-.car-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  overflow: hidden;
-  text-decoration: none; color: inherit;
-  transition: all 0.3s;
-  opacity: 0; transform: translateY(20px);
-}
-.car-card.in-view { opacity: 1; transform: translateY(0); }
-.car-card:hover {
-  border-color: rgba(14,165,233,0.3);
-  transform: translateY(-6px);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(14,165,233,0.1);
-}
-.car-img {
-  aspect-ratio: 4/3;
-  background: var(--surface2);
-  position: relative; overflow: hidden;
-}
-.car-img img {
-  width: 100%; height: 100%; object-fit: cover;
-  transition: transform 0.5s;
-}
-.car-card:hover .car-img img { transform: scale(1.06); }
-.badge-3d {
-  position: absolute; top: 10px; left: 10px;
-  background: var(--accent);
-  color: #fff; font-size: 10px; font-weight: 700;
-  padding: 3px 8px; border-radius: 6px;
-  letter-spacing: 0.5px;
-}
-.car-info { padding: 16px; }
-.car-brand { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
-.car-name { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.car-price { font-size: 18px; font-weight: 800; color: var(--accent); margin-bottom: 8px; }
-.car-meta { display: flex; gap: 6px; font-size: 11px; color: var(--muted); align-items: center; flex-wrap: wrap; }
-.car-meta-dot { width: 3px; height: 3px; background: var(--muted); border-radius: 50%; }
-
-/* ── FEATURES ── */
-#features {
-  padding: 100px 24px;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-}
-.features-inner { max-width: 1100px; margin: 0 auto; }
-.feat-grid {
-  display: grid;
-  grid-template-columns: repeat(2,1fr);
-  gap: 1px;
-  background: var(--border);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  overflow: hidden;
-}
-.feat-item {
-  background: var(--surface);
-  padding: 44px 40px;
-  transition: background 0.3s;
-  opacity: 0; transform: translateY(20px);
-}
-.feat-item.in-view { opacity: 1; transform: translateY(0); }
-.feat-item:hover { background: var(--surface2); }
-
-.feat-icon {
-  width: 48px; height: 48px; border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  margin-bottom: 20px;
-}
-.feat-icon svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.8; }
-.feat-icon.blue  { background: rgba(14,165,233,0.12); color: #0EA5E9; border: 1px solid rgba(14,165,233,0.2); }
-.feat-icon.indigo{ background: rgba(99,102,241,0.12); color: #6366F1; border: 1px solid rgba(99,102,241,0.2); }
-.feat-icon.emerald{background:rgba(16,185,129,0.12); color: #10B981; border: 1px solid rgba(16,185,129,0.2); }
-.feat-icon.amber { background: rgba(245,158,11,0.12); color: #F59E0B; border: 1px solid rgba(245,158,11,0.2); }
-
-.feat-title { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 10px; }
-.feat-desc  { font-size: 13px; color: var(--muted); line-height: 1.8; }
-.feat-tag   { display: inline-block; margin-top: 14px; font-size: 10px; font-weight: 600;
-              letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px;
-              border-radius: 6px; color: var(--muted); background: rgba(255,255,255,0.04); }
-
-/* ── CTA ── */
-#cta {
-  padding: 120px 24px;
-  text-align: center;
-  position: relative; overflow: hidden;
-}
-.cta-glow {
-  position: absolute;
-  width: 600px; height: 600px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(14,165,233,0.12) 0%, transparent 70%);
-  top: 50%; left: 50%;
-  transform: translate(-50%,-50%);
-  pointer-events: none;
-}
-.cta-title { font-size: clamp(30px,5vw,54px); font-weight: 800; letter-spacing: -1.5px; margin-bottom: 16px; color: #fff; }
-.cta-sub { font-size: 15px; color: var(--muted); margin-bottom: 40px; }
-
-/* ── FOOTER ── */
-footer.dark-footer {
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  padding: 60px 24px 32px;
-  color: var(--muted);
-}
-.footer-inner { max-width: 1100px; margin: 0 auto; }
-.footer-top {
-  display: grid; grid-template-columns: 2fr 1fr 1fr;
-  gap: 48px; margin-bottom: 48px;
-}
-.footer-logo-wrap { display: flex; flex-direction: column; gap: 12px; }
-.footer-logo {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 18px; font-weight: 700; color: #fff; text-decoration: none;
-}
-.footer-desc { font-size: 13px; line-height: 1.8; max-width: 260px; }
-.footer-col h4 { font-size: 12px; font-weight: 600; color: #fff; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 16px; }
-.footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
-.footer-col li a { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
-.footer-col li a:hover { color: #fff; }
-.footer-col li { font-size: 13px; }
-.footer-bottom {
-  border-top: 1px solid var(--border);
-  padding-top: 24px;
-  display: flex; justify-content: space-between; align-items: center;
-  font-size: 12px;
-}
-
-/* ── ANIMATIONS ── */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(24px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-/* ── RESPONSIVE ── */
-@media (max-width: 900px) {
-  .car-grid { grid-template-columns: repeat(2,1fr); }
-  .feat-grid { grid-template-columns: 1fr; }
-  .footer-top { grid-template-columns: 1fr; gap: 32px; }
-}
-@media (max-width: 640px) {
-  .steps { grid-template-columns: 1fr; }
-  .step:first-child { border-radius: 16px 16px 0 0; }
-  .step:last-child  { border-radius: 0 0 16px 16px; }
-  .stats-inner { grid-template-columns: 1fr; gap: 32px; }
-  .stat-item { border-right: none; border-bottom: 1px solid var(--border); padding: 0 0 32px; }
-  .stat-item:last-child { border-bottom: none; }
-  .car-grid { grid-template-columns: 1fr; }
-  #float-nav { display: none; }
-  .featured-header { flex-direction: column; align-items: flex-start; gap: 12px; }
-}
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity 0.7s,transform 0.7s}
+.reveal.show{opacity:1;transform:translateY(0)}
 </style>
 {% endblock %}
 
 {% block content %}
-
-<!-- Canvas 배경 -->
-<canvas id="particle-canvas"></canvas>
-
-<!-- 미니멀 상단 NAV -->
-<nav id="top-nav">
-  <a href="/" class="nav-logo">
-    <div class="nav-logo-badge">3D</div>
-    Car<span>NeRF</span>
-  </a>
+<!-- ═══ NAV ═══ -->
+<nav class="nav" id="gnav">
+  <a href="/" class="nav-logo"><div>3D</div>Car<em>NeRF</em></a>
+  <div class="nav-links">
+    <a href="#service">서비스</a>
+    <a href="#process">이용방법</a>
+    <a href="/listings">매물 검색</a>
+    <a href="/sell">내 차 팔기</a>
+  </div>
   <div class="nav-right">
+    <button onclick="toggleTheme()" class="btn btn-o" title="테마">
+      <svg id="icon-sun" style="width:14px;height:14px;display:none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg>
+      <svg id="icon-moon" style="width:14px;height:14px;display:none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>
+    </button>
     {% if user %}
-    <span style="font-size:13px;color:var(--muted)">{{ user.username }}님</span>
-    <button onclick="logout()" style="font-size:13px;color:var(--muted);background:none;border:none;cursor:pointer;">로그아웃</button>
+    <a href="/mypage" class="btn btn-o">마이페이지</a>
+    <button onclick="logout()" class="btn btn-o">로그아웃</button>
     {% else %}
-    <a href="/login" class="nav-login-btn">로그인 / 가입</a>
+    <a href="/login" class="btn btn-o">로그인</a>
+    <a href="/login?tab=register" class="btn btn-f">시작하기</a>
     {% endif %}
   </div>
 </nav>
 
-<!-- FLOATING PILL NAV (스크롤 후 출현) -->
-<div id="float-nav">
-  <a class="fnav-item active" href="#hero">홈</a>
-  <a class="fnav-item" href="#how-it-works">이용방법</a>
-  <a class="fnav-item" href="#featured">매물</a>
-  <a class="fnav-item" href="#features">기능</a>
-  <div class="fnav-divider"></div>
-  <a class="fnav-cta" href="/sell">내 차 팔기</a>
-</div>
-
-<!-- ══ HERO ══ -->
-<section id="hero">
-  <div class="hero-eyebrow">
-    <div class="eyebrow-dot"></div>
-    3D Gaussian Splatting 기반 중고차 플랫폼
+<!-- ═══ SECTION 1 : HERO ═══ -->
+<section class="hero">
+  <!-- 영상 배경 (영상 없으면 그라데이션 배경) -->
+  <div class="hero-video">
+    <video autoplay muted loop playsinline poster="">
+      <!-- 영상 파일을 /static/videos/hero.mp4 에 넣으면 자동 재생됩니다 -->
+      <source src="/static/videos/hero.mp4" type="video/mp4">
+    </video>
   </div>
 
-  <h1 class="hero-title">
-    AI가 분석하는 중고차<br>
-    <span class="accent">3D로 직접 확인</span>하세요
-  </h1>
+  <div class="hero-inner">
+    <div class="hero-badge">AI 딜러</div>
+    <h1><em>CarNeRF</em></h1>
+    <div class="hero-cta">
+      <a href="/listings" class="cta-main">매물 둘러보기</a>
+      <a href="#message" class="cta-ghost">더 알아보기 ↓</a>
+    </div>
+  </div>
 
-  <p class="hero-sub">
-    스마트폰으로 차량을 촬영하면 40분 안에<br>
-    포토리얼리스틱 3D 모델이 완성됩니다.<br>
-    AI가 결함을 탐지하고 적정 시세까지 알려드립니다.
+  <div class="scroll-hint"><span>SCROLL</span><div></div></div>
+</section>
+
+<!-- ═══ SECTION 2 : 핵심 메시지 ═══ -->
+<section class="msg-sec reveal" id="message">
+  <h2>
+    나도 모르게 빠져나가던 중고차 매매 비용,<br>
+    <em>CarNeRF</em>가 제거합니다.
+  </h2>
+  <p>
+    AI가 직접 차량을 3D로 분석하고 적정 가격을 측정합니다.<br>
+    중간 마진 없는, 신뢰 있는 거래 플랫폼.
   </p>
-
-  <div class="hero-btns">
-    <a href="/listings" class="btn-primary">매물 둘러보기</a>
-    <a href="/sell"     class="btn-ghost">내 차 팔기 →</a>
-  </div>
-
-  <!-- 와이어프레임 차량 SVG 애니메이션 -->
-  <div class="hero-visual">
-    <svg class="hero-car-svg" viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="wireGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%"   stop-color="#0EA5E9" stop-opacity="0.8"/>
-          <stop offset="50%"  stop-color="#6366F1" stop-opacity="0.6"/>
-          <stop offset="100%" stop-color="#0EA5E9" stop-opacity="0.8"/>
-        </linearGradient>
-      </defs>
-      <!-- Car body -->
-      <polyline points="80,150 100,80 200,55 340,50 480,55 580,80 620,150" fill="none" stroke="url(#wireGrad)" stroke-width="1.5"/>
-      <line x1="80" y1="150" x2="620" y2="150" stroke="url(#wireGrad)" stroke-width="1.5"/>
-      <!-- Roof -->
-      <polyline points="185,80 220,50 340,42 460,50 510,80" fill="none" stroke="url(#wireGrad)" stroke-width="1"/>
-      <!-- Grid lines vertical -->
-      <line x1="200" y1="55" x2="185" y2="80" stroke="url(#wireGrad)" stroke-width="0.8"/>
-      <line x1="270" y1="52" x2="262" y2="70" stroke="url(#wireGrad)" stroke-width="0.8"/>
-      <line x1="340" y1="50" x2="340" y2="42" stroke="url(#wireGrad)" stroke-width="0.8"/>
-      <line x1="415" y1="52" x2="420" y2="70" stroke="url(#wireGrad)" stroke-width="0.8"/>
-      <line x1="480" y1="55" x2="495" y2="80" stroke="url(#wireGrad)" stroke-width="0.8"/>
-      <!-- Grid lines horizontal -->
-      <line x1="100" y1="115" x2="600" y2="115" stroke="url(#wireGrad)" stroke-width="0.6" stroke-dasharray="4,8"/>
-      <line x1="95" y1="132" x2="605" y2="132" stroke="url(#wireGrad)" stroke-width="0.6" stroke-dasharray="4,8"/>
-      <!-- Wheels -->
-      <circle cx="190" cy="150" r="30" fill="none" stroke="url(#wireGrad)" stroke-width="1.5"/>
-      <circle cx="190" cy="150" r="18" fill="none" stroke="url(#wireGrad)" stroke-width="0.8" stroke-dasharray="3,5"/>
-      <circle cx="510" cy="150" r="30" fill="none" stroke="url(#wireGrad)" stroke-width="1.5"/>
-      <circle cx="510" cy="150" r="18" fill="none" stroke="url(#wireGrad)" stroke-width="0.8" stroke-dasharray="3,5"/>
-      <!-- Windows -->
-      <polyline points="210,78 230,56 330,50 340,78" fill="none" stroke="url(#wireGrad)" stroke-width="1"/>
-      <polyline points="355,78 365,50 450,50 475,78" fill="none" stroke="url(#wireGrad)" stroke-width="1"/>
-      <!-- Ground reflection -->
-      <line x1="100" y1="185" x2="600" y2="185" stroke="url(#wireGrad)" stroke-width="0.3" stroke-dasharray="2,12"/>
-    </svg>
-  </div>
-
-  <div class="scroll-hint">
-    <span>스크롤</span>
-    <div class="scroll-arrow"></div>
-  </div>
 </section>
 
-<!-- ══ STATS ══ -->
-<section id="stats">
-  <div class="stats-inner">
-    <div class="stat-item reveal">
-      <div class="stat-num" data-target="1200">0</div>
-      <div class="stat-label">등록 차량 수</div>
+<!-- ═══ 3D 스캔 애니메이션 ═══ -->
+<section style="padding:0 24px 100px;max-width:900px;margin:0 auto;">
+  <div id="scan-stage" style="position:relative;width:100%;aspect-ratio:16/9;background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden;">
+    <!-- 차량 (원 위) -->
+    <div id="scan-car" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);z-index:5;opacity:0;transition:opacity 1s;">
+      <div style="position:relative;">
+        <div id="scan-circle" style="width:clamp(140px,22vw,200px);height:clamp(140px,22vw,200px);border-radius:50%;background:linear-gradient(135deg,rgba(14,165,233,0.06),rgba(99,102,241,0.06));border:1px solid rgba(14,165,233,0.1);display:flex;align-items:center;justify-content:center;transition:all 0.6s;">
+          <div style="font-size:clamp(60px,12vw,90px);line-height:1;">🚗</div>
+        </div>
+        <div id="scan-ring" style="position:absolute;inset:-10px;border-radius:50%;border:2px solid transparent;border-top-color:var(--accent);opacity:0;transition:opacity 0.4s;"></div>
+      </div>
     </div>
-    <div class="stat-item reveal">
-      <div class="stat-num" data-target="40">0</div>
-      <div class="stat-label">3D 모델 생성 시간 (분)</div>
-    </div>
-    <div class="stat-item reveal">
-      <div class="stat-num" data-target="98">0</div>
-      <div class="stat-label">AI 진단 정확도 (%)</div>
+    <!-- 스캔 빔 -->
+    <div id="scan-beam" style="position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent 5%,var(--accent) 50%,transparent 95%);box-shadow:0 0 30px var(--accent),0 0 80px rgba(14,165,233,0.3);opacity:0;top:0;z-index:10;"></div>
+    <!-- 마커 -->
+    <div id="scan-markers" style="position:absolute;inset:0;z-index:15;pointer-events:none;"></div>
+    <!-- HUD -->
+    <div id="scan-hud" style="position:absolute;top:16px;left:20px;z-index:15;text-align:left;font-family:'Pretendard',monospace;"></div>
+    <!-- 점수 -->
+    <div id="scan-score" style="position:absolute;bottom:20px;right:20px;z-index:15;background:rgba(14,17,23,0.8);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:14px;padding:16px 20px;text-align:center;opacity:0;transform:translateY(10px);transition:all 0.6s;">
+      <div id="scan-score-num" style="font-size:36px;font-weight:900;color:#10B981;line-height:1;">--</div>
+      <div style="font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:4px;">종합 점수</div>
     </div>
   </div>
 </section>
 
-<!-- ══ HOW IT WORKS ══ -->
-<section>
-<div id="how-it-works">
-  <div class="section-tag">How it works</div>
-  <h2 class="section-title">3단계로 완성되는<br>AI 3D 차량 진단</h2>
-  <div class="steps">
-    <div class="step" style="transition-delay:0s">
-      <div class="step-num">01</div>
-      <div class="step-icon">
-        <svg viewBox="0 0 24 24"><path d="M15 10l4.553-2.069A1 1 0 0121 8.914V15a1 1 0 01-1.447.895L15 13.7"/><rect x="2" y="6" width="13" height="12" rx="2"/></svg>
-      </div>
-      <h3>스마트폰으로 촬영</h3>
-      <p>차량 주위를 한 바퀴 돌며 동영상 촬영. 약 1~2분이면 충분합니다. 360도 각도에서 꼼꼼하게 담아주세요.</p>
+<!-- ═══ SECTION 3 : 서비스 ═══ -->
+<section class="svc-sec" id="service">
+  <div class="svc-tag">Service</div>
+  <div class="svc-title">CarNeRF가 하는 일</div>
+  <div class="svc-grid">
+    <div class="svc-card reveal">
+      <div class="svc-icon">🔍</div>
+      <h3>AI 대리 판매</h3>
+      <p>직접 차량을 점검하고 가격을 측정합니다.<br>외부·내부 3D 모델링 진행,<br>차량 판매를 보장합니다.</p>
+      <div class="svc-divider"></div>
     </div>
-    <div class="step" style="transition-delay:0.15s">
-      <div class="step-num">02</div>
-      <div class="step-icon">
-        <svg viewBox="0 0 24 24"><path d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313"/></svg>
-      </div>
-      <h3>3D 재구성 & AI 진단</h3>
-      <p>3D Gaussian Splatting으로 포토리얼리스틱 3D 모델 생성. AI가 스크래치, 찌그러짐, 도장 상태를 자동 분석합니다.</p>
+    <div class="svc-card reveal" style="transition-delay:0.1s">
+      <div class="svc-icon">📊</div>
+      <h3>실거래 시세 분석</h3>
+      <p>5만 건의 실거래 데이터를 기반으로<br>현재 차량의 실제 평균 가격을<br>정확하게 파악합니다.</p>
+      <div class="svc-divider"></div>
     </div>
-    <div class="step" style="transition-delay:0.3s">
-      <div class="step-num">03</div>
-      <div class="step-icon">
-        <svg viewBox="0 0 24 24"><path d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/></svg>
-      </div>
-      <h3>3D 뷰어로 안심 거래</h3>
-      <p>브라우저에서 3D 모델을 360도 확인하고 AI 진단 리포트와 적정 시세 분석까지 한 번에. 투명한 거래가 시작됩니다.</p>
+    <div class="svc-card reveal" style="transition-delay:0.2s">
+      <div class="svc-icon">🛡️</div>
+      <h3>안심거래 100% 보장</h3>
+      <p>거래 대금을 CarNeRF가 안전하게 보관.<br>차량 인도 확인 후 판매자에게 정산.<br>에스크로 방식으로 사기 걱정 제로.</p>
+      <div class="svc-divider"></div>
     </div>
   </div>
-</div>
 </section>
 
-<!-- ══ FEATURED LISTINGS ══ -->
-<section>
-<div id="featured">
-  <div class="featured-header">
-    <div>
-      <div class="section-tag">Featured</div>
-      <h2 class="section-title" style="margin-bottom:0">추천 매물</h2>
+<!-- ═══ SECTION 4 : 신뢰 포인트 ═══ -->
+<section class="trust-sec">
+  <div class="trust-inner">
+    <div style="text-align:center">
+      <div class="svc-tag">Why CarNeRF</div>
+      <div class="svc-title" style="margin-bottom:0">믿을 수 있는 거래 플랫폼</div>
     </div>
-    <a href="/listings" class="all-link">전체 보기 →</a>
-  </div>
-
-  <div class="car-grid">
-    {% for listing in featured %}
-    <a href="/vehicles/{{ listing.vehicle.id }}" class="car-card reveal" style="transition-delay: {{ loop.index0 * 0.08 }}s">
-      <div class="car-img">
-        <img src="{{ listing.vehicle.thumbnail_url }}" alt="{{ listing.vehicle.brand }} {{ listing.vehicle.model }}"
-             onerror="this.parentElement.style.background='var(--surface2)'">
-        {% if listing.vehicle.model_3d_status == 'ready' %}
-        <span class="badge-3d">3D</span>
-        {% endif %}
+    <div class="trust-grid reveal">
+      <div class="trust-card">
+        <div class="num">3D</div>
+        <div class="label">Gaussian Splatting<br>차량 3D 모델링</div>
       </div>
-      <div class="car-info">
-        <div class="car-brand">{{ listing.vehicle.brand }} · {{ listing.vehicle.year }}년</div>
-        <div class="car-name">{{ listing.title }}</div>
-        <div class="car-price">{{ "{:,}".format(listing.price) }}만원</div>
-        <div class="car-meta">
-          <span>{{ "{:,}".format(listing.vehicle.mileage) }}km</span>
-          <div class="car-meta-dot"></div>
-          <span>{{ listing.vehicle.fuel_type }}</span>
-          <div class="car-meta-dot"></div>
-          <span>{{ listing.vehicle.region }}</span>
-        </div>
+      <div class="trust-card">
+        <div class="num">5만+</div>
+        <div class="label">실거래 데이터<br>기반 시세 분석</div>
       </div>
-    </a>
-    {% endfor %}
-  </div>
-</div>
-</section>
-
-<!-- ══ FEATURES ══ -->
-<section id="features">
-  <div class="features-inner">
-    <div class="section-tag">Technology</div>
-    <h2 class="section-title">CarNeRF만의<br>차별화된 기술</h2>
-    <div class="feat-grid">
-      <div class="feat-item reveal" style="transition-delay:0s">
-        <div class="feat-icon blue">
-          <svg viewBox="0 0 24 24"><path d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313"/></svg>
-        </div>
-        <div class="feat-title">3D Gaussian Splatting</div>
-        <div class="feat-desc">A100 GPU 기반 차량 1대당 약 40분 만에 포토리얼리스틱 3D 모델 생성. 브라우저에서 360도 회전, 확대, 이동이 가능한 인터랙티브 뷰어 제공.</div>
-        <span class="feat-tag">PSNR 34+</span>
+      <div class="trust-card">
+        <div class="num">100%</div>
+        <div class="label">에스크로<br>안심거래 보장</div>
       </div>
-      <div class="feat-item reveal" style="transition-delay:0.1s">
-        <div class="feat-icon indigo">
-          <svg viewBox="0 0 24 24"><path d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-        </div>
-        <div class="feat-title">2D + 3D 결함 탐지</div>
-        <div class="feat-desc">YOLOv8 기반 2D 이미지 결함 탐지(스크래치/찌그러짐/도장)와 3D 모델의 144방향 자동 렌더링 → 결함 위치를 3D 뷰어에 마커로 표시.</div>
-        <span class="feat-tag">Vision AI</span>
-      </div>
-      <div class="feat-item reveal" style="transition-delay:0.2s">
-        <div class="feat-icon emerald">
-          <svg viewBox="0 0 24 24"><path d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z"/></svg>
-        </div>
-        <div class="feat-title">AI 가격 예측</div>
-        <div class="feat-desc">엔카/KB차차차 실거래가 빅데이터 + XGBoost 모델로 적정 시세 예측. 결함 탐지 결과를 피처로 반영해 ±10% 이내 정확도 목표.</div>
-        <span class="feat-tag">ML · XGBoost</span>
-      </div>
-      <div class="feat-item reveal" style="transition-delay:0.3s">
-        <div class="feat-icon amber">
-          <svg viewBox="0 0 24 24"><path d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
-        </div>
-        <div class="feat-title">안심 거래 리포트</div>
-        <div class="feat-desc">3D 모델 + 결함 탐지 + 시세 분석을 하나의 리포트로. 숨겨진 결함 없이 투명한 정보를 바탕으로 합리적인 중고차 거래를 지원합니다.</div>
-        <span class="feat-tag">Transparent</span>
+      <div class="trust-card">
+        <div class="num">AI</div>
+        <div class="label">YOLOv8 + ChatGPT<br>자동 진단 리포트</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ══ CTA ══ -->
-<section id="cta">
+<!-- ═══ SECTION 5 : 프로세스 ═══ -->
+<section class="proc-sec" id="process">
+  <div style="text-align:center">
+    <div class="svc-tag">How it works</div>
+    <div class="svc-title">이렇게 진행됩니다</div>
+  </div>
+  <div class="proc-steps">
+    <div class="proc-step reveal">
+      <div class="proc-num">01</div>
+      <h3>차량 촬영</h3>
+      <p>스마트폰으로 차량 주위를<br>1~2분 동영상 촬영</p>
+    </div>
+    <div class="proc-step reveal" style="transition-delay:0.1s">
+      <div class="proc-num">02</div>
+      <h3>AI 3D 분석</h3>
+      <p>3D 모델 생성 + 결함 탐지 +<br>시세 분석을 AI가 자동으로</p>
+    </div>
+    <div class="proc-step reveal" style="transition-delay:0.2s">
+      <div class="proc-num">03</div>
+      <h3>안심 거래</h3>
+      <p>에스크로 결제로<br>안전하게 거래 완료</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CTA ═══ -->
+<section class="cta-sec">
   <div class="cta-glow"></div>
-  <div class="reveal">
-    <div class="section-tag" style="margin-bottom:16px">Get Started</div>
-    <div class="cta-title">지금 바로 시작하세요</div>
-    <div class="cta-sub">내 차를 3D로 스캔하고 AI 진단 리포트를 받아보세요</div>
-    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
-      <a href="/sell"     class="btn-primary">내 차 등록하기</a>
-      <a href="/listings" class="btn-ghost">매물 둘러보기 →</a>
-    </div>
+  <h2 class="reveal">지금 시작하세요</h2>
+  <p class="reveal" style="transition-delay:0.1s">AI가 분석한 차량을 직접 확인해보세요</p>
+  <div class="reveal" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;transition-delay:0.2s">
+    <a href="/listings" class="cta-main" style="padding:14px 36px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;display:inline-block">매물 둘러보기</a>
+    <a href="/sell" class="cta-ghost" style="padding:14px 36px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;display:inline-block">내 차 팔기 →</a>
   </div>
 </section>
 
-<!-- ══ FOOTER ══ -->
-<footer class="dark-footer">
-  <div class="footer-inner">
-    <div class="footer-top">
-      <div class="footer-logo-wrap">
-        <a href="/" class="footer-logo">
-          <div class="nav-logo-badge">3D</div>
-          Car<span style="color:var(--accent)">NeRF</span>
-        </a>
-        <p class="footer-desc">AI 기반 3D 차량 분석으로<br>더 안전한 중고차 거래를 만듭니다.</p>
-      </div>
-      <div class="footer-col">
-        <h4>서비스</h4>
-        <ul>
-          <li><a href="/listings">매물 검색</a></li>
-          <li><a href="/sell">내 차 팔기</a></li>
-          <li><a href="#">AI 진단 리포트</a></li>
-          <li><a href="#">3D 뷰어</a></li>
-        </ul>
-      </div>
-      <div class="footer-col">
-        <h4>고객센터</h4>
-        <ul>
-          <li>help@carnerf.kr</li>
-          <li>평일 09:00 – 18:00</li>
-          <li><a href="/login">로그인 / 가입</a></li>
-        </ul>
-      </div>
+<!-- ═══ FOOTER ═══ -->
+<div class="ft">
+  <div class="ft-inner">
+    <div class="ft-left">
+      <strong style="color:var(--heading)">CarNeRF</strong>
+      <span>AI 기반 3D 중고차 거래 플랫폼</span>
+      <span>help@carnerf.kr · 평일 09:00-18:00</span>
     </div>
-    <div class="footer-bottom">
-      <span>© 2026 CarNeRF · 프로토타입 데모</span>
-      <span>Powered by 3D Gaussian Splatting</span>
+    <div class="ft-right">
+      <a href="/listings">매물 검색</a>
+      <a href="/sell">내 차 팔기</a>
+      <a href="/mypage">마이페이지</a>
+      <a href="/login">로그인</a>
     </div>
   </div>
-</footer>
-
+</div>
+<div class="ft-copy">© 2026 CarNeRF. All rights reserved.</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-// ── PARTICLE CANVAS ──
-(function() {
-  const canvas = document.getElementById('particle-canvas');
-  const ctx = canvas.getContext('2d');
-  let W, H, particles = [], lines = [];
-  
-  function resize() {
-    W = canvas.width  = window.innerWidth;
-    H = canvas.height = window.innerHeight;
+const gnav=document.getElementById('gnav');
+addEventListener('scroll',()=>gnav.classList.toggle('scrolled',scrollY>40),{passive:true});
+const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('show');obs.unobserve(e.target)}}),{threshold:0.08});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+function toggleTheme(){const h=document.documentElement,d=h.classList.contains('dark');d?h.classList.remove('dark'):h.classList.add('dark');localStorage.setItem('theme',d?'light':'dark');updateThemeIcon()}
+function updateThemeIcon(){const d=document.documentElement.classList.contains('dark'),s=document.getElementById('icon-sun'),m=document.getElementById('icon-moon');if(s&&m){s.style.display=d?'none':'block';m.style.display=d?'block':'none'}}
+updateThemeIcon();
+async function logout(){await fetch('/api/auth/logout',{method:'POST'});location.href='/'}
+
+// ═══ 3D SCAN ANIMATION ═══
+(function(){
+  const stage=document.getElementById('scan-stage');
+  if(!stage)return;
+  const car=document.getElementById('scan-car');
+  const circle=document.getElementById('scan-circle');
+  const ring=document.getElementById('scan-ring');
+  const beam=document.getElementById('scan-beam');
+  const markers=document.getElementById('scan-markers');
+  const hud=document.getElementById('scan-hud');
+  const scoreEl=document.getElementById('scan-score');
+  const scoreNum=document.getElementById('scan-score-num');
+  let running=false;
+
+  function hudLine(txt,cls,delay){
+    setTimeout(()=>{const d=document.createElement('div');d.className='hud-line '+cls;d.innerHTML=txt;hud.appendChild(d);requestAnimationFrame(()=>d.classList.add('show'))},delay);
   }
-  resize();
-  window.addEventListener('resize', resize);
-  
-  const N = 60;
-  for (let i = 0; i < N; i++) {
-    particles.push({
-      x: Math.random() * 1920,
-      y: Math.random() * 1080,
-      vx: (Math.random() - 0.5) * 0.3,
-      vy: (Math.random() - 0.5) * 0.3,
-      r: Math.random() * 1.5 + 0.5
-    });
+  function marker(cls,top,left,delay){
+    setTimeout(()=>{const m=document.createElement('div');m.className='scan-marker '+cls;m.style.top=top;m.style.left=left;m.innerHTML='<div class="dot"></div>';markers.appendChild(m);requestAnimationFrame(()=>m.classList.add('show'))},delay);
   }
-  
-  function draw() {
-    ctx.clearRect(0, 0, W, H);
-    
-    // Update + draw dots
-    particles.forEach(p => {
-      p.x += p.vx; p.y += p.vy;
-      if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
-      if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(14,165,233,0.4)';
-      ctx.fill();
-    });
-    
-    // Draw lines between close particles
-    for (let i = 0; i < particles.length; i++) {
-      for (let j = i+1; j < particles.length; j++) {
-        const dx = particles[i].x - particles[j].x;
-        const dy = particles[i].y - particles[j].y;
-        const d = Math.sqrt(dx*dx + dy*dy);
-        if (d < 160) {
-          ctx.beginPath();
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
-          ctx.strokeStyle = `rgba(14,165,233,${0.12 * (1 - d/160)})`;
-          ctx.lineWidth = 0.6;
-          ctx.stroke();
-        }
-      }
-    }
-    requestAnimationFrame(draw);
+
+  function run(){
+    running=true;
+    // 차 등장
+    car.style.opacity='1';
+
+    hudLine('> 차량 감지...','c-accent',600);
+    hudLine('> 3D 스캔 시작','c-accent',1500);
+
+    // 링 회전
+    setTimeout(()=>{ring.style.opacity='1';ring.style.animation='ringRotate 1.5s linear infinite';circle.style.borderColor='rgba(14,165,233,0.3)'},1200);
+
+    // 빔
+    setTimeout(()=>{beam.style.opacity='1';beam.style.animation='beamDown 2.5s ease-in-out'},2200);
+    setTimeout(()=>{beam.style.opacity='0';beam.style.animation='none'},4800);
+
+    hudLine('> 외관 분석 중...','',2500);
+
+    // 마커
+    marker('warn','32%','22%',3800);
+    marker('bad','62%','74%',4800);
+    hudLine('> 좌측 도어 <em>확인</em>','c-red',3800);
+    hudLine('> 후면 범퍼 <em>확인</em>','c-red',4800);
+
+    marker('ok','28%','52%',6200);
+    marker('ok','56%','14%',6800);
+    hudLine('> 엔진 <em>양호</em>','c-green',6200);
+    hudLine('> 내부 <em>양호</em>','c-green',6800);
+
+    // 완료
+    setTimeout(()=>{
+      ring.style.animation='none';
+      circle.style.borderColor='rgba(16,185,129,0.3)';
+      circle.style.background='linear-gradient(135deg,rgba(16,185,129,0.06),rgba(14,165,233,0.06))';
+    },7500);
+
+    setTimeout(()=>{
+      hudLine('> 분석 완료 ✓','c-green',0);
+      scoreEl.style.opacity='1';scoreEl.style.transform='translateY(0)';
+      let n=0;const iv=setInterval(()=>{n+=2;if(n>=72){n=72;clearInterval(iv)}scoreNum.textContent=n},25);
+    },8000);
+
+    // 리셋
+    setTimeout(()=>{
+      car.style.opacity='0';ring.style.opacity='0';ring.style.animation='none';
+      circle.style.borderColor='rgba(14,165,233,0.1)';
+      circle.style.background='linear-gradient(135deg,rgba(14,165,233,0.06),rgba(99,102,241,0.06))';
+      scoreEl.style.opacity='0';scoreEl.style.transform='translateY(10px)';
+      markers.innerHTML='';hud.innerHTML='';scoreNum.textContent='--';
+      running=false;
+      setTimeout(()=>{
+        const o2=new IntersectionObserver(es=>{if(es[0].isIntersecting&&!running){o2.disconnect();run()}},{threshold:0.3});
+        o2.observe(stage);
+      },500);
+    },13000);
   }
-  draw();
-})();
 
-// ── FLOATING NAV ──
-const floatNav  = document.getElementById('float-nav');
-const topNav    = document.getElementById('top-nav');
-const fnItems   = document.querySelectorAll('.fnav-item[href]');
-
-window.addEventListener('scroll', () => {
-  const y = window.scrollY;
-  // top nav 스크롤 변화
-  topNav.classList.toggle('scrolled', y > 60);
-  // float nav 출현 (200px 이상)
-  floatNav.classList.toggle('visible', y > 200);
-  
-  // 활성 섹션 표시
-  const sections = ['hero','how-it-works','featured','features'];
-  let current = 'hero';
-  sections.forEach(id => {
-    const el = document.getElementById(id);
-    if (el && window.scrollY >= el.offsetTop - 200) current = id;
-  });
-  fnItems.forEach(item => {
-    const href = item.getAttribute('href').slice(1);
-    item.classList.toggle('active', href === current);
-  });
-}, { passive: true });
-
-// ── SCROLL REVEAL ──
-const revealObs = new IntersectionObserver((entries) => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      e.target.classList.add('in-view');
-      revealObs.unobserve(e.target);
-    }
-  });
-}, { threshold: 0.12 });
-
-document.querySelectorAll('.step, .feat-item, .car-card').forEach(el => {
-  revealObs.observe(el);
-});
-
-// reveal class (stats, cta)
-const fadeObs = new IntersectionObserver((entries) => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      e.target.style.opacity = '1';
-      e.target.style.transform = 'translateY(0)';
-      fadeObs.unobserve(e.target);
-    }
-  });
-}, { threshold: 0.1 });
-
-document.querySelectorAll('.reveal').forEach(el => {
-  el.style.opacity = '0';
-  el.style.transform = 'translateY(24px)';
-  el.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
-  el.style.transitionDelay = el.style.transitionDelay || '0s';
-  fadeObs.observe(el);
-});
-
-// ── COUNTER ANIMATION ──
-const counterObs = new IntersectionObserver((entries) => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      const el    = e.target;
-      const target = +el.dataset.target;
-      const suffix = target >= 1000 ? '+' : (el.closest('.stat-item').querySelector('.stat-label').textContent.includes('%') ? '%' : '+');
-      let start = 0;
-      const step = target / 60;
-      const interval = setInterval(() => {
-        start += step;
-        if (start >= target) { start = target; clearInterval(interval); }
-        el.textContent = Math.floor(start).toLocaleString() + suffix;
-      }, 16);
-      counterObs.unobserve(el);
-    }
-  });
-}, { threshold: 0.5 });
-
-document.querySelectorAll('.stat-num[data-target]').forEach(el => counterObs.observe(el));
-
-async function logout() {
-  await fetch('/api/auth/logout', { method: 'POST' });
-  window.location.href = '/';
-}
+  const o1=new IntersectionObserver(es=>{if(es[0].isIntersecting&&!running){o1.disconnect();run()}},{threshold:0.3});
+  o1.observe(stage);
+})()
 </script>
 {% endblock %}

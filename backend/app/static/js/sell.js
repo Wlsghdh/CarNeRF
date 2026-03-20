@@ -11,8 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const div = document.createElement('div');
-                    div.className = 'aspect-square rounded-lg overflow-hidden bg-gray-100';
-                    div.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover" alt="preview">`;
+                    div.className = 'img-thumb';
+                    div.innerHTML = `<img src="${e.target.result}" alt="preview">`;
                     imagePreview.appendChild(div);
                 };
                 reader.readAsDataURL(file);

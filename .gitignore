@@ -74,3 +74,17 @@ dense/
 gaussian_output/
 output/
 point_cloud/
+
+# --- 학습 모델 가중치 ---
+*.pt
+*.pth
+*.onnx
+*.engine
+runs/
+
+# --- 영상/미디어 ---
+*.mp4
+*.avi
+*.mov
+*.mkv
+backend/app/static/videos/

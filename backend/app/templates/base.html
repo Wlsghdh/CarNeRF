@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" class="dark">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/static/css/custom.css">
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: { sans: ['Pretendard', 'sans-serif'] },
@@ -19,6 +20,14 @@
                 }
             }
         }
+    </script>
+    <!-- 테마 깜빡임 방지: 페이지 로드 전에 적용 -->
+    <script>
+        (function(){
+            const t = localStorage.getItem('theme');
+            if (t === 'light') { document.documentElement.classList.remove('dark'); }
+            else { document.documentElement.classList.add('dark'); }
+        })();
     </script>
     {% block head %}{% endblock %}
 </head>
@@ -33,17 +42,22 @@
                         <div class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
                             <span class="text-white font-bold text-sm">3D</span>
                         </div>
-                        <span class="text-xl font-bold text-gray-900">Car<span class="text-primary-600">NeRF</span></span>
+                        <span class="text-xl font-bold dark:text-white">Car<span class="text-primary-600">NeRF</span></span>
                     </a>
                     <div class="hidden md:flex items-center space-x-6">
-                        <a href="/listings" class="text-gray-600 hover:text-primary-600 transition font-medium">매물 검색</a>
-                        <a href="/sell" class="text-gray-600 hover:text-primary-600 transition font-medium">내 차 팔기</a>
+                        <a href="/listings" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 transition font-medium">매물 검색</a>
+                        <a href="/sell" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 transition font-medium">내 차 팔기</a>
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
+                    <!-- 다크/라이트 토글 -->
+                    <button onclick="toggleTheme()" id="theme-toggle" class="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5 transition" title="테마 변경">
+                        <svg id="icon-sun" class="w-4 h-4 text-gray-500 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg>
+                        <svg id="icon-moon" class="w-4 h-4 text-gray-500 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>
+                    </button>
                     {% if user %}
-                    <a href="/mypage" class="text-sm text-gray-600 hover:text-primary-600 transition font-medium">마이페이지</a>
-                    <span class="text-sm text-gray-600">{{ user.username }}님</span>
+                    <a href="/mypage" class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 transition font-medium">마이페이지</a>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">{{ user.username }}님</span>
                     <button onclick="logout()" class="text-sm text-gray-500 hover:text-red-500 transition">로그아웃</button>
                     {% else %}
                     <a href="/login" class="text-sm font-medium text-primary-600 hover:text-primary-700 transition">로그인</a>
@@ -78,7 +92,7 @@
                     <ul class="space-y-2 text-sm">
                         <li><a href="/listings" class="hover:text-white transition">매물 검색</a></li>
                         <li><a href="/sell" class="hover:text-white transition">내 차 팔기</a></li>
-                        <li><a href="#" class="hover:text-white transition">AI 진단 리포트</a></li>
+                        <li><a href="/mypage" class="hover:text-white transition">마이페이지</a></li>
                     </ul>
                 </div>
                 <div>
@@ -91,12 +105,36 @@
                 </div>
             </div>
             <div class="border-t border-gray-700 mt-8 pt-8 text-center text-sm">
-                <p>&copy; 2026 CarNeRF. All rights reserved. | 프로토타입 데모</p>
+                <p>&copy; 2026 CarNeRF. All rights reserved.</p>
             </div>
         </div>
     </footer>
 
     <script>
+        // 테마 토글
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.classList.contains('dark');
+            if (isDark) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+            updateThemeIcon();
+        }
+        function updateThemeIcon() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const sun = document.getElementById('icon-sun');
+            const moon = document.getElementById('icon-moon');
+            if (sun && moon) {
+                sun.classList.toggle('hidden', isDark);
+                moon.classList.toggle('hidden', !isDark);
+            }
+        }
+        updateThemeIcon();
+
         async function logout() {
             await fetch('/api/auth/logout', { method: 'POST' });
             window.location.href = '/';
