@@ -82,6 +82,9 @@ point_cloud/
 *.engine
 runs/
 
+# --- 예외: models/ 디렉토리의 pt 파일은 LFS로 추적 ---
+!models/**/*.pt
+
 # --- 영상/미디어 ---
 *.mp4
 *.avi
