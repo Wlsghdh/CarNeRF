@@ -552,11 +552,12 @@ body { background: var(--bg) !important; color: var(--text) !important; }
 
           {% if listing %}
           <div class="action-row">
-            <button class="btn-contact">연락하기</button>
-            <button class="btn-heart">
-              <svg viewBox="0 0 24 24"><path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+            <button class="btn-contact" onclick="showContactModal()">연락하기</button>
+            <button class="btn-heart" id="wishlist-btn" onclick="toggleWishlist()">
+              <svg viewBox="0 0 24 24" id="heart-icon"><path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
             </button>
           </div>
+          <div id="wishlist-count" style="text-align:right;font-size:11px;color:var(--muted);margin-top:4px;"></div>
           {% endif %}
         </div>
       </div>
@@ -776,6 +777,21 @@ body { background: var(--bg) !important; color: var(--text) !important; }
 const VEHICLE_ID = {{ vehicle.id }};
 let priceLoaded = false;
 let defectLoaded = false;
+
+// 최근 본 차량 저장
+(function(){
+  let recent = JSON.parse(localStorage.getItem('recent_vehicles') || '[]');
+  recent = recent.filter(r => r.id !== String(VEHICLE_ID));
+  recent.unshift({
+    id: String(VEHICLE_ID),
+    title: {{ listing.title|tojson if listing else '""' }},
+    meta: '{{ vehicle.brand }} {{ vehicle.model }} · {{ vehicle.year }}년',
+    price: '{{ "{:,}".format(listing.price) if listing else "0" }}',
+    time: Date.now()
+  });
+  if (recent.length > 10) recent = recent.slice(0, 10);
+  localStorage.setItem('recent_vehicles', JSON.stringify(recent));
+})();
 let _toggleDefectsViewer = null;
 
 function showTab(tab) {
@@ -1056,9 +1072,38 @@ function loadMarketPrice() {
   priceContent.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:12px;"><div class="spinner"></div><span style="font-size:13px;color:var(--muted);">시세 데이터를 불러오는 중...</span></div>';
 
   Promise.all([
-    fetch(`/api/transactions/market-price/${VEHICLE_ID}`).then(r => r.json()),
-    fetch(`/api/transactions/vehicle/${VEHICLE_ID}`).then(r => r.json()),
-  ]).then(([market, txData]) => {
+    fetch(`/api/transactions/market-price/${VEHICLE_ID}`).then(r => r.json()).catch(() => null),
+    fetch(`/api/transactions/vehicle/${VEHICLE_ID}`).then(r => r.json()).catch(() => ({direct_transactions:[], similar_transactions:[]})),
+    fetch(`/api/market/price/${VEHICLE_ID}`).then(r => r.json()).catch(() => null),
+  ]).then(([market, txData, marketDetail]) => {
+    // marketDetail에서 verdict 표시
+    if (marketDetail && marketDetail.verdict) {
+      const v = marketDetail.verdict;
+      priceContent.innerHTML = `
+        <div style="background:${v.color}10;border:1px solid ${v.color}30;border-radius:10px;padding:14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
+          <div style="width:10px;height:10px;border-radius:50%;background:${v.color};flex-shrink:0;"></div>
+          <div>
+            <span style="font-size:14px;font-weight:700;color:${v.color};">${v.level}</span>
+            <span style="font-size:13px;color:var(--muted2);margin-left:8px;">${v.message}</span>
+          </div>
+        </div>
+      `;
+    }
+    if (!market) {
+      if (marketDetail) {
+        market = {
+          avg_price: marketDetail.overall_avg_price || 0,
+          min_price: marketDetail.depreciation?.estimated_current || 0,
+          max_price: marketDetail.depreciation?.new_car_price || 0,
+          price_trend: 'stable',
+          sample_count: (marketDetail.internal_data?.count || 0) + (marketDetail.active_listings?.count || 0),
+          monthly_prices: [],
+        };
+      } else {
+        priceContent.innerHTML += '<p style="color:var(--muted);font-size:13px;padding:8px;">시세 데이터가 없습니다.</p>';
+        return;
+      }
+    }
     const trendIcon = market.price_trend === 'increasing' ? '📈' : market.price_trend === 'decreasing' ? '📉' : '➡️';
     const trendText = market.price_trend === 'increasing' ? '상승세' : market.price_trend === 'decreasing' ? '하락세' : '보합';
     const trendColor = market.price_trend === 'increasing' ? '#EF4444' : market.price_trend === 'decreasing' ? '#10B981' : 'var(--muted2)';
@@ -1101,6 +1146,14 @@ function loadMarketPrice() {
       const prices = market.monthly_prices.map(m => m.avg_price);
       const counts = market.monthly_prices.map(m => m.count);
 
+      // 라이트/다크 모드 감지
+      const isDark = document.documentElement.classList.contains('dark');
+      const gridColor = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)';
+      const textColor = isDark ? '#94A3B8' : '#64748B';
+      const bgColor = isDark ? '#0E1117' : '#FFFFFF';
+      const textMain = isDark ? '#E2E8F0' : '#1E293B';
+      const pointBorder = isDark ? '#0E1117' : '#FFFFFF';
+
       new Chart(ctx, {
         type: 'line',
         data: {
@@ -1110,10 +1163,10 @@ function loadMarketPrice() {
               label: '평균 시세 (만원)',
               data: prices,
               borderColor: '#0EA5E9',
-              backgroundColor: 'rgba(14,165,233,0.1)',
+              backgroundColor: isDark ? 'rgba(14,165,233,0.1)' : 'rgba(14,165,233,0.08)',
               borderWidth: 2.5,
               pointBackgroundColor: '#0EA5E9',
-              pointBorderColor: '#0E1117',
+              pointBorderColor: pointBorder,
               pointBorderWidth: 2,
               pointRadius: counts.map(c => c > 0 ? 5 : 3),
               pointHoverRadius: 7,
@@ -1124,7 +1177,7 @@ function loadMarketPrice() {
               label: '거래 건수',
               data: counts,
               borderColor: '#6366F1',
-              backgroundColor: 'rgba(99,102,241,0.5)',
+              backgroundColor: isDark ? 'rgba(99,102,241,0.5)' : 'rgba(99,102,241,0.3)',
               borderWidth: 0,
               pointRadius: 0,
               type: 'bar',
@@ -1140,14 +1193,14 @@ function loadMarketPrice() {
           interaction: { mode: 'index', intersect: false },
           plugins: {
             legend: {
-              labels: { color: '#94A3B8', font: { size: 11 }, boxWidth: 12, padding: 16 },
+              labels: { color: textColor, font: { size: 11 }, boxWidth: 12, padding: 16 },
             },
             tooltip: {
-              backgroundColor: '#0E1117',
-              borderColor: 'rgba(255,255,255,0.1)',
+              backgroundColor: bgColor,
+              borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
               borderWidth: 1,
-              titleColor: '#E2E8F0',
-              bodyColor: '#94A3B8',
+              titleColor: textMain,
+              bodyColor: textColor,
               padding: 10,
               callbacks: {
                 label: function(ctx) {
@@ -1159,17 +1212,17 @@ function loadMarketPrice() {
           },
           scales: {
             x: {
-              ticks: { color: '#64748B', font: { size: 11 } },
-              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: { color: textColor, font: { size: 11 } },
+              grid: { color: gridColor },
             },
             y: {
               position: 'left',
               ticks: {
-                color: '#64748B',
+                color: textColor,
                 font: { size: 11 },
                 callback: v => v.toLocaleString(),
               },
-              grid: { color: 'rgba(255,255,255,0.04)' },
+              grid: { color: gridColor },
             },
             y1: {
               position: 'right',
@@ -1291,8 +1344,71 @@ function loadReviews() {
     });
 }
 
-// 페이지 로드 시 후기 자동 로드
-document.addEventListener('DOMContentLoaded', loadReviews);
+// ── 위시리스트 (찜하기) ──
+let isWishlisted = false;
+
+function updateHeartUI() {
+  const btn = document.getElementById('wishlist-btn');
+  const icon = document.getElementById('heart-icon');
+  if (!btn || !icon) return;
+  if (isWishlisted) {
+    btn.style.borderColor = '#EF4444';
+    btn.style.background = 'rgba(239,68,68,0.1)';
+    icon.style.fill = '#EF4444';
+    icon.style.stroke = '#EF4444';
+  } else {
+    btn.style.borderColor = 'var(--border)';
+    btn.style.background = 'var(--sur2)';
+    icon.style.fill = 'none';
+    icon.style.stroke = 'currentColor';
+  }
+}
+
+function toggleWishlist() {
+  fetch(`/api/wishlist/toggle/${VEHICLE_ID}`, { method: 'POST' })
+    .then(r => {
+      if (r.status === 401) { window.location.href = '/login'; return null; }
+      return r.json();
+    })
+    .then(data => {
+      if (!data) return;
+      isWishlisted = data.wishlisted;
+      updateHeartUI();
+      loadWishlistCount();
+    })
+    .catch(() => {});
+}
+
+function loadWishlistCount() {
+  fetch(`/api/wishlist/count/${VEHICLE_ID}`)
+    .then(r => r.json())
+    .then(data => {
+      const el = document.getElementById('wishlist-count');
+      if (el && data.count > 0) {
+        el.textContent = `${data.count}명이 찜했습니다`;
+      } else if (el) {
+        el.textContent = '';
+      }
+    })
+    .catch(() => {});
+}
+
+function checkWishlistStatus() {
+  fetch(`/api/wishlist/check/${VEHICLE_ID}`)
+    .then(r => r.json())
+    .then(data => {
+      isWishlisted = data.wishlisted;
+      updateHeartUI();
+    })
+    .catch(() => {});
+}
+
+// 페이지 로드 시 후기 + 위시리스트 자동 로드
+document.addEventListener('DOMContentLoaded', () => {
+  loadReviews();
+  checkWishlistStatus();
+  loadWishlistCount();
+});
 </script>
 
 {% if vehicle.model_3d_status == 'ready' and vehicle.model_3d_url %}
@@ -1367,6 +1483,52 @@ document.addEventListener('DOMContentLoaded', loadReviews);
     document.addEventListener('keydown', function esc(e) { if (e.key === 'Escape') { modal.remove(); document.removeEventListener('keydown', esc); } });
     document.body.appendChild(modal);
   };
+</script>
+{% endif %}
+
+{% if listing %}
+<script>
+  function showContactModal() {
+    const existing = document.getElementById('contact-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'contact-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);';
+    modal.innerHTML = `
+      <div style="background:#1E293B;border:1px solid rgba(255,255,255,0.1);border-radius:16px;width:90%;max-width:420px;box-shadow:0 25px 60px rgba(0,0,0,0.4);">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <h3 style="font-size:16px;font-weight:700;color:#E2E8F0;">판매자 연락하기</h3>
+          <button onclick="document.getElementById('contact-modal').remove()" style="width:32px;height:32px;background:rgba(255,255,255,0.08);border:none;border-radius:8px;color:#94A3B8;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">&times;</button>
+        </div>
+        <div style="padding:24px;">
+          <div style="background:#161B24;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:16px;">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+              <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#818cf8);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;">
+                {{ listing.seller.username[0] if listing.seller else 'S' }}
+              </div>
+              <div>
+                <div style="font-size:14px;font-weight:600;color:#E2E8F0;">{{ listing.seller.username if listing.seller else '판매자' }}</div>
+                <div style="font-size:12px;color:#64748B;">{{ listing.seller.email if listing.seller else '' }}</div>
+              </div>
+            </div>
+            {% if listing.seller and listing.seller.phone %}
+            <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.2);border-radius:8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+              <span style="font-size:14px;font-weight:600;color:#38bdf8;">{{ listing.seller.phone }}</span>
+            </div>
+            {% else %}
+            <div style="font-size:13px;color:#64748B;text-align:center;padding:8px;">전화번호가 등록되지 않았습니다.</div>
+            {% endif %}
+          </div>
+          <div style="font-size:12px;color:#64748B;text-align:center;">매물 문의 시 CarNeRF에서 보았다고 말씀해주세요.</div>
+        </div>
+      </div>
+    `;
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+    document.addEventListener('keydown', function esc(e) { if (e.key === 'Escape') { modal.remove(); document.removeEventListener('keydown', esc); }});
+    document.body.appendChild(modal);
+  }
 </script>
 {% endif %}
 {% endblock %}

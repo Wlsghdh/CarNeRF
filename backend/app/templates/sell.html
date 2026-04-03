@@ -37,12 +37,16 @@ body { background: var(--bg) !important; color: var(--text) !important; }
 .step-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 16px;
   padding: 28px;
   margin-bottom: 16px;
-  transition: border-color 0.2s;
+  transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
 }
-.step-card:focus-within { border-color: rgba(14,165,233,0.3); }
+.step-card:focus-within {
+  border-color: rgba(14,165,233,0.3);
+  box-shadow: 0 0 0 3px rgba(14,165,233,0.08), 0 8px 25px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
+}
 
 .step-header {
   display: flex; align-items: center; gap: 10px;
@@ -161,38 +165,135 @@ textarea.dk-input { resize: none; line-height: 1.6; }
 }
 .btn-scan-upload:hover { background: rgba(14,165,233,0.18); }
 
+/* 품질 선택 */
+.quality-selector {
+  display: flex; gap: 8px; margin: 16px 0; justify-content: center;
+}
+.quality-opt {
+  flex: 1; max-width: 160px;
+  background: var(--sur2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 10px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+}
+.quality-opt:hover { border-color: rgba(14,165,233,0.3); }
+.quality-opt.selected {
+  border-color: var(--accent);
+  background: rgba(14,165,233,0.06);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.quality-opt .q-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.quality-opt .q-desc { font-size: 10px; color: var(--muted); margin-top: 4px; }
+.quality-opt .q-time { font-size: 10px; color: var(--accent); margin-top: 4px; font-weight: 600; }
+
 .scan-progress {
   display: none;
   margin-top: 16px;
   background: rgba(14,165,233,0.06);
   border: 1px solid rgba(14,165,233,0.15);
-  border-radius: 10px;
-  padding: 20px;
+  border-radius: 14px;
+  padding: 24px;
 }
-.progress-bar-bg {
-  width: 100%; height: 4px;
+
+/* 스텝 인디케이터 */
+.step-indicator {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0; margin-bottom: 20px;
+}
+.step-dot {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
   background: var(--sur2);
-  border-radius: 4px; overflow: hidden;
-  margin: 10px 0 6px;
+  border: 2px solid var(--border);
+  color: var(--muted);
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+.step-dot.active {
+  border-color: var(--accent);
+  background: rgba(14,165,233,0.15);
+  color: var(--accent);
+  animation: stepPulse 1.5s ease infinite;
+}
+.step-dot.done {
+  border-color: #10B981;
+  background: rgba(16,185,129,0.15);
+  color: #10B981;
+}
+.step-dot.failed {
+  border-color: #EF4444;
+  background: rgba(239,68,68,0.15);
+  color: #EF4444;
+}
+.step-line {
+  width: 20px; height: 2px;
+  background: var(--border);
+  transition: background 0.3s;
+}
+.step-line.done { background: #10B981; }
+.step-line.active { background: var(--accent); }
+
+@keyframes stepPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(14,165,233,0.3); }
+  50% { box-shadow: 0 0 0 6px rgba(14,165,233,0); }
+}
+
+.progress-bar-bg {
+  width: 100%; height: 6px;
+  background: var(--sur2);
+  border-radius: 6px; overflow: hidden;
+  margin: 12px 0 8px;
 }
 .progress-bar-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--accent), #6366F1);
-  border-radius: 4px;
+  border-radius: 6px;
   transition: width 0.5s ease;
   width: 0%;
 }
+.scan-info-row {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: var(--muted);
+  margin-top: 4px;
+}
+.scan-detail-box {
+  margin-top: 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+.scan-detail-box .detail-row {
+  display: flex; justify-content: space-between;
+  font-size: 12px; padding: 4px 0;
+}
+.scan-detail-box .detail-row .dk { color: var(--muted); }
+.scan-detail-box .detail-row .dv { color: var(--text); font-weight: 600; }
+
 .scan-done {
   display: none;
   margin-top: 16px;
   background: rgba(16,185,129,0.07);
   border: 1px solid rgba(16,185,129,0.2);
-  border-radius: 10px;
-  padding: 16px;
+  border-radius: 14px;
+  padding: 24px;
   text-align: center;
 }
-.scan-done p { color: #10B981; font-weight: 600; font-size: 14px; margin-bottom: 6px; }
-.scan-done a { color: var(--accent); font-size: 13px; text-decoration: none; }
+.scan-done p { color: #10B981; font-weight: 700; font-size: 16px; margin-bottom: 8px; }
+.scan-done .done-sub { color: var(--muted); font-size: 12px; margin-bottom: 14px; }
+.scan-done a {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: #fff; background: var(--accent);
+  padding: 10px 22px; border-radius: 10px;
+  font-size: 13px; font-weight: 600;
+  text-decoration: none; transition: all 0.2s;
+}
+.scan-done a:hover { background: #38BEF8; transform: translateY(-1px); }
 
 /* ── SUBMIT ── */
 .btn-submit {
@@ -368,20 +469,76 @@ textarea.dk-input { resize: none; line-height: 1.6; }
         <p id="video-filename" style="font-size:12px;color:#64748B;margin-top:10px;display:none;"></p>
       </div>
 
-      <div id="scan-progress" class="scan-progress">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-          <div style="width:16px;height:16px;border:2px solid #0EA5E9;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;"></div>
-          <span id="scan-status-text" style="font-size:13px;font-weight:600;color:#0EA5E9;">처리 중...</span>
+      <!-- 품질 선택 -->
+      <div id="quality-selector" class="quality-selector">
+        <div class="quality-opt" data-quality="standard" onclick="selectQuality('standard')">
+          <div class="q-name">Standard</div>
+          <div class="q-desc">30K iter</div>
+          <div class="q-time">~20분</div>
         </div>
+        <div class="quality-opt selected" data-quality="hq" onclick="selectQuality('hq')">
+          <div class="q-name">HQ</div>
+          <div class="q-desc">60K iter + 배경제거</div>
+          <div class="q-time">~60분</div>
+        </div>
+        <div class="quality-opt" data-quality="ultra" onclick="selectQuality('ultra')">
+          <div class="q-name">Ultra</div>
+          <div class="q-desc">80K iter + 전처리</div>
+          <div class="q-time">~120분</div>
+        </div>
+      </div>
+
+      <div id="scan-progress" class="scan-progress">
+        <!-- 스텝 인디케이터 -->
+        <div class="step-indicator" id="step-indicator">
+          <div class="step-dot" data-step="1" title="프레임 추출">1</div>
+          <div class="step-line" data-after="1"></div>
+          <div class="step-dot" data-step="2" title="COLMAP">2</div>
+          <div class="step-line" data-after="2"></div>
+          <div class="step-dot" data-step="3" title="배경 제거">3</div>
+          <div class="step-line" data-after="3"></div>
+          <div class="step-dot" data-step="4" title="Depth">4</div>
+          <div class="step-line" data-after="4"></div>
+          <div class="step-dot" data-step="5" title="학습">5</div>
+          <div class="step-line" data-after="5"></div>
+          <div class="step-dot" data-step="6" title="변환">6</div>
+          <div class="step-line" data-after="6"></div>
+          <div class="step-dot" data-step="7" title="완료">&#10003;</div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+          <div style="width:16px;height:16px;border:2px solid #0EA5E9;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;"></div>
+          <span id="scan-status-text" style="font-size:14px;font-weight:700;color:#0EA5E9;">처리 중...</span>
+        </div>
+        <p id="scan-message" style="font-size:12px;color:#64748B;margin-bottom:4px;"></p>
         <div class="progress-bar-bg">
           <div id="scan-progress-bar" class="progress-bar-fill"></div>
         </div>
-        <p id="scan-message" style="font-size:12px;color:#64748B;"></p>
+        <div class="scan-info-row">
+          <span id="scan-progress-pct">0%</span>
+          <span id="scan-elapsed">경과: 0분</span>
+          <span id="scan-est-time"></span>
+        </div>
+
+        <!-- 상세 정보 -->
+        <div class="scan-detail-box" id="scan-details">
+          <div class="detail-row"><span class="dk">품질</span><span class="dv" id="detail-quality">HQ</span></div>
+          <div class="detail-row"><span class="dk">프레임 수</span><span class="dv" id="detail-frames">-</span></div>
+          <div class="detail-row"><span class="dk">배경 제거</span><span class="dv" id="detail-bg">대기</span></div>
+          <div class="detail-row"><span class="dk">Depth Map</span><span class="dv" id="detail-depth">대기</span></div>
+          <div class="detail-row"><span class="dk">학습 반복</span><span class="dv" id="detail-iter">-</span></div>
+        </div>
       </div>
 
       <div id="scan-done" class="scan-done">
         <p>3D 모델 생성 완료!</p>
-        <a id="scan-view-link" href="#">3D 모델 보기 →</a>
+        <div class="done-sub" id="scan-done-info">고품질 3D 모델이 성공적으로 생성되었습니다.</div>
+        <a id="scan-view-link" href="#">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25"/>
+          </svg>
+          3D 모델 보기
+        </a>
       </div>
     </div>
 

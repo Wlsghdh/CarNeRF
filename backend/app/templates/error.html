@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ error_code }} - {{ error_title }}{% endblock %}
+
+{% block content %}
+<div style="min-height:70vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;">
+  <div style="text-align:center;max-width:480px;">
+    <div style="font-size:120px;font-weight:900;background:linear-gradient(135deg,#0EA5E9,#6366F1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;">{{ error_code }}</div>
+    <h1 style="font-size:24px;font-weight:800;color:var(--text,#E2E8F0);margin:16px 0 8px;">{{ error_title }}</h1>
+    <p style="font-size:14px;color:var(--muted,#64748B);line-height:1.8;margin-bottom:32px;">{{ error_message }}</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <a href="/" style="display:inline-flex;align-items:center;gap:6px;padding:12px 28px;border-radius:10px;font-size:14px;font-weight:600;text-decoration:none;background:linear-gradient(135deg,#0EA5E9,#38BDF8);color:#fff;box-shadow:0 4px 15px rgba(14,165,233,0.3);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        홈으로
+      </a>
+      <a href="/listings" style="display:inline-flex;align-items:center;gap:6px;padding:12px 28px;border-radius:10px;font-size:14px;font-weight:600;text-decoration:none;border:1px solid rgba(14,165,233,0.3);color:var(--accent,#0EA5E9);">
+        매물 검색
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

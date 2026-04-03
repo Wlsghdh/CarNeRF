@@ -105,6 +105,48 @@ body { background: var(--bg) !important; color: var(--text) !important; }
     </div>
   </div>
 
+  <!-- 프로필 편집 -->
+  <div class="mp-card" id="profile-edit-card" style="display:none;">
+    <h3>프로필 수정</h3>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div><label style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;display:block;">닉네임</label>
+        <input type="text" id="edit-username" class="mp-input" value="{{ user.username }}"></div>
+      <div><label style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;display:block;">전화번호</label>
+        <input type="tel" id="edit-phone" class="mp-input" value="{{ user.phone or '' }}"></div>
+      <div><label style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;display:block;">지역</label>
+        <select id="edit-region" class="mp-input">
+          <option value="">선택</option>
+          {% for r in ['서울','경기','인천','부산','대구','대전','광주','울산','세종','강원','충북','충남','전북','전남','경북','경남','제주'] %}
+          <option value="{{ r }}" {{ 'selected' if user.region == r }}>{{ r }}</option>
+          {% endfor %}
+        </select></div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="saveProfile()" class="mp-btn mp-btn-primary" style="width:auto;padding:10px 24px;">저장</button>
+        <button onclick="document.getElementById('profile-edit-card').style.display='none'" class="mp-btn mp-btn-outline" style="width:auto;padding:10px 24px;">취소</button>
+      </div>
+      <div id="profile-result" style="font-size:13px;"></div>
+    </div>
+  </div>
+  <div style="text-align:right;margin-bottom:12px;margin-top:-12px;">
+    <button onclick="document.getElementById('profile-edit-card').style.display='block'" class="mp-btn mp-btn-outline" style="width:auto;padding:8px 16px;font-size:12px;">프로필 수정</button>
+  </div>
+
+  <!-- 내 매물 -->
+  <div class="mp-card">
+    <h3>내 매물</h3>
+    <div id="my-listings">
+      <p style="font-size:13px;color:var(--muted);text-align:center;">로딩 중...</p>
+    </div>
+  </div>
+
+  <!-- 찜 목록 -->
+  <div class="mp-card">
+    <h3>찜 목록</h3>
+    <div id="my-wishlist">
+      <p style="font-size:13px;color:var(--muted);text-align:center;">로딩 중...</p>
+    </div>
+  </div>
+
   <!-- 포인트 충전 -->
   <div class="mp-card">
     <h3>포인트 충전</h3>
@@ -166,6 +208,14 @@ body { background: var(--bg) !important; color: var(--text) !important; }
     <div id="seller-result" style="margin-top:10px;font-size:13px;"></div>
   </div>
   {% endif %}
+
+  <!-- 로그인 기록 -->
+  <div class="mp-card">
+    <h3>로그인 기록</h3>
+    <div id="login-history">
+      <p style="font-size:13px;color:var(--muted);text-align:center;">로딩 중...</p>
+    </div>
+  </div>
 
   <!-- AI 사용 수수료 안내 -->
   <div class="mp-card">
@@ -275,6 +325,146 @@ async function upgradeSeller() {
   } catch { document.getElementById('seller-result').innerHTML = '<span style="color:#EF4444;">인증에 실패했습니다.</span>'; }
 }
 
-document.addEventListener('DOMContentLoaded', loadPointHistory);
+// 프로필 수정
+async function saveProfile() {
+  const data = {
+    username: document.getElementById('edit-username').value,
+    phone: document.getElementById('edit-phone').value,
+    region: document.getElementById('edit-region').value,
+  };
+  try {
+    const res = await fetch('/api/auth/profile', {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data),
+    });
+    const result = await res.json();
+    if (res.ok) {
+      document.getElementById('profile-result').innerHTML = '<span style="color:#10B981;">프로필이 수정되었습니다.</span>';
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      document.getElementById('profile-result').innerHTML = `<span style="color:#EF4444;">${result.detail}</span>`;
+    }
+  } catch { document.getElementById('profile-result').innerHTML = '<span style="color:#EF4444;">수정에 실패했습니다.</span>'; }
+}
+
+// 내 매물 로드
+async function loadMyListings() {
+  try {
+    const res = await fetch('/api/auth/my-listings');
+    const data = await res.json();
+    const el = document.getElementById('my-listings');
+    if (data.listings.length === 0) {
+      el.innerHTML = '<p style="font-size:13px;color:var(--muted);text-align:center;">등록한 매물이 없습니다. <a href="/sell" style="color:var(--accent);">매물 등록하기</a></p>';
+      return;
+    }
+    const statusLabels = { active: '판매중', reserved: '예약중', sold: '판매완료' };
+    const statusColors = { active: '#10B981', reserved: '#F59E0B', sold: '#64748B' };
+    el.innerHTML = data.listings.map(l => `
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);">
+        <div style="width:60px;height:45px;background:var(--sur2);border-radius:8px;overflow:hidden;flex-shrink:0;">
+          <img src="${l.thumbnail_url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
+        </div>
+        <div style="flex:1;min-width:0;">
+          <a href="/vehicles/${l.vehicle_id}" style="font-size:13px;font-weight:600;color:var(--text);text-decoration:none;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.title}</a>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">${l.brand} ${l.model} ${l.year}년 · 조회 ${l.view_count}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:14px;font-weight:700;color:var(--accent);">${l.price.toLocaleString()}만원</div>
+          <div style="display:flex;gap:4px;margin-top:4px;">
+            <select onchange="changeListingStatus(${l.id}, this.value)" style="font-size:10px;padding:2px 6px;border-radius:6px;background:${statusColors[l.status]}15;color:${statusColors[l.status]};border:1px solid ${statusColors[l.status]}40;font-weight:600;cursor:pointer;">
+              <option value="active" ${l.status==='active'?'selected':''}>판매중</option>
+              <option value="reserved" ${l.status==='reserved'?'selected':''}>예약중</option>
+              <option value="sold" ${l.status==='sold'?'selected':''}>판매완료</option>
+            </select>
+            <button onclick="deleteListing(${l.id})" style="font-size:10px;padding:2px 8px;border-radius:6px;background:rgba(239,68,68,0.1);color:#EF4444;border:1px solid rgba(239,68,68,0.3);cursor:pointer;font-weight:600;">삭제</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } catch { document.getElementById('my-listings').innerHTML = '<p style="color:var(--muted);font-size:13px;">매물을 불러올 수 없습니다.</p>'; }
+}
+
+async function changeListingStatus(listingId, status) {
+  await fetch(`/api/auth/listings/${listingId}/status?status=${status}`, { method: 'PUT' });
+  loadMyListings();
+}
+
+async function deleteListing(listingId) {
+  if (!confirm('정말 이 매물을 삭제하시겠습니까?')) return;
+  await fetch(`/api/auth/listings/${listingId}`, { method: 'DELETE' });
+  loadMyListings();
+}
+
+// 찜 목록 로드
+async function loadMyWishlist() {
+  try {
+    const res = await fetch('/api/wishlist/');
+    const data = await res.json();
+    const el = document.getElementById('my-wishlist');
+    if (data.items.length === 0) {
+      el.innerHTML = '<p style="font-size:13px;color:var(--muted);text-align:center;">찜한 차량이 없습니다. <a href="/listings" style="color:var(--accent);">매물 둘러보기</a></p>';
+      return;
+    }
+    el.innerHTML = data.items.map(w => `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+        <div style="width:50px;height:38px;background:var(--sur2);border-radius:8px;overflow:hidden;flex-shrink:0;">
+          <img src="${w.thumbnail_url || '/static/images/placeholder-car.svg'}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
+        </div>
+        <div style="flex:1;">
+          <a href="/vehicles/${w.vehicle_id}" style="font-size:13px;font-weight:600;color:var(--text);text-decoration:none;">${w.title}</a>
+          <div style="font-size:11px;color:var(--muted);">${w.brand} ${w.model} ${w.year}년</div>
+        </div>
+        <div style="text-align:right;">
+          ${w.price ? `<div style="font-size:13px;font-weight:700;color:var(--accent);">${w.price.toLocaleString()}만원</div>` : ''}
+          ${w.model_3d_status === 'ready' ? '<span style="font-size:9px;background:var(--accent);color:#fff;padding:1px 6px;border-radius:4px;font-weight:700;">3D</span>' : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch { document.getElementById('my-wishlist').innerHTML = '<p style="color:var(--muted);font-size:13px;">찜 목록을 불러올 수 없습니다.</p>'; }
+}
+
+// 로그인 기록 로드
+async function loadLoginHistory() {
+  try {
+    const res = await fetch('/api/auth/login-history');
+    const data = await res.json();
+    const el = document.getElementById('login-history');
+    if (data.histories.length === 0) {
+      el.innerHTML = '<p style="font-size:13px;color:var(--muted);text-align:center;">로그인 기록이 없습니다.</p>';
+      return;
+    }
+    const deviceIcons = { mobile: '&#128241;', desktop: '&#128187;', tablet: '&#128193;' };
+    el.innerHTML = data.histories.slice(0, 10).map(h => {
+      const date = new Date(h.created_at);
+      const dateStr = date.toLocaleDateString('ko-KR') + ' ' + date.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'});
+      const icon = deviceIcons[h.device_type] || '&#128187;';
+      const statusColor = h.success ? '#10B981' : '#EF4444';
+      const statusText = h.success ? '성공' : '실패';
+      return `
+        <div class="tx-item">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:18px;">${icon}</span>
+            <div>
+              <div style="color:var(--text);font-weight:600;font-size:13px;">${h.browser} · ${h.device_type}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px;">${dateStr}</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:11px;color:var(--muted);">${h.ip_address || ''}</span>
+            <span style="font-size:10px;padding:2px 8px;border-radius:6px;background:${statusColor}15;color:${statusColor};font-weight:600;border:1px solid ${statusColor}30;">${statusText}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch { document.getElementById('login-history').innerHTML = '<p style="color:var(--muted);font-size:13px;">로그인 기록을 불러올 수 없습니다.</p>'; }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadPointHistory();
+  loadMyListings();
+  loadMyWishlist();
+  loadLoginHistory();
+});
 </script>
 {% endblock %}

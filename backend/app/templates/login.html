@@ -1,157 +1,245 @@
 {% extends "base.html" %}
 {% block title %}로그인{% endblock %}
 
+{% block head %}
+<style>
+:root {
+  --bg:      #07090F;
+  --surface: #0E1117;
+  --sur2:    #161B24;
+  --border:  rgba(255,255,255,0.08);
+  --accent:  #0EA5E9;
+  --text:    #E2E8F0;
+  --muted:   #64748B;
+}
+html:not(.dark) {
+  --bg:      #F8FAFC;
+  --surface: #FFFFFF;
+  --sur2:    #F1F5F9;
+  --border:  rgba(0,0,0,0.08);
+  --text:    #1E293B;
+  --muted:   #64748B;
+}
+body { background: var(--bg) !important; color: var(--text) !important; }
+
+.login-wrap {
+  max-width: 420px; margin: 0 auto;
+  padding: 120px 24px 60px;
+}
+.login-logo {
+  text-align: center; margin-bottom: 32px;
+}
+.login-logo .icon {
+  width: 48px; height: 48px; background: var(--accent);
+  border-radius: 14px; display: inline-flex; align-items: center;
+  justify-content: center; font-size: 14px; font-weight: 900; color: #fff;
+  margin-bottom: 14px;
+}
+.login-logo h1 { font-size: 24px; font-weight: 900; color: var(--text); }
+.login-logo p { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+.login-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; overflow: hidden;
+}
+.tab-row { display: flex; border-bottom: 1px solid var(--border); }
+.tab-btn {
+  flex: 1; padding: 14px; font-size: 13px; font-weight: 600;
+  color: var(--muted); background: none; border: none; cursor: pointer;
+  border-bottom: 2px solid transparent; transition: all 0.2s;
+}
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.form-inner { padding: 24px; }
+.field { margin-bottom: 16px; }
+.field label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.dk-input {
+  width: 100%; background: var(--sur2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 12px; font-size: 13px;
+  color: var(--text); outline: none; transition: border-color 0.2s;
+  font-family: inherit;
+}
+.dk-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14,165,233,0.1); }
+
+.pw-strength {
+  height: 3px; border-radius: 3px; margin-top: 6px; transition: all 0.3s;
+  background: var(--border);
+}
+.pw-strength-fill { height: 100%; border-radius: 3px; transition: all 0.3s; width: 0%; }
+.pw-hint { font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+.msg-box {
+  display: none; padding: 10px 14px; border-radius: 8px;
+  font-size: 13px; margin-bottom: 12px;
+}
+.msg-error { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: #EF4444; }
+.msg-success { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); color: #10B981; }
+
+.btn-submit {
+  width: 100%; padding: 12px; border-radius: 10px; border: none;
+  background: var(--accent); color: #fff; font-size: 14px;
+  font-weight: 700; cursor: pointer; transition: all 0.2s;
+}
+.btn-submit:hover { background: #38BEF8; transform: translateY(-1px); }
+
+.demo-info {
+  margin-top: 14px; padding: 10px 14px; border-radius: 8px;
+  background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.15);
+  font-size: 11px; color: var(--muted); text-align: center;
+}
+.demo-info code {
+  font-family: monospace; background: var(--sur2);
+  padding: 1px 6px; border-radius: 4px; font-size: 11px;
+  color: var(--text);
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="max-w-md mx-auto px-4 py-16">
-    <div class="text-center mb-8">
-        <div class="w-12 h-12 bg-primary-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-            <span class="text-white font-bold text-lg">3D</span>
-        </div>
-        <h1 class="text-2xl font-bold">CarNeRF</h1>
-        <p class="text-gray-500 text-sm mt-1">AI 중고차 플랫폼에 오신 것을 환영합니다</p>
+<div class="login-wrap">
+  <div class="login-logo">
+    <div class="icon">3D</div>
+    <h1>CarNeRF</h1>
+    <p>AI 중고차 플랫폼에 오신 것을 환영합니다</p>
+  </div>
+
+  <div class="login-card">
+    <div class="tab-row">
+      <button id="tab-login" class="tab-btn active" onclick="switchTab('login')">로그인</button>
+      <button id="tab-register" class="tab-btn" onclick="switchTab('register')">회원가입</button>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <!-- Tabs -->
-        <div class="flex border-b border-gray-100">
-            <button id="tab-login" class="flex-1 py-3 text-sm font-medium text-primary-600 border-b-2 border-primary-600 transition" onclick="switchTab('login')">로그인</button>
-            <button id="tab-register" class="flex-1 py-3 text-sm font-medium text-gray-400 hover:text-gray-600 transition" onclick="switchTab('register')">회원가입</button>
-        </div>
+    <!-- Login Form -->
+    <form id="login-form" class="form-inner">
+      <div class="field">
+        <label>이메일</label>
+        <input type="email" name="email" required placeholder="이메일을 입력하세요" class="dk-input">
+      </div>
+      <div class="field">
+        <label>비밀번호</label>
+        <input type="password" name="password" required placeholder="비밀번호를 입력하세요" class="dk-input">
+      </div>
+      <div id="login-error" class="msg-box msg-error"></div>
+      <button type="submit" class="btn-submit">로그인</button>
+      <div class="demo-info">
+        체험용 계정: <code>demo@carnerf.kr</code> / <code>demo1234</code>
+      </div>
+    </form>
 
-        <!-- Login Form -->
-        <form id="login-form" class="p-6 space-y-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">이메일</label>
-                <input type="email" name="email" required placeholder="demo@carnerf.kr" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
-                <input type="password" name="password" required placeholder="demo1234" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-            </div>
-            <div id="login-error" class="hidden text-sm text-red-500 bg-red-50 p-3 rounded-lg"></div>
-            <button type="submit" class="w-full bg-primary-600 text-white py-2.5 rounded-lg font-semibold hover:bg-primary-700 transition">로그인</button>
-            <div class="text-center">
-                <p class="text-xs text-gray-400">데모 계정: demo@carnerf.kr / demo1234</p>
-            </div>
-        </form>
-
-        <!-- Register Form -->
-        <form id="register-form" class="p-6 space-y-4 hidden">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">이름</label>
-                <input type="text" name="username" required placeholder="홍길동" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">이메일</label>
-                <input type="email" name="email" required placeholder="user@example.com" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
-                <input type="password" name="password" required minlength="6" placeholder="6자 이상" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">전화번호</label>
-                <input type="tel" name="phone" placeholder="010-1234-5678" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-            </div>
-            <div id="register-error" class="hidden text-sm text-red-500 bg-red-50 p-3 rounded-lg"></div>
-            <div id="register-success" class="hidden text-sm text-green-600 bg-green-50 p-3 rounded-lg"></div>
-            <button type="submit" class="w-full bg-primary-600 text-white py-2.5 rounded-lg font-semibold hover:bg-primary-700 transition">회원가입</button>
-        </form>
-    </div>
+    <!-- Register Form -->
+    <form id="register-form" class="form-inner" style="display:none;">
+      <div class="field">
+        <label>이름</label>
+        <input type="text" name="username" required minlength="2" placeholder="홍길동" class="dk-input">
+      </div>
+      <div class="field">
+        <label>이메일</label>
+        <input type="email" name="email" required placeholder="user@example.com" class="dk-input">
+      </div>
+      <div class="field">
+        <label>비밀번호</label>
+        <input type="password" name="password" id="reg-password" required minlength="6" placeholder="6자 이상" class="dk-input" oninput="checkPasswordStrength(this.value)">
+        <div class="pw-strength"><div id="pw-strength-fill" class="pw-strength-fill"></div></div>
+        <div id="pw-hint" class="pw-hint"></div>
+      </div>
+      <div class="field">
+        <label>비밀번호 확인</label>
+        <input type="password" name="password_confirm" id="reg-password-confirm" required placeholder="비밀번호를 다시 입력하세요" class="dk-input">
+      </div>
+      <div class="field">
+        <label>전화번호 (선택)</label>
+        <input type="tel" name="phone" placeholder="010-1234-5678" class="dk-input">
+      </div>
+      <div id="register-error" class="msg-box msg-error"></div>
+      <div id="register-success" class="msg-box msg-success"></div>
+      <button type="submit" class="btn-submit">회원가입</button>
+    </form>
+  </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
 function switchTab(tab) {
-    const loginForm = document.getElementById('login-form');
-    const registerForm = document.getElementById('register-form');
-    const loginTab = document.getElementById('tab-login');
-    const registerTab = document.getElementById('tab-register');
-
-    if (tab === 'login') {
-        loginForm.classList.remove('hidden');
-        registerForm.classList.add('hidden');
-        loginTab.classList.add('text-primary-600', 'border-b-2', 'border-primary-600');
-        loginTab.classList.remove('text-gray-400');
-        registerTab.classList.remove('text-primary-600', 'border-b-2', 'border-primary-600');
-        registerTab.classList.add('text-gray-400');
-    } else {
-        loginForm.classList.add('hidden');
-        registerForm.classList.remove('hidden');
-        registerTab.classList.add('text-primary-600', 'border-b-2', 'border-primary-600');
-        registerTab.classList.remove('text-gray-400');
-        loginTab.classList.remove('text-primary-600', 'border-b-2', 'border-primary-600');
-        loginTab.classList.add('text-gray-400');
-    }
+  document.getElementById('login-form').style.display = tab === 'login' ? '' : 'none';
+  document.getElementById('register-form').style.display = tab === 'register' ? '' : 'none';
+  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
 }
 
-// Check URL param for tab
 const params = new URLSearchParams(window.location.search);
 if (params.get('tab') === 'register') switchTab('register');
 
-// Login
-document.getElementById('login-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const form = e.target;
-    const errorEl = document.getElementById('login-error');
-    errorEl.classList.add('hidden');
+function checkPasswordStrength(pw) {
+  const fill = document.getElementById('pw-strength-fill');
+  const hint = document.getElementById('pw-hint');
+  let score = 0;
+  if (pw.length >= 6) score++;
+  if (pw.length >= 8) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
 
-    try {
-        const res = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                email: form.email.value,
-                password: form.password.value,
-            }),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-            errorEl.textContent = data.detail || '로그인에 실패했습니다.';
-            errorEl.classList.remove('hidden');
-            return;
-        }
-        window.location.href = '/';
-    } catch {
-        errorEl.textContent = '서버 오류가 발생했습니다.';
-        errorEl.classList.remove('hidden');
-    }
+  const pct = Math.min(score * 20, 100);
+  fill.style.width = pct + '%';
+
+  if (score <= 1) { fill.style.background = '#EF4444'; hint.textContent = '약함'; hint.style.color = '#EF4444'; }
+  else if (score <= 2) { fill.style.background = '#F59E0B'; hint.textContent = '보통'; hint.style.color = '#F59E0B'; }
+  else if (score <= 3) { fill.style.background = '#0EA5E9'; hint.textContent = '양호'; hint.style.color = '#0EA5E9'; }
+  else { fill.style.background = '#10B981'; hint.textContent = '강함'; hint.style.color = '#10B981'; }
+
+  if (!pw) { fill.style.width = '0%'; hint.textContent = ''; }
+}
+
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const err = document.getElementById('login-error');
+  err.style.display = 'none';
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ email: form.email.value, password: form.password.value }),
+    });
+    const data = await res.json();
+    if (!res.ok) { err.textContent = data.detail || '로그인에 실패했습니다.'; err.style.display = 'block'; return; }
+    const redirect = params.get('next') || '/';
+    window.location.href = redirect;
+  } catch { err.textContent = '서버 오류가 발생했습니다.'; err.style.display = 'block'; }
 });
 
-// Register
 document.getElementById('register-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const form = e.target;
-    const errorEl = document.getElementById('register-error');
-    const successEl = document.getElementById('register-success');
-    errorEl.classList.add('hidden');
-    successEl.classList.add('hidden');
+  e.preventDefault();
+  const form = e.target;
+  const err = document.getElementById('register-error');
+  const ok = document.getElementById('register-success');
+  err.style.display = 'none'; ok.style.display = 'none';
 
-    try {
-        const res = await fetch('/api/auth/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                username: form.username.value,
-                email: form.email.value,
-                password: form.password.value,
-                phone: form.phone.value || null,
-            }),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-            errorEl.textContent = data.detail || '회원가입에 실패했습니다.';
-            errorEl.classList.remove('hidden');
-            return;
-        }
-        successEl.textContent = '회원가입이 완료되었습니다! 로그인해주세요.';
-        successEl.classList.remove('hidden');
-        setTimeout(() => switchTab('login'), 1500);
-    } catch {
-        errorEl.textContent = '서버 오류가 발생했습니다.';
-        errorEl.classList.remove('hidden');
-    }
+  // 비밀번호 확인
+  if (form.password.value !== form.password_confirm.value) {
+    err.textContent = '비밀번호가 일치하지 않습니다.'; err.style.display = 'block'; return;
+  }
+  if (form.password.value.length < 6) {
+    err.textContent = '비밀번호는 6자 이상이어야 합니다.'; err.style.display = 'block'; return;
+  }
+
+  try {
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        username: form.username.value,
+        email: form.email.value,
+        password: form.password.value,
+        phone: form.phone.value || null,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) { err.textContent = data.detail || '회원가입에 실패했습니다.'; err.style.display = 'block'; return; }
+    ok.textContent = '회원가입이 완료되었습니다! 로그인해주세요.'; ok.style.display = 'block';
+    setTimeout(() => switchTab('login'), 1500);
+  } catch { err.textContent = '서버 오류가 발생했습니다.'; err.style.display = 'block'; }
 });
 </script>
 {% endblock %}

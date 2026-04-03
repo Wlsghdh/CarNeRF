@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}차량 비교{% endblock %}
+
+{% block head %}
+<style>
+:root { --bg:#07090F;--surface:#0E1117;--sur2:#161B24;--border:rgba(255,255,255,0.08);--accent:#0EA5E9;--text:#E2E8F0;--muted:#64748B; }
+html:not(.dark) { --bg:#F8FAFC;--surface:#FFFFFF;--sur2:#F1F5F9;--border:rgba(0,0,0,0.08);--text:#1E293B;--muted:#64748B; }
+body { background:var(--bg)!important; }
+.cmp-wrap { max-width:1100px;margin:0 auto;padding:100px 24px 60px; }
+.cmp-card { background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;flex:1;min-width:0; }
+.cmp-row { display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap; }
+.cmp-label { font-size:12px;color:var(--muted);margin-bottom:4px; }
+.cmp-val { font-size:14px;font-weight:600;color:var(--text); }
+.score-bar { height:6px;border-radius:3px;background:var(--sur2);overflow:hidden;margin-top:4px; }
+.score-fill { height:100%;border-radius:3px;transition:width 0.6s; }
+.best-tag { display:inline-block;font-size:10px;font-weight:700;color:#10B981;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);padding:2px 8px;border-radius:6px;margin-left:6px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cmp-wrap">
+  <h2 style="font-size:24px;font-weight:900;color:var(--text);margin-bottom:8px;">차량 비교</h2>
+  <p style="font-size:14px;color:var(--muted);margin-bottom:24px;">최대 4대의 차량을 한눈에 비교하세요.</p>
+
+  <!-- 차량 선택 -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:24px;">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <input type="text" id="add-vehicle-input" placeholder="차량 ID를 입력하세요 (예: 1,2,3)" style="flex:1;padding:10px 14px;border-radius:8px;background:var(--sur2);border:1px solid var(--border);color:var(--text);font-size:13px;min-width:200px;outline:none;" value="{{ request.query_params.get('ids','') }}">
+      <button onclick="loadComparison()" style="padding:10px 24px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;">비교하기</button>
+    </div>
+  </div>
+
+  <div id="compare-result"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadComparison() {
+  const ids = document.getElementById('add-vehicle-input').value.trim();
+  if (!ids) return;
+  const div = document.getElementById('compare-result');
+  div.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">비교 데이터를 불러오는 중...</div>';
+
+  try {
+    const res = await fetch(`/api/search/compare?ids=${encodeURIComponent(ids)}`);
+    if (!res.ok) { const e = await res.json(); div.innerHTML = `<div style="text-align:center;padding:40px;color:#EF4444;">${e.detail}</div>`; return; }
+    const data = await res.json();
+    renderComparison(data);
+    history.replaceState(null, '', `/compare?ids=${encodeURIComponent(ids)}`);
+  } catch(e) { div.innerHTML = '<div style="text-align:center;padding:40px;color:#EF4444;">오류가 발생했습니다.</div>'; }
+}
+
+function renderComparison(data) {
+  const div = document.getElementById('compare-result');
+  const vehicles = data.vehicles;
+  const summary = data.summary;
+
+  const specs = [
+    ['브랜드/모델', v => `${v.vehicle.brand} ${v.vehicle.model}`],
+    ['연식', v => `${v.vehicle.year}년`],
+    ['트림', v => v.vehicle.trim || '-'],
+    ['주행거리', v => `${v.vehicle.mileage.toLocaleString()}km`],
+    ['연료', v => v.vehicle.fuel_type],
+    ['변속기', v => v.vehicle.transmission],
+    ['배기량', v => v.vehicle.engine_cc ? `${v.vehicle.engine_cc.toLocaleString()}cc` : '-'],
+    ['색상', v => v.vehicle.color || '-'],
+    ['지역', v => v.vehicle.region || '-'],
+    ['3D 모델', v => v.vehicle.has_3d ? '있음' : '없음'],
+    ['가격', v => v.listing ? `${v.listing.price.toLocaleString()}만원` : '-'],
+    ['조회수', v => v.listing ? v.listing.view_count : '-'],
+  ];
+
+  const scoreColor = s => s >= 90 ? '#10B981' : s >= 80 ? '#0EA5E9' : s >= 70 ? '#F59E0B' : '#EF4444';
+
+  let html = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;">';
+  // Header
+  html += '<tr><th style="text-align:left;padding:12px 16px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--border);min-width:100px;"></th>';
+  for (const v of vehicles) {
+    const isBest = summary.cheapest === v.vehicle.id;
+    html += `<th style="padding:12px 16px;text-align:center;border-bottom:1px solid var(--border);min-width:160px;">
+      <div style="font-size:15px;font-weight:700;color:var(--text);">${v.vehicle.brand} ${v.vehicle.model}</div>
+      <div style="font-size:12px;color:var(--muted);">${v.vehicle.year}년</div>
+      ${v.vehicle.has_3d ? '<span style="font-size:10px;padding:2px 8px;background:linear-gradient(135deg,#0EA5E9,#6366F1);color:#fff;border-radius:6px;margin-top:4px;display:inline-block;">3D</span>' : ''}
+    </th>`;
+  }
+  html += '</tr>';
+
+  // Rows
+  for (const [label, fn] of specs) {
+    html += `<tr><td style="padding:10px 16px;font-size:13px;font-weight:600;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap;">${label}</td>`;
+    const vals = vehicles.map(fn);
+    for (let i = 0; i < vehicles.length; i++) {
+      let best = '';
+      if (label === '가격' && summary.cheapest === vehicles[i].vehicle.id) best = '<span class="best-tag">최저가</span>';
+      if (label === '주행거리' && summary.lowest_mileage === vehicles[i].vehicle.id) best = '<span class="best-tag">최소</span>';
+      html += `<td style="padding:10px 16px;text-align:center;font-size:14px;font-weight:600;color:var(--text);border-bottom:1px solid var(--border);">${vals[i]}${best}</td>`;
+    }
+    html += '</tr>';
+  }
+
+  // Diagnosis scores
+  const scoreLabels = [['종합', 'overall_score'], ['외관', 'exterior_score'], ['내부', 'interior_score'], ['엔진', 'engine_score']];
+  for (const [label, key] of scoreLabels) {
+    html += `<tr><td style="padding:10px 16px;font-size:13px;font-weight:600;color:var(--muted);border-bottom:1px solid var(--border);">${label} 점수</td>`;
+    for (const v of vehicles) {
+      const score = v.diagnosis ? v.diagnosis[key] : null;
+      const isBest = key === 'overall_score' && summary.best_condition === v.vehicle.id;
+      if (score != null) {
+        html += `<td style="padding:10px 16px;text-align:center;border-bottom:1px solid var(--border);">
+          <span style="font-size:16px;font-weight:800;color:${scoreColor(score)};">${score}</span>
+          ${isBest ? '<span class="best-tag">최고</span>' : ''}
+          <div class="score-bar"><div class="score-fill" style="width:${score}%;background:${scoreColor(score)};"></div></div>
+        </td>`;
+      } else {
+        html += '<td style="padding:10px 16px;text-align:center;border-bottom:1px solid var(--border);font-size:13px;color:var(--muted);">-</td>';
+      }
+    }
+    html += '</tr>';
+  }
+
+  html += '</table></div>';
+  div.innerHTML = html;
+}
+
+// Auto-load if ids in URL
+const urlIds = new URLSearchParams(window.location.search).get('ids');
+if (urlIds) { document.getElementById('add-vehicle-input').value = urlIds; loadComparison(); }
+</script>
+{% endblock %}

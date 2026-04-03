@@ -54,21 +54,42 @@ def load_colmap_sparse_points(sparse_dir: str):
 
     cam_extrinsics = read_extrinsics_binary(images_bin)
     cam_intrinsics = read_intrinsics_binary(cameras_bin)
-    points3d = read_points3D_binary(points3d_bin)
+    points3d_raw = read_points3D_binary(points3d_bin)
+
+    # read_points3D_binary returns (xyzs, rgbs, errors) numpy arrays
+    # Build a dict: point_id -> xyz for fast lookup
+    # We need to re-read using struct to get the IDs
+    import struct
+    points3d_dict = {}
+    if isinstance(points3d_raw, tuple):
+        # xyzs is (N, 3) array - but we don't have IDs
+        # Re-read points3D.bin manually to get ID -> xyz mapping
+        with open(points3d_bin, "rb") as f:
+            num_points = struct.unpack("Q", f.read(8))[0]
+            for _ in range(num_points):
+                point_id = struct.unpack("Q", f.read(8))[0]
+                xyz = struct.unpack("ddd", f.read(24))
+                rgb = struct.unpack("BBB", f.read(3))
+                error = struct.unpack("d", f.read(8))[0]
+                track_len = struct.unpack("Q", f.read(8))[0]
+                f.read(track_len * 8)  # skip track (image_id, point2D_idx) pairs
+                points3d_dict[point_id] = np.array(xyz)
+        logger.info(f"  3D 포인트 {len(points3d_dict)}개 로드")
+    else:
+        # Legacy dict format
+        points3d_dict = {k: v.xyz for k, v in points3d_raw.items()}
+
+    from scene.colmap_loader import qvec2rotmat
 
     # 각 이미지별 보이는 3D 포인트의 depth 수집
     image_depths = {}
     for key in cam_extrinsics:
         extr = cam_extrinsics[key]
-        intr = cam_intrinsics[extr.camera_id]
         name = extr.name
 
-        # R, T (world to camera)
-        from scene.colmap_loader import qvec2rotmat
         R = qvec2rotmat(extr.qvec)
         T = np.array(extr.tvec)
 
-        # 이 이미지에 보이는 3D 포인트 ID 수집
         point3d_ids = extr.point3D_ids
         valid_mask = point3d_ids >= 0
 
@@ -79,9 +100,9 @@ def load_colmap_sparse_points(sparse_dir: str):
 
         depths = []
         for pid in valid_ids:
-            if pid in points3d:
-                xyz = points3d[pid].xyz
-                # world → camera: depth = (R @ xyz + T)[2]
+            pid_int = int(pid)
+            if pid_int in points3d_dict:
+                xyz = points3d_dict[pid_int]
                 cam_point = R @ xyz + T
                 depth = cam_point[2]
                 if depth > 0:

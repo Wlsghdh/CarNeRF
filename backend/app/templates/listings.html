@@ -128,13 +128,28 @@ body { background: var(--bg) !important; color: var(--text) !important; }
 .car-card:hover .card-img img { transform: scale(1.05); }
 .badge-3d {
   position: absolute; top: 10px; left: 10px;
-  background: var(--accent); color: #fff;
+  background: linear-gradient(135deg, #0EA5E9, #6366F1);
+  color: #fff;
   font-size: 10px; font-weight: 700;
-  padding: 3px 8px; border-radius: 6px;
+  padding: 4px 10px; border-radius: 8px;
+  display: flex; align-items: center; gap: 4px;
+  box-shadow: 0 2px 8px rgba(14,165,233,0.4);
+  animation: badge3dGlow 2s ease-in-out infinite;
 }
+@keyframes badge3dGlow {
+  0%, 100% { box-shadow: 0 2px 8px rgba(14,165,233,0.4); }
+  50% { box-shadow: 0 2px 16px rgba(14,165,233,0.6); }
+}
+.badge-3d svg { width: 12px; height: 12px; }
 .badge-fixed {
   position: absolute; top: 10px; right: 10px;
   background: rgba(239,68,68,0.9); color: #fff;
+  font-size: 10px; font-weight: 600;
+  padding: 3px 8px; border-radius: 6px;
+}
+.badge-new {
+  position: absolute; top: 10px; right: 10px;
+  background: rgba(16,185,129,0.9); color: #fff;
   font-size: 10px; font-weight: 600;
   padding: 3px 8px; border-radius: 6px;
 }
@@ -258,6 +273,25 @@ body { background: var(--bg) !important; color: var(--text) !important; }
 
   <!-- ── MAIN ── -->
   <div class="main-col">
+    <!-- 검색 바 -->
+    <div style="margin-bottom:20px;">
+      <form id="search-form" style="display:flex;gap:8px;" onsubmit="doSearch(event)">
+        <div style="flex:1;position:relative;">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="var(--muted)" style="width:16px;height:16px;position:absolute;left:12px;top:50%;transform:translateY(-50%);">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/>
+          </svg>
+          <input type="text" name="search" id="search-input" placeholder="브랜드, 모델, 키워드로 검색..." value="{{ filters.search or '' }}" class="dk-input" style="padding-left:36px;">
+        </div>
+        <button type="submit" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap;">검색</button>
+      </form>
+      {% if filters.search %}
+      <div style="margin-top:8px;font-size:12px;color:var(--muted);">
+        "<span style="color:var(--accent);font-weight:600;">{{ filters.search }}</span>" 검색 결과
+        <a href="/listings" style="color:var(--muted);margin-left:8px;text-decoration:none;">초기화</a>
+      </div>
+      {% endif %}
+    </div>
+
     <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
       <div>
         <div class="page-title">매물 검색</div>
@@ -277,13 +311,17 @@ body { background: var(--bg) !important; color: var(--text) !important; }
     {% if listings %}
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;" id="listings-grid">
       {% for listing in listings %}
-      <a href="/vehicles/{{ listing.vehicle.id }}" class="car-card">
-        <div class="card-img">
+      <a href="/vehicles/{{ listing.vehicle.id }}" class="car-card glow-hover">
+        <div class="card-img card-img-zoom">
           <img src="{{ listing.vehicle.thumbnail_url }}"
                alt="{{ listing.vehicle.brand }} {{ listing.vehicle.model }}"
-               onerror="this.parentElement.style.background='#161B24'">
+               loading="lazy"
+               onerror="this.style.display='none'">
           {% if listing.vehicle.model_3d_status == 'ready' %}
-          <span class="badge-3d">3D</span>
+          <span class="badge-3d badge-3d-glow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313"/></svg>
+            3D 뷰어
+          </span>
           {% endif %}
           {% if not listing.is_negotiable %}
           <span class="badge-fixed">확정가</span>
@@ -292,17 +330,22 @@ body { background: var(--bg) !important; color: var(--text) !important; }
         <div class="card-body">
           <div class="card-meta-top">{{ listing.vehicle.brand }} {{ listing.vehicle.model }} · {{ listing.vehicle.year }}년</div>
           <div class="card-title">{{ listing.title }}</div>
-          <div class="card-price">{{ "{:,}".format(listing.price) }}만원</div>
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;">
+            <div class="card-price">{{ "{:,}".format(listing.price) }}<span style="font-size:12px;font-weight:600;color:var(--muted);margin-left:2px;">만원</span></div>
+            {% if listing.is_negotiable %}
+            <span style="font-size:10px;color:#10B981;font-weight:600;background:rgba(16,185,129,0.1);padding:2px 6px;border-radius:4px;">네고</span>
+            {% endif %}
+          </div>
           <div class="card-specs">
             <span>{{ "{:,}".format(listing.vehicle.mileage) }}km</span>
             <div class="spec-dot"></div>
             <span>{{ listing.vehicle.fuel_type }}</span>
             <div class="spec-dot"></div>
-            <span>{{ listing.vehicle.region }}</span>
+            <span>{{ listing.vehicle.region or '미지정' }}</span>
           </div>
           <div class="card-footer">
             <span>조회 {{ listing.view_count }}</span>
-            <span>{{ listing.vehicle.transmission }}</span>
+            <span>{{ listing.vehicle.transmission }} · {{ listing.vehicle.color or '' }}</span>
           </div>
         </div>
       </a>
@@ -312,8 +355,10 @@ body { background: var(--bg) !important; color: var(--text) !important; }
     {% if total_pages > 1 %}
     <div class="pag-wrap">
       {% for p in range(1, total_pages + 1) %}
-      <a href="?page={{ p }}{% if filters.brand %}&brand={{ filters.brand }}{% endif %}{% if filters.fuel_type %}&fuel_type={{ filters.fuel_type }}{% endif %}{% if filters.sort %}&sort={{ filters.sort }}{% endif %}"
+      {% if p <= 10 or (p > current_page - 3 and p < current_page + 3) or p == total_pages %}
+      <a href="?page={{ p }}{% for k, v in filters.items() if v and k != 'page' %}&{{ k }}={{ v }}{% endfor %}"
          class="pag-btn {{ 'active' if p == current_page }}">{{ p }}</a>
+      {% endif %}
       {% endfor %}
     </div>
     {% endif %}
@@ -333,15 +378,70 @@ body { background: var(--bg) !important; color: var(--text) !important; }
 document.getElementById('sort-select').addEventListener('change', function() {
   const url = new URL(window.location);
   url.searchParams.set('sort', this.value);
+  url.searchParams.delete('page');
   window.location.href = url.toString();
 });
 document.getElementById('filter-form').addEventListener('submit', function(e) {
   e.preventDefault();
   const data = new FormData(this);
   const url = new URL('/listings', window.location.origin);
+  // 검색어도 유지
+  const searchInput = document.getElementById('search-input');
+  if (searchInput && searchInput.value) url.searchParams.set('search', searchInput.value);
+  // 정렬 유지
+  const sortSelect = document.getElementById('sort-select');
+  if (sortSelect && sortSelect.value) url.searchParams.set('sort', sortSelect.value);
   for (const [k, v] of data.entries()) { if (v) url.searchParams.set(k, v); }
   window.location.href = url.toString();
 });
+function doSearch(e) {
+  e.preventDefault();
+  const url = new URL(window.location);
+  const search = document.getElementById('search-input').value.trim();
+  if (search) {
+    url.searchParams.set('search', search);
+  } else {
+    url.searchParams.delete('search');
+  }
+  url.searchParams.delete('page');
+  window.location.href = url.toString();
+}
+// 최근 본 차량 저장
+document.querySelectorAll('.car-card').forEach(card => {
+  card.addEventListener('click', function() {
+    const href = this.getAttribute('href');
+    const vid = href.split('/').pop();
+    const title = this.querySelector('.card-title')?.textContent || '';
+    const meta = this.querySelector('.card-meta-top')?.textContent || '';
+    const price = this.querySelector('.card-price')?.textContent || '';
+
+    let recent = JSON.parse(localStorage.getItem('recent_vehicles') || '[]');
+    recent = recent.filter(r => r.id !== vid);
+    recent.unshift({ id: vid, title, meta, price, time: Date.now() });
+    if (recent.length > 10) recent = recent.slice(0, 10);
+    localStorage.setItem('recent_vehicles', JSON.stringify(recent));
+  });
+});
+
+// 최근 본 차량 표시
+(function showRecent() {
+  const recent = JSON.parse(localStorage.getItem('recent_vehicles') || '[]');
+  if (recent.length === 0) return;
+  const sidebar = document.querySelector('.filter-panel');
+  if (!sidebar) return;
+
+  const div = document.createElement('div');
+  div.style.cssText = 'margin-top:20px;padding-top:16px;border-top:1px solid var(--border);';
+  div.innerHTML = '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;">최근 본 차량</div>' +
+    recent.slice(0, 5).map(r =>
+      `<a href="/vehicles/${r.id}" style="display:block;padding:8px 10px;margin-bottom:4px;border-radius:8px;text-decoration:none;color:inherit;font-size:12px;background:var(--sur2);border:1px solid var(--border);transition:border-color 0.2s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.meta}</div>
+        <div style="color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.title}</div>
+      </a>`
+    ).join('');
+  sidebar.appendChild(div);
+})();
+
 async function logout() {
   await fetch('/api/auth/logout', { method: 'POST' });
   window.location.href = '/';

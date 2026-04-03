@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 # --- Auth ---
@@ -10,6 +10,13 @@ class UserCreate(BaseModel):
     username: str
     password: str
     phone: Optional[str] = None
+
+    @field_validator("password")
+    @classmethod
+    def password_min_length(cls, v):
+        if len(v) < 8:
+            raise ValueError("비밀번호는 8자 이상이어야 합니다.")
+        return v
 
 
 class UserLogin(BaseModel):
@@ -85,6 +92,30 @@ class ListingCreate(BaseModel):
     color: Optional[str] = None
     engine_cc: Optional[int] = None
     region: Optional[str] = None
+    image_urls: Optional[list[str]] = None  # Uploaded image URLs
+
+    @field_validator("price")
+    @classmethod
+    def price_must_be_positive(cls, v):
+        if v <= 0:
+            raise ValueError("가격은 0보다 커야 합니다.")
+        if v > 50_000_000_000:  # 500억 상한
+            raise ValueError("가격이 비정상적으로 높습니다.")
+        return v
+
+    @field_validator("year")
+    @classmethod
+    def year_must_be_valid(cls, v):
+        if v < 1990 or v > 2027:
+            raise ValueError("연식은 1990~2027 사이여야 합니다.")
+        return v
+
+    @field_validator("mileage")
+    @classmethod
+    def mileage_must_be_valid(cls, v):
+        if v < 0:
+            raise ValueError("주행거리는 0 이상이어야 합니다.")
+        return v
 
 
 class ListingOut(BaseModel):

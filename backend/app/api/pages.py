@@ -22,10 +22,21 @@ def home(request: Request, db: Session = Depends(get_db), user: Optional[User] =
         .limit(4)
         .all()
     )
+
+    # 실제 통계
+    stats = {
+        "total_listings": db.query(Listing).filter(Listing.status == "active").count(),
+        "total_vehicles": db.query(Vehicle).count(),
+        "total_transactions": db.query(TransactionHistory).count(),
+        "total_3d_models": db.query(Vehicle).filter(Vehicle.model_3d_status == "ready").count(),
+        "total_users": db.query(User).count(),
+    }
+
     return templates.TemplateResponse("home.html", {
         "request": request,
         "user": user,
         "featured": featured,
+        "stats": stats,
     })
 
 
@@ -39,6 +50,7 @@ def listings_page(
     price_max: Optional[int] = None,
     year_min: Optional[int] = None,
     year_max: Optional[int] = None,
+    search: Optional[str] = None,
     sort: str = "newest",
     page: int = Query(1, ge=1),
     db: Session = Depends(get_db),
@@ -62,6 +74,15 @@ def listings_page(
         q = q.filter(Vehicle.year >= year_min)
     if year_max is not None:
         q = q.filter(Vehicle.year <= year_max)
+    if search:
+        term = f"%{search}%"
+        q = q.filter(
+            (Listing.title.ilike(term)) |
+            (Listing.description.ilike(term)) |
+            (Vehicle.brand.ilike(term)) |
+            (Vehicle.model.ilike(term)) |
+            (Vehicle.trim.ilike(term))
+        )
 
     total = q.count()
 
@@ -103,6 +124,7 @@ def listings_page(
             "price_max": price_max,
             "year_min": year_min,
             "year_max": year_max,
+            "search": search,
             "sort": sort,
         },
     })
@@ -117,9 +139,8 @@ def vehicle_detail(
 ):
     vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
     if not vehicle:
-        return templates.TemplateResponse("home.html", {
-            "request": request, "user": user, "featured": [],
-        }, status_code=404)
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="차량을 찾을 수 없습니다.")
 
     listing = (
         db.query(Listing)
@@ -128,14 +149,17 @@ def vehicle_detail(
         .first()
     )
     if listing:
-        listing.view_count += 1
-        db.commit()
+        # 세션 기반 중복 방지: 쿠키에 viewed 플래그
+        viewed_key = f"viewed_{vehicle_id}"
+        if not request.cookies.get(viewed_key):
+            listing.view_count += 1
+            db.commit()
 
     diagnosis = db.query(DiagnosisReport).filter(DiagnosisReport.vehicle_id == vehicle_id).first()
     review_count = db.query(UserReview).filter(UserReview.vehicle_id == vehicle_id).count()
     transaction_count = db.query(TransactionHistory).filter(TransactionHistory.vehicle_id == vehicle_id).count()
 
-    return templates.TemplateResponse("vehicle_detail.html", {
+    response = templates.TemplateResponse("vehicle_detail.html", {
         "request": request,
         "user": user,
         "vehicle": vehicle,
@@ -144,6 +168,11 @@ def vehicle_detail(
         "review_count": review_count,
         "transaction_count": transaction_count,
     })
+    # 조회수 중복 방지 쿠키 (1시간)
+    viewed_key = f"viewed_{vehicle_id}"
+    if not request.cookies.get(viewed_key):
+        response.set_cookie(viewed_key, "1", max_age=3600, httponly=True)
+    return response
 
 
 @router.get("/sell")
@@ -169,6 +198,11 @@ def mypage(request: Request, db: Session = Depends(get_db), user: Optional[User]
     return templates.TemplateResponse("mypage.html", {"request": request, "user": user})
 
 
+@router.get("/compare")
+def compare_page(request: Request, user: Optional[User] = Depends(get_current_user)):
+    return templates.TemplateResponse("compare.html", {"request": request, "user": user})
+
+
 @router.get("/viewer/{vehicle_id}")
 def viewer_page(
     request: Request,
@@ -178,9 +212,8 @@ def viewer_page(
 ):
     vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
     if not vehicle:
-        return templates.TemplateResponse("home.html", {
-            "request": request, "user": user, "featured": [],
-        }, status_code=404)
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="차량을 찾을 수 없습니다.")
 
     return templates.TemplateResponse("viewer.html", {
         "request": request,
