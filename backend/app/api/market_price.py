@@ -268,7 +268,7 @@ async def get_market_price(
         if ratio < 0.90:
             verdict = {"level": "저렴", "color": "#10B981", "message": f"시세 대비 {int((1 - ratio) * 100)}% 저렴합니다"}
         elif ratio < 1.05:
-            verdict = {"level": "적정", "color": "#0EA5E9", "message": "시세 수준의 적정 가격입니다"}
+            verdict = {"level": "적정", "color": "#C8A96E", "message": "시세 수준의 적정 가격입니다"}
         elif ratio < 1.15:
             verdict = {"level": "다소 높음", "color": "#F59E0B", "message": f"시세 대비 {int((ratio - 1) * 100)}% 높습니다"}
         else:

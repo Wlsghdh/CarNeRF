@@ -18,7 +18,7 @@
   --surface: #0E1117;
   --sur2:    #161B24;
   --border:  rgba(255,255,255,0.08);
-  --accent:  #0EA5E9;
+  --accent:  #C8A96E;
   --text:    #E2E8F0;
   --muted:   #64748B;
   --muted2:  #94A3B8;
@@ -34,6 +34,20 @@ html:not(.dark) {
 }
 body { background: var(--bg) !important; color: var(--text) !important; }
 
+/* ── SCROLL ENTRANCE ANIMATIONS ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-delay-1 { transition-delay: 0.08s; }
+.reveal-delay-2 { transition-delay: 0.16s; }
+.reveal-delay-3 { transition-delay: 0.24s; }
+
 .detail-wrap {
   max-width: 1200px; margin: 0 auto;
   padding: 80px 24px 60px;
@@ -42,7 +56,7 @@ body { background: var(--bg) !important; color: var(--text) !important; }
 /* ── BREADCRUMB ── */
 .breadcrumb { display: flex; align-items: center; gap: 8px; margin-bottom: 28px; font-size: 13px; }
 .breadcrumb a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
-.breadcrumb a:hover { color: var(--text); }
+.breadcrumb a:hover { color: var(--accent); }
 .breadcrumb span { color: var(--muted); }
 .breadcrumb .current { color: var(--muted2); }
 
@@ -53,22 +67,46 @@ body { background: var(--bg) !important; color: var(--text) !important; }
   gap: 24px;
   align-items: start;
 }
-@media (max-width: 900px) { .detail-grid { grid-template-columns: 1fr; } }
+@media (max-width: 900px) {
+  .detail-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .detail-wrap { padding: 70px 14px 40px; }
+  .detail-grid { gap: 12px; }
+}
 
-/* ── CARD ── */
+/* ── CARD (glass-morphism) ── */
 .dk-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
+  background: rgba(14,17,23,0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 18px;
   overflow: hidden;
   margin-bottom: 16px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.dk-card:hover {
+  border-color: rgba(255,255,255,0.1);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+}
+html:not(.dark) .dk-card {
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0,0,0,0.06);
 }
 .dk-card-body { padding: 24px; }
+@media (max-width: 480px) {
+  .dk-card-body { padding: 16px; }
+  .dk-card { border-radius: 14px; }
+}
 
 /* ── TABS ── */
 .tab-bar {
   display: flex;
   border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
 }
 .tab-btn {
   flex: 1; padding: 14px;
@@ -76,20 +114,58 @@ body { background: var(--bg) !important; color: var(--text) !important; }
   color: var(--muted);
   background: none; border: none; cursor: pointer;
   border-bottom: 2px solid transparent;
-  transition: all 0.2s;
+  transition: all 0.25s ease;
   margin-bottom: -1px;
   display: flex; align-items: center; justify-content: center; gap: 6px;
+  position: relative;
 }
-.tab-btn:hover { color: var(--text); }
-.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: rgba(200,169,110,0.04);
+}
 
 /* ── VIEWER ── */
 .media-panel {
   aspect-ratio: 16/10;
   background: var(--sur2);
   position: relative;
+  overflow: hidden;
 }
-.media-panel img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.media-panel img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  transition: transform 0.5s cubic-bezier(0.16,1,0.3,1), opacity 0.4s ease;
+}
+.media-panel:hover img { transform: scale(1.02); }
+
+/* ── 3D loading spinner overlay ── */
+.viewer-loading-overlay {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: rgba(7,9,15,0.85);
+  backdrop-filter: blur(8px);
+  z-index: 20;
+  transition: opacity 0.4s ease;
+}
+.viewer-loading-overlay.hidden {
+  opacity: 0; pointer-events: none;
+}
+.viewer-loading-ring {
+  width: 48px; height: 48px;
+  border: 3px solid rgba(200,169,110,0.15);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.viewer-loading-overlay p {
+  font-size: 14px; font-weight: 600; color: var(--text); margin-top: 14px;
+}
+.viewer-loading-overlay small {
+  font-size: 12px; color: var(--muted); margin-top: 4px;
+}
+
 .viewer-overlay {
   position: absolute; inset: 0;
   display: flex; flex-direction: column;
@@ -101,15 +177,15 @@ body { background: var(--bg) !important; color: var(--text) !important; }
 .viewer-overlay small { font-size: 12px; color: var(--muted); margin-top: 4px; }
 .fullscreen-btn {
   position: absolute; bottom: 14px; right: 14px;
-  background: rgba(255,255,255,0.1);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,0.15);
-  color: #fff; font-size: 12px;
-  padding: 7px 14px; border-radius: 8px;
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #fff; font-size: 12px; font-weight: 600;
+  padding: 8px 16px; border-radius: 10px;
   text-decoration: none;
-  transition: background 0.2s;
+  transition: all 0.25s ease;
 }
-.fullscreen-btn:hover { background: rgba(255,255,255,0.18); }
+.fullscreen-btn:hover { background: rgba(255,255,255,0.16); transform: translateY(-1px); }
 
 /* ── 3D 뷰어 컨트롤 바 ── */
 .viewer-controls {
@@ -124,7 +200,7 @@ body { background: var(--bg) !important; color: var(--text) !important; }
   background: rgba(14,17,23,0.85); backdrop-filter: blur(12px);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 10px; padding: 8px 14px;
-  cursor: pointer; transition: all 0.2s;
+  cursor: pointer; transition: all 0.25s ease;
   color: var(--muted2); font-size: 12px; font-weight: 600;
 }
 .defect-toggle:hover { border-color: rgba(255,255,255,0.25); color: var(--text); }
@@ -139,11 +215,18 @@ body { background: var(--bg) !important; color: var(--text) !important; }
 
 /* ── PRICE CARD ── */
 .price-section { padding: 24px; }
-.listing-title { font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 6px; line-height: 1.3; }
+@media (max-width: 480px) { .price-section { padding: 16px; } }
+.listing-title { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 6px; line-height: 1.3; }
 .listing-sub   { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
-.price-row { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 20px; }
-.price-num { font-size: 32px; font-weight: 900; color: var(--accent); line-height: 1; }
-.price-unit { font-size: 16px; color: var(--muted2); padding-bottom: 2px; }
+.price-row { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; }
+.price-num {
+  font-size: 36px; font-weight: 900; line-height: 1;
+  background: linear-gradient(135deg, #C8A96E 0%, #D4B896 50%, #D4B896 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.price-unit { font-size: 16px; color: var(--muted2); padding-bottom: 4px; }
 .nego-badge {
   font-size: 11px; font-weight: 600;
   background: rgba(16,185,129,0.12);
@@ -151,15 +234,25 @@ body { background: var(--bg) !important; color: var(--text) !important; }
   border: 1px solid rgba(16,185,129,0.25);
   padding: 3px 10px; border-radius: 20px;
   margin-bottom: 3px;
+  animation: gentlePulse 2s ease-in-out infinite;
+}
+@keyframes gentlePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 
 /* ── 시세 BAR ── */
 .price-bar-wrap {
-  background: var(--sur2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 20px;
+  background: rgba(14,17,23,0.5);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 22px;
+}
+html:not(.dark) .price-bar-wrap {
+  background: rgba(241,245,249,0.8);
+  border: 1px solid rgba(0,0,0,0.06);
 }
 .price-bar-label {
   display: flex; justify-content: space-between;
@@ -168,59 +261,86 @@ body { background: var(--bg) !important; color: var(--text) !important; }
 }
 .price-bar-label span:last-child { color: var(--accent); font-weight: 600; font-size: 12px; }
 .price-bar-bg {
-  height: 6px; background: var(--border);
-  border-radius: 6px; overflow: visible;
+  height: 8px; background: rgba(255,255,255,0.06);
+  border-radius: 8px; overflow: visible;
   position: relative;
 }
+html:not(.dark) .price-bar-bg { background: rgba(0,0,0,0.06); }
 .price-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #0EA5E9, #6366F1);
-  border-radius: 6px;
+  background: linear-gradient(90deg, #C8A96E, #818CF8, #D4B896);
+  border-radius: 8px;
   position: relative;
+  transition: width 1.2s cubic-bezier(0.16,1,0.3,1);
+  box-shadow: 0 0 12px rgba(200,169,110,0.3);
 }
 .price-bar-dot {
-  position: absolute; right: -5px; top: 50%;
+  position: absolute; right: -6px; top: 50%;
   transform: translateY(-50%);
-  width: 12px; height: 12px;
-  background: #fff; border: 2px solid var(--accent);
+  width: 14px; height: 14px;
+  background: #fff; border: 2.5px solid var(--accent);
   border-radius: 50%;
+  box-shadow: 0 0 10px rgba(200,169,110,0.4);
+  transition: transform 0.2s ease;
 }
+.price-bar-fill:hover .price-bar-dot { transform: translateY(-50%) scale(1.2); }
+
+/* ── market comparison visual ── */
+.price-comparison-visual {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 10px; font-size: 11px;
+}
+.price-indicator {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 8px; font-weight: 600;
+}
+.price-indicator.good { background: rgba(16,185,129,0.1); color: #10B981; }
+.price-indicator.fair { background: rgba(245,158,11,0.1); color: #F59E0B; }
+.price-indicator.high { background: rgba(239,68,68,0.1); color: #EF4444; }
 
 /* ── AI 진단 버튼 ── */
 .ai-btn-row {
   display: flex; gap: 10px; margin-bottom: 16px;
 }
+@media (max-width: 480px) {
+  .ai-btn-row { flex-direction: column; gap: 8px; }
+}
 .ai-btn {
   flex: 1; padding: 12px 16px;
-  border-radius: 10px; border: 1px solid var(--border);
-  background: var(--sur2); color: var(--muted2);
+  border-radius: 12px; border: 1px solid var(--border);
+  background: rgba(22,27,36,0.6);
+  backdrop-filter: blur(8px);
+  color: var(--muted2);
   font-size: 13px; font-weight: 600;
-  cursor: pointer; transition: all 0.2s;
+  cursor: pointer; transition: all 0.25s ease;
   display: flex; align-items: center; justify-content: center; gap: 8px;
 }
-.ai-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--text); transform: translateY(-1px); }
-.ai-btn.price-btn:hover, .ai-btn.price-btn.active { border-color: #0EA5E960; background: rgba(14,165,233,0.08); color: #0EA5E9; }
-.ai-btn.defect-btn:hover, .ai-btn.defect-btn.active { border-color: #F59E0B60; background: rgba(245,158,11,0.08); color: #F59E0B; }
+html:not(.dark) .ai-btn { background: rgba(241,245,249,0.8); }
+.ai-btn:hover { border-color: rgba(255,255,255,0.18); color: var(--text); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+.ai-btn.price-btn:hover, .ai-btn.price-btn.active { border-color: #C8A96E50; background: rgba(200,169,110,0.1); color: #C8A96E; box-shadow: 0 4px 20px rgba(200,169,110,0.1); }
+.ai-btn.defect-btn:hover, .ai-btn.defect-btn.active { border-color: #F59E0B50; background: rgba(245,158,11,0.1); color: #F59E0B; box-shadow: 0 4px 20px rgba(245,158,11,0.1); }
 .ai-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
 
 /* ── AI 가격 예측 패널 ── */
 .price-predict-panel {
   display: none;
-  background: var(--sur2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  background: rgba(22,27,36,0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
   padding: 20px;
   margin-bottom: 16px;
-  animation: slideDown 0.3s ease;
+  animation: slideDown 0.35s cubic-bezier(0.16,1,0.3,1);
 }
+html:not(.dark) .price-predict-panel { background: rgba(241,245,249,0.9); }
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-8px); }
+  from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .predict-result-price {
   font-size: 28px; font-weight: 900;
-  background: linear-gradient(135deg, #0EA5E9, #6366F1);
+  background: linear-gradient(135deg, #C8A96E, #D4B896);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -250,49 +370,90 @@ body { background: var(--bg) !important; color: var(--text) !important; }
 /* ── 결함 요약 패널 ── */
 .defect-summary-panel {
   display: none;
-  background: var(--sur2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  background: rgba(22,27,36,0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
   padding: 20px;
   margin-bottom: 16px;
-  animation: slideDown 0.3s ease;
+  animation: slideDown 0.35s cubic-bezier(0.16,1,0.3,1);
 }
+html:not(.dark) .defect-summary-panel { background: rgba(241,245,249,0.9); }
 
 .defect-list-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 12px;
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
   background: rgba(255,255,255,0.03);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
   margin-bottom: 8px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
 }
-.defect-list-item:hover { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); }
+.defect-list-item::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px; border-radius: 3px;
+  background: var(--defect-color, #F59E0B);
+  opacity: 0; transition: opacity 0.25s ease;
+}
+.defect-list-item:hover {
+  border-color: rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  transform: translateX(4px);
+}
+.defect-list-item:hover::before { opacity: 1; }
 .defect-dot {
   width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  box-shadow: 0 0 8px currentColor;
 }
+
+/* severity badge improved */
+.severity-badge {
+  font-size: 11px; padding: 3px 10px; border-radius: 20px;
+  font-weight: 700; letter-spacing: 0.3px;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.severity-badge::before {
+  content: ''; width: 5px; height: 5px; border-radius: 50%;
+  background: currentColor;
+}
+.severity-mild { background: rgba(16,185,129,0.12); color: #10B981; border: 1px solid rgba(16,185,129,0.2); }
+.severity-moderate { background: rgba(245,158,11,0.12); color: #F59E0B; border: 1px solid rgba(245,158,11,0.2); }
+.severity-severe { background: rgba(239,68,68,0.12); color: #EF4444; border: 1px solid rgba(239,68,68,0.2); }
 
 /* ── BUTTONS ── */
 .action-row { display: flex; gap: 10px; }
 .btn-contact {
-  flex: 1; background: var(--accent);
+  flex: 1;
+  background: linear-gradient(135deg, #C8A96E, #3B82F6);
   color: #fff; border: none;
-  border-radius: 10px; padding: 13px;
+  border-radius: 12px; padding: 14px;
   font-size: 14px; font-weight: 700;
-  cursor: pointer; transition: all 0.2s;
+  cursor: pointer; transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(200,169,110,0.25);
+  position: relative; overflow: hidden;
 }
-.btn-contact:hover { background: #38BEF8; transform: translateY(-1px); }
+.btn-contact::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+  opacity: 0; transition: opacity 0.3s ease;
+}
+.btn-contact:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(200,169,110,0.35); }
+.btn-contact:hover::after { opacity: 1; }
 .btn-heart {
-  width: 46px; height: 46px;
-  background: var(--sur2);
+  width: 48px; height: 48px;
+  background: rgba(22,27,36,0.6);
+  backdrop-filter: blur(8px);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; color: var(--muted);
-  transition: all 0.2s;
+  transition: all 0.25s ease;
 }
-.btn-heart:hover { border-color: #EF4444; color: #EF4444; }
+.btn-heart:hover { border-color: #EF4444; color: #EF4444; transform: scale(1.05); }
 .btn-heart svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
 
 /* ── SPECS ── */
@@ -302,20 +463,28 @@ body { background: var(--bg) !important; color: var(--text) !important; }
   padding: 12px 0;
   border-bottom: 1px solid var(--border);
   font-size: 13px;
+  transition: background 0.2s ease, padding 0.2s ease;
+}
+.spec-row:hover {
+  background: rgba(255,255,255,0.02);
+  padding-left: 8px; padding-right: 8px;
+  margin: 0 -8px;
+  border-radius: 8px;
 }
 .spec-row:last-child { border-bottom: none; }
 .spec-key { color: var(--muted); }
 .spec-val { font-weight: 600; color: var(--text); }
 
 /* ── SELLER ── */
-.seller-row { display: flex; align-items: center; gap: 12px; }
+.seller-row { display: flex; align-items: center; gap: 14px; }
 .seller-avatar {
-  width: 40px; height: 40px;
-  background: linear-gradient(135deg, var(--accent), #6366F1);
+  width: 44px; height: 44px;
+  background: linear-gradient(135deg, var(--accent), #D4B896);
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 15px; font-weight: 800; color: #fff;
+  font-size: 16px; font-weight: 800; color: #fff;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(200,169,110,0.2);
 }
 .seller-name { font-size: 14px; font-weight: 600; color: var(--text); }
 .seller-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
@@ -325,23 +494,38 @@ body { background: var(--bg) !important; color: var(--text) !important; }
 
 /* ── AI REPORT ── */
 .report-wrap {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 28px;
-  margin-top: 24px;
+  background: rgba(14,17,23,0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(212,180,120,0.12);
+  border-radius: 20px;
+  padding: 32px;
+  margin-top: 28px;
+  position: relative;
+  overflow: hidden;
 }
+html:not(.dark) .report-wrap {
+  background: rgba(255,255,255,0.75);
+  border: 1px solid rgba(212,180,120,0.15);
+}
+.report-wrap::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, #D4B896, #C8A96E, #D4B896);
+  opacity: 0.6;
+}
+@media (max-width: 480px) { .report-wrap { padding: 20px; border-radius: 16px; } }
 .report-header {
   display: flex; align-items: center; gap: 14px;
   margin-bottom: 28px;
 }
 .report-icon {
-  width: 44px; height: 44px;
-  background: rgba(99,102,241,0.12);
-  border: 1px solid rgba(99,102,241,0.2);
-  border-radius: 12px;
+  width: 48px; height: 48px;
+  background: rgba(212,180,120,0.12);
+  border: 1px solid rgba(212,180,120,0.2);
+  border-radius: 14px;
   display: flex; align-items: center; justify-content: center;
-  color: #6366F1; flex-shrink: 0;
+  color: #D4B896; flex-shrink: 0;
 }
 .report-icon svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; }
 .report-title { font-size: 18px; font-weight: 800; color: var(--text); }
@@ -351,14 +535,22 @@ body { background: var(--bg) !important; color: var(--text) !important; }
   display: grid;
   grid-template-columns: auto 1fr 1fr 1fr;
   gap: 24px;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
   align-items: center;
 }
-@media (max-width: 640px) { .score-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 640px) {
+  .score-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+}
+@media (max-width: 480px) {
+  .score-grid { grid-template-columns: 1fr; gap: 14px; }
+}
 
 /* 원형 점수 */
 .circle-score { text-align: center; }
-.circle-score svg { display: block; margin: 0 auto 8px; }
+.circle-score svg {
+  display: block; margin: 0 auto 8px;
+  filter: drop-shadow(0 0 8px rgba(200,169,110,0.2));
+}
 .circle-score .score-num {
   font-size: 22px; font-weight: 900;
   color: var(--text);
@@ -366,32 +558,98 @@ body { background: var(--bg) !important; color: var(--text) !important; }
 .circle-score .score-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
 /* 바 점수 */
-.bar-score { display: flex; flex-direction: column; justify-content: center; }
+.bar-score {
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 14px 16px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 12px;
+  transition: border-color 0.25s ease;
+}
+html:not(.dark) .bar-score { background: rgba(0,0,0,0.02); border-color: rgba(0,0,0,0.05); }
+.bar-score:hover { border-color: rgba(255,255,255,0.1); }
 .bar-score-header {
   display: flex; justify-content: space-between;
-  font-size: 12px; margin-bottom: 8px;
+  font-size: 12px; margin-bottom: 10px;
 }
 .bar-score-header .lbl { color: var(--muted); }
-.bar-score-header .val { font-weight: 700; color: var(--text); }
-.bar-bg { height: 6px; background: var(--sur2); border-radius: 6px; overflow: hidden; }
-.bar-fill { height: 100%; border-radius: 6px; transition: width 1s ease; }
-.bar-green  { background: linear-gradient(90deg,#059669,#10B981); }
-.bar-yellow { background: linear-gradient(90deg,#D97706,#F59E0B); }
-.bar-red    { background: linear-gradient(90deg,#DC2626,#EF4444); }
+.bar-score-header .val { font-weight: 700; color: var(--text); font-size: 14px; }
+.bar-bg {
+  height: 8px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 8px;
+  overflow: hidden;
+}
+html:not(.dark) .bar-bg { background: rgba(0,0,0,0.06); }
+.bar-fill {
+  height: 100%; border-radius: 8px;
+  transition: width 1.2s cubic-bezier(0.16,1,0.3,1);
+  position: relative;
+}
+.bar-fill::after {
+  content: '';
+  position: absolute; right: 0; top: 0; bottom: 0; width: 40px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15));
+  border-radius: 0 8px 8px 0;
+}
+.bar-green  { background: linear-gradient(90deg,#059669,#10B981); box-shadow: 0 0 10px rgba(16,185,129,0.2); }
+.bar-yellow { background: linear-gradient(90deg,#D97706,#F59E0B); box-shadow: 0 0 10px rgba(245,158,11,0.2); }
+.bar-red    { background: linear-gradient(90deg,#DC2626,#EF4444); box-shadow: 0 0 10px rgba(239,68,68,0.2); }
 
 .report-boxes {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
   margin-top: 4px;
 }
 @media (max-width: 560px) { .report-boxes { grid-template-columns: 1fr; } }
 .report-box {
-  background: var(--sur2);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 16px;
+  background: rgba(22,27,36,0.5);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
+  padding: 18px;
+  transition: border-color 0.25s ease, transform 0.25s ease;
 }
+html:not(.dark) .report-box { background: rgba(241,245,249,0.7); border-color: rgba(0,0,0,0.06); }
+.report-box:hover { border-color: rgba(255,255,255,0.12); transform: translateY(-2px); }
 .report-box h4 { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
 .report-box p  { font-size: 13px; color: var(--muted2); line-height: 1.7; }
+
+/* ── REVIEW SECTION ── */
+.review-item {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s ease;
+}
+.review-item:last-child { border-bottom: none; }
+.review-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+  flex-wrap: wrap; gap: 6px;
+}
+.review-stars { font-size: 14px; color: #F59E0B; letter-spacing: 1px; }
+.review-author { font-size: 13px; font-weight: 600; color: var(--text); }
+.review-type-badge {
+  font-size: 10px; padding: 2px 8px; border-radius: 8px; font-weight: 600;
+}
+.review-date { font-size: 11px; color: var(--muted); }
+.review-content { font-size: 13px; color: var(--muted2); line-height: 1.7; margin: 0; }
+.review-avg-display {
+  display: flex; align-items: center; gap: 14px; margin-bottom: 16px;
+  padding: 14px; background: rgba(245,158,11,0.05); border: 1px solid rgba(245,158,11,0.1);
+  border-radius: 12px;
+}
+.review-avg-num { font-size: 28px; font-weight: 900; color: #F59E0B; }
+.review-avg-stars { font-size: 18px; color: #F59E0B; }
+.review-avg-count { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* ── star rating ── */
+.star-btn { transition: color 0.15s ease, transform 0.15s ease !important; }
+.star-btn:hover { transform: scale(1.2); }
+
+/* ── fadeIn for modals ── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 
 /* ── 로딩 스피너 ── */
 .spinner {
@@ -436,13 +694,20 @@ body { background: var(--bg) !important; color: var(--text) !important; }
 
         <!-- 사진 패널 -->
         <div id="panel-photo" class="media-panel">
-          <img src="{{ vehicle.thumbnail_url }}" alt="{{ vehicle.brand }} {{ vehicle.model }}"
-               onerror="this.style.display='none'">
+          <img src="{{ vehicle.thumbnail_url }}" alt="{{ vehicle.brand }} {{ vehicle.model }} {{ vehicle.year }}년식 차량 사진"
+               onerror="this.onerror=null;this.src='/static/images/placeholder-car.svg';">
         </div>
 
         <!-- 3D 패널 -->
         <div id="panel-3d" class="media-panel" style="display:none;">
           <div id="viewer-container" style="width:100%;height:100%;"></div>
+
+          <!-- 3D Loading Spinner -->
+          <div id="viewer-loading" class="viewer-loading-overlay" style="display:none;">
+            <div class="viewer-loading-ring"></div>
+            <p>3D 모델 로딩 중...</p>
+            <small id="viewer-loading-pct">잠시만 기다려주세요</small>
+          </div>
 
           {% if vehicle.model_3d_status == 'ready' %}
           <!-- 3D 뷰어 컨트롤 -->
@@ -460,7 +725,7 @@ body { background: var(--bg) !important; color: var(--text) !important; }
 
           {% if vehicle.model_3d_status != 'ready' %}
           <div class="viewer-overlay">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="#0EA5E9" style="width:48px;height:48px;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="#C8A96E" style="width:48px;height:48px;">
               <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25"/>
             </svg>
             <p>3D 스캔 준비 중</p>
@@ -472,7 +737,7 @@ body { background: var(--bg) !important; color: var(--text) !important; }
 
       <!-- 판매자 설명 -->
       {% if listing and listing.description %}
-      <div class="dk-card">
+      <div class="dk-card reveal">
         <div class="dk-card-body">
           <h3 style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:12px;">판매자 설명</h3>
           <p class="desc-text">{{ listing.description }}</p>
@@ -563,7 +828,7 @@ body { background: var(--bg) !important; color: var(--text) !important; }
       </div>
 
       <!-- 차량 정보 -->
-      <div class="dk-card">
+      <div class="dk-card reveal">
         <div class="dk-card-body">
           <h3 style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px;">차량 정보</h3>
           <div class="specs-list">
@@ -589,7 +854,7 @@ body { background: var(--bg) !important; color: var(--text) !important; }
       </div>
 
       <!-- AI 차량 요약 -->
-      <div class="dk-card">
+      <div class="dk-card reveal reveal-delay-1">
         <div class="dk-card-body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
             <h3 style="font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;">
@@ -607,7 +872,7 @@ body { background: var(--bg) !important; color: var(--text) !important; }
       </div>
 
       <!-- 거래기록 / 시세 -->
-      <div class="dk-card">
+      <div class="dk-card reveal reveal-delay-2">
         <div class="dk-card-body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
             <h3 style="font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;">
@@ -626,7 +891,7 @@ body { background: var(--bg) !important; color: var(--text) !important; }
       </div>
 
       <!-- 이용자 후기 -->
-      <div class="dk-card">
+      <div class="dk-card reveal reveal-delay-3">
         <div class="dk-card-body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
             <h3 style="font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;">
@@ -665,7 +930,7 @@ body { background: var(--bg) !important; color: var(--text) !important; }
 
       <!-- 판매자 정보 -->
       {% if listing %}
-      <div class="dk-card">
+      <div class="dk-card reveal">
         <div class="dk-card-body">
           <h3 style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px;">판매자 정보</h3>
           <div class="seller-row">
@@ -691,7 +956,7 @@ body { background: var(--bg) !important; color: var(--text) !important; }
 
   <!-- ── AI 진단 리포트 ── -->
   {% if diagnosis %}
-  <div class="report-wrap">
+  <div class="report-wrap reveal">
     <div class="report-header">
       <div class="report-icon">
         <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
@@ -858,7 +1123,7 @@ function renderPriceResult(data) {
 
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-      <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:#0EA5E9;fill:none;stroke-width:2;">
+      <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:#C8A96E;fill:none;stroke-width:2;">
         <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
       </svg>
       <span style="font-size:13px;font-weight:600;color:var(--text);">AI 예측 가격</span>
@@ -937,37 +1202,43 @@ function renderDefectSummary(data) {
   const sevColors = { '경미': '#10B981', '중간': '#F59E0B', '심각': '#EF4444' };
   const sevColor = sevColors[data.severity_level] || '#F59E0B';
 
+  const sevClasses = { '경미': 'severity-mild', '중간': 'severity-moderate', '심각': 'severity-severe' };
   const defectItems = data.defects.map(d => `
-    <div class="defect-list-item" onclick="showDefectDetail(${JSON.stringify(d).replace(/"/g, '&quot;')})">
-      <div class="defect-dot" style="background:${d.marker_color};box-shadow:0 0 6px ${d.marker_color};"></div>
-      <div style="flex:1;">
+    <div class="defect-list-item" style="--defect-color:${d.marker_color};" onclick="showDefectDetail(${JSON.stringify(d).replace(/"/g, '&quot;')})">
+      <div class="defect-dot" style="background:${d.marker_color};color:${d.marker_color};"></div>
+      <div style="flex:1;min-width:0;">
         <div style="font-size:13px;font-weight:600;color:var(--text);">${d.type_kr}</div>
-        <div style="font-size:11px;color:var(--muted);">${d.description}</div>
+        <div style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${d.description}</div>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
-        <span style="font-size:11px;padding:2px 8px;border-radius:8px;background:${sevColors[d.severity] || '#F59E0B'}15;color:${sevColors[d.severity] || '#F59E0B'};font-weight:600;">${d.severity}</span>
-        <span style="font-size:10px;color:var(--muted);">${Math.round(d.confidence * 100)}%</span>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+        <span class="severity-badge ${sevClasses[d.severity] || 'severity-moderate'}">${d.severity}</span>
+        <span style="font-size:10px;color:var(--muted);font-weight:600;">${Math.round(d.confidence * 100)}%</span>
       </div>
     </div>
   `).join('');
 
   el.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border);">
       <div>
-        <div style="font-size:13px;font-weight:600;color:var(--text);">
-          총 <span style="color:${sevColor};font-size:16px;font-weight:800;">${data.defect_count}</span>건 결함 발견
+        <div style="font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;">
+          <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:${sevColor};fill:none;stroke-width:2.5;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z"/>
+          </svg>
+          총 <span style="color:${sevColor};font-size:18px;font-weight:900;margin:0 2px;">${data.defect_count}</span>건 결함 발견
         </div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px;">
-          종합 점수: <span id="defect-score-value" style="font-weight:700;color:var(--text);">${data.total_defect_score}</span>점
-          &middot;
-          심각도: <span id="defect-severity-level" style="font-weight:700;color:${sevColor};">${data.severity_level}</span>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;display:flex;align-items:center;gap:8px;">
+          <span>종합 점수: <span id="defect-score-value" style="font-weight:700;color:var(--text);">${data.total_defect_score}</span>점</span>
+          <span style="width:4px;height:4px;border-radius:50%;background:var(--muted);"></span>
+          <span>심각도: <span class="severity-badge ${sevClasses[data.severity_level] || 'severity-moderate'}" id="defect-severity-level">${data.severity_level}</span></span>
         </div>
       </div>
       <button onclick="goTo3DAndShowDefects()" style="
-        padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;
-        background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);
-        color:#F59E0B;cursor:pointer;transition:all 0.2s;
-      " onmouseover="this.style.background='rgba(245,158,11,0.2)'" onmouseout="this.style.background='rgba(245,158,11,0.1)'">
+        padding:9px 16px;border-radius:10px;font-size:12px;font-weight:600;
+        background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);
+        color:#F59E0B;cursor:pointer;transition:all 0.25s ease;
+        display:flex;align-items:center;gap:6px;
+      " onmouseover="this.style.background='rgba(245,158,11,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(245,158,11,0.08)';this.style.transform='none'">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25"/></svg>
         3D에서 보기
       </button>
     </div>
@@ -1162,10 +1433,10 @@ function loadMarketPrice() {
             {
               label: '평균 시세 (만원)',
               data: prices,
-              borderColor: '#0EA5E9',
-              backgroundColor: isDark ? 'rgba(14,165,233,0.1)' : 'rgba(14,165,233,0.08)',
+              borderColor: '#C8A96E',
+              backgroundColor: isDark ? 'rgba(200,169,110,0.1)' : 'rgba(200,169,110,0.08)',
               borderWidth: 2.5,
-              pointBackgroundColor: '#0EA5E9',
+              pointBackgroundColor: '#C8A96E',
               pointBorderColor: pointBorder,
               pointBorderWidth: 2,
               pointRadius: counts.map(c => c > 0 ? 5 : 3),
@@ -1176,8 +1447,8 @@ function loadMarketPrice() {
             {
               label: '거래 건수',
               data: counts,
-              borderColor: '#6366F1',
-              backgroundColor: isDark ? 'rgba(99,102,241,0.5)' : 'rgba(99,102,241,0.3)',
+              borderColor: '#D4B896',
+              backgroundColor: isDark ? 'rgba(212,180,120,0.5)' : 'rgba(212,180,120,0.3)',
               borderWidth: 0,
               pointRadius: 0,
               type: 'bar',
@@ -1226,9 +1497,9 @@ function loadMarketPrice() {
             },
             y1: {
               position: 'right',
-              ticks: { color: '#6366F1', font: { size: 11 }, stepSize: 1 },
+              ticks: { color: '#D4B896', font: { size: 11 }, stepSize: 1 },
               grid: { display: false },
-              title: { display: true, text: '거래 건수', color: '#6366F1', font: { size: 10 } },
+              title: { display: true, text: '거래 건수', color: '#D4B896', font: { size: 10 } },
             },
           },
         },
@@ -1245,7 +1516,7 @@ function loadMarketPrice() {
             <span style="color:var(--muted);margin-left:8px;">${t.mileage ? t.mileage.toLocaleString() + 'km' : ''}</span>
           </div>
           <div style="display:flex;align-items:center;gap:8px;">
-            <span style="font-size:10px;padding:2px 6px;border-radius:6px;background:${t.source === 'carnerf' ? 'rgba(14,165,233,0.1)' : 'rgba(148,163,184,0.1)'};color:${t.source === 'carnerf' ? '#0EA5E9' : '#94A3B8'};font-weight:600;">${t.source === 'carnerf' ? 'CarNeRF' : '외부'}</span>
+            <span style="font-size:10px;padding:2px 6px;border-radius:6px;background:${t.source === 'carnerf' ? 'rgba(200,169,110,0.1)' : 'rgba(148,163,184,0.1)'};color:${t.source === 'carnerf' ? '#C8A96E' : '#94A3B8'};font-weight:600;">${t.source === 'carnerf' ? 'CarNeRF' : '외부'}</span>
             ${t.buyer_region ? `<span style="font-size:11px;background:rgba(16,185,129,0.1);color:#10B981;padding:2px 8px;border-radius:8px;">${t.buyer_region}</span>` : ''}
             <span style="color:var(--muted);font-size:12px;">${t.date}</span>
           </div>
@@ -1311,29 +1582,29 @@ function loadReviews() {
 
       const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
       const typeLabel = t => t === 'buyer' ? '구매자' : '판매자';
-      const typeBg = t => t === 'buyer' ? 'rgba(14,165,233,0.1)' : 'rgba(16,185,129,0.1)';
-      const typeColor = t => t === 'buyer' ? '#0EA5E9' : '#10B981';
+      const typeBg = t => t === 'buyer' ? 'rgba(200,169,110,0.1)' : 'rgba(16,185,129,0.1)';
+      const typeColor = t => t === 'buyer' ? '#C8A96E' : '#10B981';
 
       const reviewsHtml = data.reviews.map(r => `
-        <div style="padding:12px 0;border-bottom:1px solid var(--border);">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div class="review-item">
+          <div class="review-header">
             <div style="display:flex;align-items:center;gap:8px;">
-              <span style="font-size:14px;color:#F59E0B;">${stars(r.rating)}</span>
-              <span style="font-size:13px;font-weight:600;color:var(--text);">${r.author_name}</span>
-              <span style="font-size:10px;padding:2px 6px;border-radius:6px;background:${typeBg(r.review_type)};color:${typeColor(r.review_type)};font-weight:600;">${typeLabel(r.review_type)}</span>
+              <span class="review-stars">${stars(r.rating)}</span>
+              <span class="review-author">${r.author_name}</span>
+              <span class="review-type-badge" style="background:${typeBg(r.review_type)};color:${typeColor(r.review_type)};">${typeLabel(r.review_type)}</span>
             </div>
-            <span style="font-size:11px;color:var(--muted);">${new Date(r.created_at).toLocaleDateString('ko-KR')}</span>
+            <span class="review-date">${new Date(r.created_at).toLocaleDateString('ko-KR')}</span>
           </div>
-          <p style="font-size:13px;color:var(--muted2);line-height:1.7;margin:0;">${r.content}</p>
+          <p class="review-content">${r.content}</p>
         </div>
       `).join('');
 
       el.innerHTML = `
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-          <span style="font-size:24px;font-weight:900;color:#F59E0B;">${data.avg_rating}</span>
+        <div class="review-avg-display">
+          <span class="review-avg-num">${data.avg_rating}</span>
           <div>
-            <div style="font-size:16px;color:#F59E0B;">${stars(Math.round(data.avg_rating))}</div>
-            <div style="font-size:12px;color:var(--muted);">${data.total}건의 후기</div>
+            <div class="review-avg-stars">${stars(Math.round(data.avg_rating))}</div>
+            <div class="review-avg-count">${data.total}건의 후기</div>
           </div>
         </div>
         ${reviewsHtml}
@@ -1403,11 +1674,27 @@ function checkWishlistStatus() {
     .catch(() => {});
 }
 
-// 페이지 로드 시 후기 + 위시리스트 자동 로드
+// 페이지 로드 시 후기 + 위시리스트 자동 로드 + scroll reveal
 document.addEventListener('DOMContentLoaded', () => {
   loadReviews();
   checkWishlistStatus();
   loadWishlistCount();
+
+  // Scroll reveal animation via IntersectionObserver
+  const revealEls = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window && revealEls.length > 0) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+    revealEls.forEach(el => observer.observe(el));
+  } else {
+    revealEls.forEach(el => el.classList.add('visible'));
+  }
 });
 </script>
 
@@ -1421,11 +1708,42 @@ document.addEventListener('DOMContentLoaded', () => {
     origShowTab(tab);
     if (tab === '3d' && !viewerLoaded) {
       viewerLoaded = true;
-      initViewer('viewer-container', {
+
+      // Show loading spinner
+      const loadingOverlay = document.getElementById('viewer-loading');
+      const loadingPct = document.getElementById('viewer-loading-pct');
+      if (loadingOverlay) loadingOverlay.style.display = 'flex';
+
+      // Progress simulation (real progress from viewer if available)
+      let pct = 0;
+      const progressInterval = setInterval(() => {
+        pct = Math.min(pct + Math.random() * 8, 92);
+        if (loadingPct) loadingPct.textContent = Math.round(pct) + '% 로딩됨';
+      }, 400);
+
+      const viewerPromise = initViewer('viewer-container', {
         modelUrl: '{{ vehicle.model_3d_url }}',
         autoRotate: false,
         backgroundColor: 0x07090F,
       });
+
+      // Handle viewer loaded (works whether initViewer returns a promise or not)
+      const hideLoading = () => {
+        clearInterval(progressInterval);
+        if (loadingPct) loadingPct.textContent = '100% 완료';
+        setTimeout(() => {
+          if (loadingOverlay) loadingOverlay.classList.add('hidden');
+          setTimeout(() => { if (loadingOverlay) loadingOverlay.style.display = 'none'; }, 400);
+        }, 300);
+      };
+
+      if (viewerPromise && typeof viewerPromise.then === 'function') {
+        viewerPromise.then(hideLoading).catch(hideLoading);
+      } else {
+        // If initViewer doesn't return a promise, hide after a reasonable delay
+        setTimeout(hideLoading, 3000);
+      }
+
       // 결함 마커 데이터 로드
       initDefectMarkers({{ vehicle.id }});
     }
@@ -1434,28 +1752,29 @@ document.addEventListener('DOMContentLoaded', () => {
   // 결함 마커 토글 연결
   window._toggleDefectsViewer = toggleDefectMarkers;
 
-  // 리스트에서 결함 클릭 시 모달 표시
-  window._showDefectModalFromList = function(defect) {
-    // viewer.js 내부의 showDefectModal을 재구현
+  // -- Fix module scope: explicitly assign to window so non-module scripts can call it --
+  function _showDefectModalFromList(defect) {
     const severityColors = { '경미': '#10B981', '중간': '#F59E0B', '심각': '#EF4444' };
+    const sevClasses = { '경미': 'severity-mild', '중간': 'severity-moderate', '심각': 'severity-severe' };
     const sevColor = severityColors[defect.severity] || '#F59E0B';
+    const sevClass = sevClasses[defect.severity] || 'severity-moderate';
     let modal = document.getElementById('defect-modal');
     if (modal) modal.remove();
     modal = document.createElement('div');
     modal.id = 'defect-modal';
-    modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);animation:fadeIn 0.25s ease;';
     modal.innerHTML = `
-      <div style="background:#0E1117;border:1px solid rgba(255,255,255,0.1);border-radius:20px;max-width:600px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+      <div style="background:rgba(14,17,23,0.95);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.08);border-radius:20px;max-width:600px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.6);animation:slideDown 0.35s cubic-bezier(0.16,1,0.3,1);">
         <div style="padding:24px 24px 0;display:flex;justify-content:space-between;align-items:center;">
-          <div style="display:flex;align-items:center;gap:10px;">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
             <div style="width:10px;height:10px;background:${defect.marker_color};border-radius:50%;box-shadow:0 0 8px ${defect.marker_color};"></div>
             <h3 style="font-size:18px;font-weight:800;color:#E2E8F0;margin:0;">결함 발견: ${defect.type_kr}</h3>
-            <span style="font-size:12px;padding:3px 10px;border-radius:12px;background:${sevColor}15;color:${sevColor};border:1px solid ${sevColor}30;font-weight:600;">${defect.severity}</span>
+            <span class="severity-badge ${sevClass}">${defect.severity}</span>
           </div>
-          <button onclick="document.getElementById('defect-modal').remove()" style="width:32px;height:32px;background:rgba(255,255,255,0.08);border:none;border-radius:8px;color:#94A3B8;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">&times;</button>
+          <button onclick="document.getElementById('defect-modal').remove()" style="width:32px;height:32px;background:rgba(255,255,255,0.08);border:none;border-radius:8px;color:#94A3B8;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">&times;</button>
         </div>
         <div style="padding:16px 24px;">
-          <div style="background:#161B24;border:1px solid rgba(255,255,255,0.08);border-radius:12px;overflow:hidden;aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;">
+          <div style="background:#161B24;border:1px solid rgba(255,255,255,0.08);border-radius:14px;overflow:hidden;aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;">
             <img src="${defect.annotated_image_url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
             <div style="display:none;flex-direction:column;align-items:center;gap:8px;color:#64748B;">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
@@ -1464,15 +1783,22 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         </div>
         <div style="padding:0 24px 24px;">
-          <div style="background:#161B24;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-              <div><div style="font-size:11px;color:#64748B;margin-bottom:4px;">결함 유형</div><div style="font-size:14px;font-weight:600;color:#E2E8F0;">${defect.type_kr} (${defect.type})</div></div>
-              <div><div style="font-size:11px;color:#64748B;margin-bottom:4px;">심각도</div><div style="font-size:14px;font-weight:600;color:${sevColor};">${defect.severity}</div></div>
-              <div><div style="font-size:11px;color:#64748B;margin-bottom:4px;">AI 신뢰도</div><div style="font-size:14px;font-weight:600;color:#E2E8F0;">${Math.round(defect.confidence * 100)}%</div></div>
-              <div><div style="font-size:11px;color:#64748B;margin-bottom:4px;">소스 프레임</div><div style="font-size:14px;font-weight:600;color:#E2E8F0;">${defect.source_frame}</div></div>
+          <div style="background:#161B24;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:18px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+              <div><div style="font-size:11px;color:#64748B;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">결함 유형</div><div style="font-size:14px;font-weight:600;color:#E2E8F0;">${defect.type_kr} (${defect.type})</div></div>
+              <div><div style="font-size:11px;color:#64748B;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">심각도</div><div style="font-size:14px;font-weight:600;color:${sevColor};">${defect.severity}</div></div>
+              <div><div style="font-size:11px;color:#64748B;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">AI 신뢰도</div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="flex:1;height:6px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden;">
+                    <div style="height:100%;width:${Math.round(defect.confidence * 100)}%;background:linear-gradient(90deg,#C8A96E,#D4B896);border-radius:6px;"></div>
+                  </div>
+                  <span style="font-size:13px;font-weight:700;color:#E2E8F0;">${Math.round(defect.confidence * 100)}%</span>
+                </div>
+              </div>
+              <div><div style="font-size:11px;color:#64748B;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">소스 프레임</div><div style="font-size:14px;font-weight:600;color:#E2E8F0;">${defect.source_frame}</div></div>
             </div>
-            <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:12px;">
-              <div style="font-size:11px;color:#64748B;margin-bottom:4px;">AI 분석 소견</div>
+            <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:14px;">
+              <div style="font-size:11px;color:#64748B;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">AI 분석 소견</div>
               <div style="font-size:13px;color:#94A3B8;line-height:1.7;">${defect.description}</div>
             </div>
           </div>
@@ -1482,7 +1808,10 @@ document.addEventListener('DOMContentLoaded', () => {
     modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
     document.addEventListener('keydown', function esc(e) { if (e.key === 'Escape') { modal.remove(); document.removeEventListener('keydown', esc); } });
     document.body.appendChild(modal);
-  };
+  }
+
+  // Explicitly export to window scope so non-module onclick handlers can call it
+  window._showDefectModalFromList = _showDefectModalFromList;
 </script>
 {% endif %}
 
@@ -1504,7 +1833,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div style="padding:24px;">
           <div style="background:#161B24;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:16px;">
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-              <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#818cf8);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;">
+              <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#D4B896,#818cf8);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;">
                 {{ listing.seller.username[0] if listing.seller else 'S' }}
               </div>
               <div>
@@ -1514,8 +1843,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             {% if listing.seller and listing.seller.phone %}
             <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.2);border-radius:8px;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
-              <span style="font-size:14px;font-weight:600;color:#38bdf8;">{{ listing.seller.phone }}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4B896" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+              <span style="font-size:14px;font-weight:600;color:#D4B896;">{{ listing.seller.phone }}</span>
             </div>
             {% else %}
             <div style="font-size:13px;color:#64748B;text-align:center;padding:8px;">전화번호가 등록되지 않았습니다.</div>

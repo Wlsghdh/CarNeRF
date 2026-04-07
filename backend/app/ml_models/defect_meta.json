@@ -1,0 +1,1 @@
+{"classes": ["damage"], "nc": 1, "model_type": "yolov8n", "epochs": 100, "imgsz": 640, "dataset": "vehide_binary"}

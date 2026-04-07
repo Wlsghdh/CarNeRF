@@ -20,7 +20,7 @@ UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # CORS
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:8000,http://localhost:3000").split(",")
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:8000,http://localhost:5199,http://localhost:3000").split(",")
 
 # External APIs
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")

@@ -8,10 +8,15 @@
   --surface: #0E1117;
   --sur2:    #161B24;
   --border:  rgba(255,255,255,0.08);
-  --accent:  #0EA5E9;
+  --accent:  #C8A96E;
+  --accent2: #D4B896;
   --text:    #E2E8F0;
   --muted:   #64748B;
   --muted2:  #94A3B8;
+  --glow:    rgba(200,169,110,0.15);
+  --card-radius: 18px;
+  --glass-bg: rgba(14,17,23,0.6);
+  --glass-border: rgba(255,255,255,0.06);
 }
 html:not(.dark) {
   --bg:      #F8FAFC;
@@ -21,61 +26,195 @@ html:not(.dark) {
   --text:    #1E293B;
   --muted:   #64748B;
   --muted2:  #475569;
+  --glow:    rgba(200,169,110,0.08);
+  --glass-bg: rgba(255,255,255,0.7);
+  --glass-border: rgba(0,0,0,0.06);
 }
 html:not(.dark) .dk-input option { background: #fff; color: #1E293B; }
-body { background: var(--bg) !important; color: var(--text) !important; }
+body {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+}
+
+/* ── SUBTLE BACKGROUND PATTERN ── */
+.listings-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(200,169,110,0.06), transparent),
+    radial-gradient(ellipse 60% 50% at 80% 80%, rgba(212,180,120,0.04), transparent),
+    radial-gradient(ellipse 40% 30% at 50% 50%, rgba(200,169,110,0.02), transparent),
+    var(--bg);
+  pointer-events: none;
+}
+
+/* ── LOADING SKELETON ── */
+@keyframes skeletonShimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--card-radius);
+  overflow: hidden;
+}
+.skeleton-img {
+  aspect-ratio: 16/10;
+  background: linear-gradient(90deg, var(--sur2) 0%, rgba(255,255,255,0.04) 50%, var(--sur2) 100%);
+  background-size: 800px 100%;
+  animation: skeletonShimmer 1.8s ease-in-out infinite;
+}
+.skeleton-body { padding: 20px; }
+.skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--sur2) 0%, rgba(255,255,255,0.04) 50%, var(--sur2) 100%);
+  background-size: 800px 100%;
+  animation: skeletonShimmer 1.8s ease-in-out infinite;
+  margin-bottom: 10px;
+}
+.skeleton-line:nth-child(1) { width: 50%; }
+.skeleton-line:nth-child(2) { width: 80%; }
+.skeleton-line:nth-child(3) { width: 40%; height: 18px; }
+.skeleton-line:nth-child(4) { width: 65%; animation-delay: 0.1s; }
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+/* ── PAGE ENTRANCE ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-in {
+  animation: fadeInUp 0.5s ease-out both;
+}
+.animate-in-delay-1 { animation-delay: 0.05s; }
+.animate-in-delay-2 { animation-delay: 0.1s; }
+.animate-in-delay-3 { animation-delay: 0.15s; }
 
 /* ── INPUTS & SELECTS ── */
 .dk-input {
   width: 100%;
-  background: var(--sur2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 9px 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 11px 14px;
   font-size: 13px;
   color: var(--text);
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
   appearance: none;
   -webkit-appearance: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 .dk-input::placeholder { color: var(--muted); }
-.dk-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14,165,233,0.12); }
+.dk-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(200,169,110,0.12);
+  background: rgba(200,169,110,0.04);
+}
+.dk-input:hover:not(:focus) {
+  border-color: rgba(255,255,255,0.14);
+}
 .dk-input option { background: #1a1f2e; color: var(--text); }
 
-/* ── SIDEBAR ── */
+/* ── SIDEBAR (Glass Morphism) ── */
 .filter-panel {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 24px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 28px 24px;
   position: sticky;
   top: 88px;
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.05);
 }
-.filter-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 20px; }
-.filter-label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
-.filter-group { margin-bottom: 20px; }
+.filter-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.filter-title::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 18px;
+  background: linear-gradient(180deg, var(--accent), var(--accent2));
+  border-radius: 2px;
+}
+.filter-subtitle {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 24px;
+  line-height: 1.4;
+}
+.filter-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted2);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 8px;
+}
+.filter-group {
+  margin-bottom: 20px;
+}
+.filter-group:last-of-type {
+  margin-bottom: 24px;
+}
 .filter-row { display: flex; gap: 8px; align-items: center; }
 .filter-sep { color: var(--muted); font-size: 12px; flex-shrink: 0; }
+.filter-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--glass-border), transparent);
+  margin: 4px 0 22px;
+}
 
 .btn-filter {
   width: 100%;
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent), #2563EB);
   color: #fff;
   border: none;
-  border-radius: 8px;
-  padding: 10px;
+  border-radius: 12px;
+  padding: 12px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   margin-top: 4px;
+  position: relative;
+  overflow: hidden;
 }
-.btn-filter:hover { background: #38BEF8; transform: translateY(-1px); }
+.btn-filter::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #38BEF8, #818CF8);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.btn-filter:hover::before { opacity: 1; }
+.btn-filter:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(200,169,110,0.35); }
+.btn-filter span { position: relative; z-index: 1; }
 .btn-reset {
   display: block;
   text-align: center;
-  margin-top: 10px;
+  margin-top: 12px;
   font-size: 12px;
   color: var(--muted);
   text-decoration: none;
@@ -85,37 +224,92 @@ body { background: var(--bg) !important; color: var(--text) !important; }
 
 /* ── TOP BAR ── */
 .page-header { margin-bottom: 24px; }
-.page-title { font-size: 22px; font-weight: 800; color: var(--text); }
+.page-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.03em;
+}
 .page-count { font-size: 13px; color: var(--muted); margin-top: 4px; }
-.page-count span { color: var(--accent); font-weight: 600; }
+.page-count span { color: var(--accent); font-weight: 700; }
 
-.sort-select-wrap {
-  position: relative;
+/* ── SORT PILLS ── */
+.sort-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
 }
-.sort-select-wrap::after {
-  content: '▾';
-  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-  color: var(--muted); pointer-events: none; font-size: 12px;
+.sort-pill {
+  padding: 8px 18px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  white-space: nowrap;
+  text-decoration: none;
+  user-select: none;
+}
+.sort-pill:hover {
+  border-color: rgba(200,169,110,0.3);
+  color: var(--text);
+  background: rgba(200,169,110,0.06);
+}
+.sort-pill.active {
+  background: linear-gradient(135deg, var(--accent), #2563EB);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(200,169,110,0.3);
 }
 
-/* ── CAR CARDS ── */
+/* ── CAR CARDS (Premium 3D Tilt) ── */
 .car-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--card-radius);
   overflow: hidden;
   text-decoration: none;
   color: inherit;
   display: block;
-  transition: all 0.28s;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.car-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: var(--card-radius);
+  padding: 1px;
+  background: linear-gradient(135deg, transparent, transparent);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+  z-index: 1;
+}
+.car-card:hover::before {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  opacity: 0.6;
 }
 .car-card:hover {
-  border-color: rgba(14,165,233,0.3);
-  transform: translateY(-4px);
-  box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+  transform: perspective(1000px) rotateY(2deg) rotateX(-1deg) translateY(-8px);
+  box-shadow:
+    0 24px 60px rgba(0,0,0,0.45),
+    0 0 50px var(--glow),
+    -4px 0 20px rgba(200,169,110,0.05);
 }
 .card-img {
-  aspect-ratio: 4/3;
+  aspect-ratio: 16/10;
   background: var(--sur2);
   position: relative;
   overflow: hidden;
@@ -123,150 +317,524 @@ body { background: var(--bg) !important; color: var(--text) !important; }
 .card-img img {
   width: 100%; height: 100%;
   object-fit: cover;
-  transition: transform 0.4s;
+  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
-.car-card:hover .card-img img { transform: scale(1.05); }
+.car-card:hover .card-img img {
+  transform: scale(1.08);
+}
+
+/* Gradient overlay on image */
+.card-img-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(7,9,15,0.75) 0%,
+    rgba(7,9,15,0.2) 40%,
+    transparent 70%
+  );
+  transition: opacity 0.4s;
+  pointer-events: none;
+}
+/* Always show subtle gradient, stronger on hover */
+.card-img-overlay { opacity: 0.7; }
+.car-card:hover .card-img-overlay { opacity: 1; }
+
+/* ── 3D BADGE ── */
 .badge-3d {
-  position: absolute; top: 10px; left: 10px;
-  background: linear-gradient(135deg, #0EA5E9, #6366F1);
+  position: absolute; top: 12px; left: 12px;
+  background: linear-gradient(135deg, #C8A96E, #D4B896);
   color: #fff;
   font-size: 10px; font-weight: 700;
-  padding: 4px 10px; border-radius: 8px;
-  display: flex; align-items: center; gap: 4px;
-  box-shadow: 0 2px 8px rgba(14,165,233,0.4);
-  animation: badge3dGlow 2s ease-in-out infinite;
+  padding: 5px 12px; border-radius: 20px;
+  display: flex; align-items: center; gap: 5px;
+  box-shadow: 0 2px 12px rgba(200,169,110,0.5);
+  animation: badge3dFloat 3s ease-in-out infinite;
+  z-index: 2;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  letter-spacing: 0.02em;
 }
-@keyframes badge3dGlow {
-  0%, 100% { box-shadow: 0 2px 8px rgba(14,165,233,0.4); }
-  50% { box-shadow: 0 2px 16px rgba(14,165,233,0.6); }
+@keyframes badge3dFloat {
+  0%, 100% {
+    box-shadow: 0 2px 12px rgba(200,169,110,0.5);
+    transform: translateY(0);
+  }
+  50% {
+    box-shadow: 0 4px 20px rgba(200,169,110,0.7), 0 0 30px rgba(212,180,120,0.2);
+    transform: translateY(-2px);
+  }
 }
-.badge-3d svg { width: 12px; height: 12px; }
+.badge-3d svg {
+  width: 13px; height: 13px;
+  animation: badge3dSpin 4s linear infinite;
+}
+@keyframes badge3dSpin {
+  0%   { transform: rotateY(0deg); }
+  25%  { transform: rotateY(180deg); }
+  50%  { transform: rotateY(180deg); }
+  75%  { transform: rotateY(360deg); }
+  100% { transform: rotateY(360deg); }
+}
+
+/* ── 3D VIEW HOVER BUTTON ── */
+.btn-3d-view {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: linear-gradient(135deg, rgba(200,169,110,0.9), rgba(212,180,120,0.9));
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 10px 24px;
+  border-radius: 100px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  z-index: 5;
+  opacity: 0;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 20px rgba(200,169,110,0.4);
+  white-space: nowrap;
+  pointer-events: none;
+  letter-spacing: 0.02em;
+}
+.car-card:hover .btn-3d-view {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 4px 20px rgba(200,169,110,0.4); }
+  50% { box-shadow: 0 4px 28px rgba(200,169,110,0.7), 0 0 40px rgba(212,180,120,0.2); }
+}
+.car-card:hover .btn-3d-view {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+.btn-3d-view svg {
+  width: 15px; height: 15px;
+}
+
 .badge-fixed {
-  position: absolute; top: 10px; right: 10px;
-  background: rgba(239,68,68,0.9); color: #fff;
+  position: absolute; top: 12px; right: 12px;
+  background: rgba(239,68,68,0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
   font-size: 10px; font-weight: 600;
-  padding: 3px 8px; border-radius: 6px;
+  padding: 4px 10px; border-radius: 20px;
+  z-index: 2;
 }
 .badge-new {
-  position: absolute; top: 10px; right: 10px;
-  background: rgba(16,185,129,0.9); color: #fff;
+  position: absolute; top: 12px; right: 12px;
+  background: rgba(16,185,129,0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
   font-size: 10px; font-weight: 600;
-  padding: 3px 8px; border-radius: 6px;
+  padding: 4px 10px; border-radius: 20px;
+  z-index: 2;
 }
-.card-body { padding: 14px 16px; }
-.card-meta-top { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
-.card-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.card-price { font-size: 18px; font-weight: 800; color: var(--accent); margin-bottom: 8px; }
-.card-specs { display: flex; gap: 6px; align-items: center; font-size: 11px; color: var(--muted); flex-wrap: wrap; }
-.spec-dot { width: 3px; height: 3px; background: var(--muted); border-radius: 50%; opacity: 0.5; }
-.card-footer {
-  display: flex; justify-content: space-between;
-  margin-top: 10px; padding-top: 10px;
+.card-body {
+  padding: 18px 20px;
+  position: relative;
+}
+.card-meta-top {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  letter-spacing: 0.01em;
+}
+.card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+.card-price {
+  font-size: 24px;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--accent), #D4B896);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 12px;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+.card-price .price-unit {
+  font-size: 13px;
+  font-weight: 600;
+  -webkit-text-fill-color: var(--muted);
+  margin-left: 2px;
+}
+
+/* ── Slide-up detail panel ── */
+.card-detail-panel {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+  opacity: 0;
+}
+.car-card:hover .card-detail-panel {
+  max-height: 120px;
+  opacity: 1;
+}
+.card-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  padding-top: 12px;
+  margin-top: 12px;
   border-top: 1px solid var(--border);
-  font-size: 11px; color: var(--muted);
+}
+.card-detail-item {
+  text-align: center;
+}
+.card-detail-item .detail-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 3px;
+}
+.card-detail-item .detail-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.card-specs {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 11px;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+.spec-dot {
+  width: 3px; height: 3px;
+  background: var(--muted);
+  border-radius: 50%;
+  opacity: 0.4;
+}
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
 }
 
 /* ── PAGINATION ── */
-.pag-wrap { display: flex; justify-content: center; gap: 6px; margin-top: 40px; }
-.pag-btn {
-  width: 36px; height: 36px;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: 8px;
-  font-size: 13px; font-weight: 500;
-  text-decoration: none;
-  transition: all 0.2s;
-  border: 1px solid var(--border);
-  color: var(--muted);
-  background: var(--surface);
+.pag-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 48px;
+  padding: 16px 0;
 }
-.pag-btn:hover { border-color: var(--accent); color: var(--accent); }
-.pag-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.pag-btn {
+  width: 42px; height: 42px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 14px;
+  font-size: 13px; font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid var(--glass-border);
+  color: var(--muted);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.pag-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(200,169,110,0.06);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(200,169,110,0.15);
+}
+.pag-btn.active {
+  background: linear-gradient(135deg, var(--accent), #2563EB);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(200,169,110,0.35);
+  transform: translateY(-1px);
+}
+.pag-ellipsis {
+  color: var(--muted);
+  font-size: 13px;
+  padding: 0 4px;
+  user-select: none;
+}
 
-/* ── EMPTY ── */
-.empty-state { text-align: center; padding: 80px 20px; }
-.empty-state p { color: var(--muted); font-size: 16px; margin-bottom: 12px; }
-.empty-state a { color: var(--accent); font-size: 13px; text-decoration: none; }
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align: center;
+  padding: 100px 20px;
+  animation: fadeInUp 0.6s ease-out;
+}
+.empty-icon {
+  width: 80px; height: 80px;
+  margin: 0 auto 24px;
+  background: var(--sur2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+}
+.empty-icon svg {
+  width: 36px; height: 36px;
+  color: var(--muted);
+  opacity: 0.6;
+}
+.empty-state h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+.empty-state p {
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+.empty-state .btn-reset-empty {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), #2563EB);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  transition: all 0.3s;
+}
+.empty-state .btn-reset-empty:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(200,169,110,0.3);
+}
+
+/* ── SEARCH BAR ── */
+.search-bar-wrap {
+  margin-bottom: 24px;
+}
+.search-bar-form {
+  display: flex;
+  gap: 10px;
+}
+.search-input-wrap {
+  flex: 1;
+  position: relative;
+}
+.search-input-wrap svg {
+  width: 16px; height: 16px;
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  transition: color 0.2s;
+}
+.search-input-wrap:focus-within svg {
+  color: var(--accent);
+}
+.search-btn {
+  background: linear-gradient(135deg, var(--accent), #2563EB);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 28px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+.search-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(200,169,110,0.35);
+}
+.search-result-tag {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--glass-bg);
+  padding: 6px 14px;
+  border-radius: 100px;
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.search-result-tag span {
+  color: var(--accent);
+  font-weight: 600;
+}
 
 /* ── LAYOUT ── */
 .listings-layout {
-  max-width: 1200px;
+  max-width: 1320px;
   margin: 0 auto;
   padding: 84px 24px 60px;
   display: flex;
-  gap: 28px;
+  gap: 36px;
+  position: relative;
 }
-.sidebar { width: 240px; flex-shrink: 0; }
+.sidebar { width: 260px; flex-shrink: 0; }
 .main-col { flex: 1; min-width: 0; }
+.listings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
 
+/* ── RESPONSIVE ── */
+@media (max-width: 1100px) {
+  .listings-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+}
 @media (max-width: 900px) {
-  .listings-layout { flex-direction: column; padding-top: 80px; }
+  .listings-layout {
+    flex-direction: column;
+    padding-top: 80px;
+    gap: 20px;
+  }
   .sidebar { width: 100%; }
-  .filter-panel { position: static; }
+  .filter-panel {
+    position: static;
+    border-radius: 16px;
+  }
+  .filter-panel .filter-groups-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 16px;
+  }
+  .filter-panel .filter-actions {
+    grid-column: 1 / -1;
+  }
+  .listings-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+  }
+  .page-title { font-size: 22px; }
+  .card-body { padding: 14px 16px; }
+  .card-title { font-size: 14px; }
+  .card-price { font-size: 20px; }
+  .sort-pills { gap: 4px; }
+  .sort-pill { padding: 6px 14px; font-size: 11px; }
+}
+@media (max-width: 480px) {
+  .listings-layout {
+    padding: 72px 16px 40px;
+  }
+  .listings-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .filter-panel .filter-groups-inner {
+    grid-template-columns: 1fr;
+  }
+  .search-bar-form {
+    flex-direction: column;
+  }
+  .pag-btn { width: 36px; height: 36px; border-radius: 10px; }
+  .sort-pills { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
 }
 </style>
 
 {% endblock %}
 
 {% block content %}
+<!-- Background pattern -->
+<div class="listings-bg"></div>
+
 <div class="listings-layout" style="padding-top:84px;">
 
   <!-- ── SIDEBAR FILTER ── -->
-  <aside class="sidebar">
+  <aside class="sidebar animate-in">
     <div class="filter-panel">
       <div class="filter-title">필터</div>
+      <div class="filter-subtitle">조건을 설정하여 원하는 매물을 찾아보세요</div>
       <form id="filter-form">
+        <div class="filter-groups-inner">
+          <div class="filter-group">
+            <label class="filter-label">브랜드</label>
+            <select name="brand" class="dk-input">
+              <option value="">전체</option>
+              {% for b in brands %}
+              <option value="{{ b }}" {{ 'selected' if filters.brand == b }}>{{ b }}</option>
+              {% endfor %}
+            </select>
+          </div>
 
-        <div class="filter-group">
-          <label class="filter-label">브랜드</label>
-          <select name="brand" class="dk-input">
-            <option value="">전체</option>
-            {% for b in brands %}
-            <option value="{{ b }}" {{ 'selected' if filters.brand == b }}>{{ b }}</option>
-            {% endfor %}
-          </select>
-        </div>
+          <div class="filter-group">
+            <label class="filter-label">연료</label>
+            <select name="fuel_type" class="dk-input">
+              <option value="">전체</option>
+              <option value="가솔린"  {{ 'selected' if filters.fuel_type == '가솔린' }}>가솔린</option>
+              <option value="디젤"    {{ 'selected' if filters.fuel_type == '디젤' }}>디젤</option>
+              <option value="전기"    {{ 'selected' if filters.fuel_type == '전기' }}>전기</option>
+              <option value="하이브리드" {{ 'selected' if filters.fuel_type == '하이브리드' }}>하이브리드</option>
+            </select>
+          </div>
 
-        <div class="filter-group">
-          <label class="filter-label">연료</label>
-          <select name="fuel_type" class="dk-input">
-            <option value="">전체</option>
-            <option value="가솔린"  {{ 'selected' if filters.fuel_type == '가솔린' }}>가솔린</option>
-            <option value="디젤"    {{ 'selected' if filters.fuel_type == '디젤' }}>디젤</option>
-            <option value="전기"    {{ 'selected' if filters.fuel_type == '전기' }}>전기</option>
-            <option value="하이브리드" {{ 'selected' if filters.fuel_type == '하이브리드' }}>하이브리드</option>
-          </select>
-        </div>
+          <div class="filter-group">
+            <label class="filter-label">지역</label>
+            <select name="region" class="dk-input">
+              <option value="">전체</option>
+              {% for r in regions|default([]) %}
+              <option value="{{ r }}" {{ 'selected' if filters.region == r }}>{{ r }}</option>
+              {% endfor %}
+            </select>
+          </div>
 
-        <div class="filter-group">
-          <label class="filter-label">지역</label>
-          <select name="region" class="dk-input">
-            <option value="">전체</option>
-            {% for r in regions|default([]) %}
-            <option value="{{ r }}" {{ 'selected' if filters.region == r }}>{{ r }}</option>
-            {% endfor %}
-          </select>
-        </div>
+          <div class="filter-divider"></div>
 
-        <div class="filter-group">
-          <label class="filter-label">가격 (만원)</label>
-          <div class="filter-row">
-            <input type="number" name="price_min" placeholder="최소" value="{{ filters.price_min or '' }}" class="dk-input">
-            <span class="filter-sep">~</span>
-            <input type="number" name="price_max" placeholder="최대" value="{{ filters.price_max or '' }}" class="dk-input">
+          <div class="filter-group">
+            <label class="filter-label">가격 (만원)</label>
+            <div class="filter-row">
+              <input type="number" name="price_min" placeholder="최소" value="{{ filters.price_min or '' }}" class="dk-input">
+              <span class="filter-sep">~</span>
+              <input type="number" name="price_max" placeholder="최대" value="{{ filters.price_max or '' }}" class="dk-input">
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <label class="filter-label">연식</label>
+            <div class="filter-row">
+              <input type="number" name="year_min" placeholder="최소" value="{{ filters.year_min or '' }}" class="dk-input">
+              <span class="filter-sep">~</span>
+              <input type="number" name="year_max" placeholder="최대" value="{{ filters.year_max or '' }}" class="dk-input">
+            </div>
+          </div>
+
+          <div class="filter-actions">
+            <button type="submit" class="btn-filter"><span>필터 적용</span></button>
+            <a href="/listings" class="btn-reset">초기화</a>
           </div>
         </div>
-
-        <div class="filter-group">
-          <label class="filter-label">연식</label>
-          <div class="filter-row">
-            <input type="number" name="year_min" placeholder="최소" value="{{ filters.year_min or '' }}" class="dk-input">
-            <span class="filter-sep">~</span>
-            <input type="number" name="year_max" placeholder="최대" value="{{ filters.year_max or '' }}" class="dk-input">
-          </div>
-        </div>
-
-        <button type="submit" class="btn-filter">필터 적용</button>
-        <a href="/listings" class="btn-reset">초기화</a>
       </form>
     </div>
   </aside>
@@ -274,53 +842,80 @@ body { background: var(--bg) !important; color: var(--text) !important; }
   <!-- ── MAIN ── -->
   <div class="main-col">
     <!-- 검색 바 -->
-    <div style="margin-bottom:20px;">
-      <form id="search-form" style="display:flex;gap:8px;" onsubmit="doSearch(event)">
-        <div style="flex:1;position:relative;">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="var(--muted)" style="width:16px;height:16px;position:absolute;left:12px;top:50%;transform:translateY(-50%);">
+    <div class="search-bar-wrap animate-in animate-in-delay-1">
+      <form id="search-form" class="search-bar-form" onsubmit="doSearch(event)">
+        <div class="search-input-wrap">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/>
           </svg>
-          <input type="text" name="search" id="search-input" placeholder="브랜드, 모델, 키워드로 검색..." value="{{ filters.search or '' }}" class="dk-input" style="padding-left:36px;">
+          <input type="text" name="search" id="search-input" placeholder="브랜드, 모델, 키워드로 검색..." value="{{ filters.search or '' }}" class="dk-input" style="padding-left:40px;">
         </div>
-        <button type="submit" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap;">검색</button>
+        <button type="submit" class="search-btn">검색</button>
       </form>
       {% if filters.search %}
-      <div style="margin-top:8px;font-size:12px;color:var(--muted);">
-        "<span style="color:var(--accent);font-weight:600;">{{ filters.search }}</span>" 검색 결과
-        <a href="/listings" style="color:var(--muted);margin-left:8px;text-decoration:none;">초기화</a>
+      <div class="search-result-tag">
+        "<span>{{ filters.search }}</span>" 검색 결과
+        <a href="/listings" style="color:var(--muted);text-decoration:none;margin-left:4px;font-size:11px;">&#10005;</a>
       </div>
       {% endif %}
     </div>
 
-    <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+    <div class="page-header animate-in animate-in-delay-2" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
       <div>
         <div class="page-title">매물 검색</div>
         <div class="page-count">총 <span id="total-count">{{ total }}</span>대</div>
       </div>
-      <div class="sort-select-wrap">
-        <select id="sort-select" class="dk-input" style="width:auto;padding-right:32px;">
-          <option value="newest"     {{ 'selected' if filters.sort == 'newest' }}>최신순</option>
-          <option value="price_asc"  {{ 'selected' if filters.sort == 'price_asc' }}>가격 낮은순</option>
-          <option value="price_desc" {{ 'selected' if filters.sort == 'price_desc' }}>가격 높은순</option>
-          <option value="mileage"    {{ 'selected' if filters.sort == 'mileage' }}>주행거리순</option>
-          <option value="region_match" {{ 'selected' if filters.sort == 'region_match' }}>내 지역 우선</option>
-        </select>
+      <div class="sort-pills" id="sort-pills">
+        <button type="button" class="sort-pill {{ 'active' if not filters.sort or filters.sort == 'newest' }}" data-sort="newest">최신순</button>
+        <button type="button" class="sort-pill {{ 'active' if filters.sort == 'price_asc' }}" data-sort="price_asc">가격 낮은순</button>
+        <button type="button" class="sort-pill {{ 'active' if filters.sort == 'price_desc' }}" data-sort="price_desc">가격 높은순</button>
+        <button type="button" class="sort-pill {{ 'active' if filters.sort == 'mileage' }}" data-sort="mileage">주행거리순</button>
+        <button type="button" class="sort-pill {{ 'active' if filters.sort == 'region_match' }}" data-sort="region_match">내 지역</button>
       </div>
     </div>
 
+    <!-- Hidden sort select to maintain existing JS compatibility -->
+    <select id="sort-select" style="display:none;">
+      <option value="newest"     {{ 'selected' if filters.sort == 'newest' }}>최신순</option>
+      <option value="price_asc"  {{ 'selected' if filters.sort == 'price_asc' }}>가격 낮은순</option>
+      <option value="price_desc" {{ 'selected' if filters.sort == 'price_desc' }}>가격 높은순</option>
+      <option value="mileage"    {{ 'selected' if filters.sort == 'mileage' }}>주행거리순</option>
+      <option value="region_match" {{ 'selected' if filters.sort == 'region_match' }}>내 지역 우선</option>
+    </select>
+
+    <!-- Loading Skeleton (hidden when content loads) -->
+    <div id="skeleton-loader" class="skeleton-grid" style="display:none;">
+      {% for i in range(6) %}
+      <div class="skeleton-card">
+        <div class="skeleton-img"></div>
+        <div class="skeleton-body">
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line"></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
     {% if listings %}
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;" id="listings-grid">
+    <div class="listings-grid animate-in animate-in-delay-3" id="listings-grid">
       {% for listing in listings %}
-      <a href="/vehicles/{{ listing.vehicle.id }}" class="car-card glow-hover">
-        <div class="card-img card-img-zoom">
+      <a href="/vehicles/{{ listing.vehicle.id }}" class="car-card" style="animation-delay:{{ loop.index0 * 0.04 }}s;">
+        <div class="card-img">
           <img src="{{ listing.vehicle.thumbnail_url }}"
-               alt="{{ listing.vehicle.brand }} {{ listing.vehicle.model }}"
+               alt="{{ listing.vehicle.brand }} {{ listing.vehicle.model }} {{ listing.vehicle.year }}년식"
                loading="lazy"
-               onerror="this.style.display='none'">
+               onerror="this.onerror=null;this.src='/static/images/placeholder-car.svg';">
+          <div class="card-img-overlay"></div>
           {% if listing.vehicle.model_3d_status == 'ready' %}
-          <span class="badge-3d badge-3d-glow">
+          <span class="badge-3d">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313"/></svg>
             3D 뷰어
+          </span>
+          <span class="btn-3d-view">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313"/></svg>
+            3D 보기
           </span>
           {% endif %}
           {% if not listing.is_negotiable %}
@@ -331,9 +926,9 @@ body { background: var(--bg) !important; color: var(--text) !important; }
           <div class="card-meta-top">{{ listing.vehicle.brand }} {{ listing.vehicle.model }} · {{ listing.vehicle.year }}년</div>
           <div class="card-title">{{ listing.title }}</div>
           <div style="display:flex;align-items:flex-end;justify-content:space-between;">
-            <div class="card-price">{{ "{:,}".format(listing.price) }}<span style="font-size:12px;font-weight:600;color:var(--muted);margin-left:2px;">만원</span></div>
+            <div class="card-price">{{ "{:,}".format(listing.price) }}<span class="price-unit">만원</span></div>
             {% if listing.is_negotiable %}
-            <span style="font-size:10px;color:#10B981;font-weight:600;background:rgba(16,185,129,0.1);padding:2px 6px;border-radius:4px;">네고</span>
+            <span style="font-size:10px;color:#10B981;font-weight:600;background:rgba(16,185,129,0.1);padding:3px 8px;border-radius:6px;">네고</span>
             {% endif %}
           </div>
           <div class="card-specs">
@@ -342,6 +937,23 @@ body { background: var(--bg) !important; color: var(--text) !important; }
             <span>{{ listing.vehicle.fuel_type }}</span>
             <div class="spec-dot"></div>
             <span>{{ listing.vehicle.region or '미지정' }}</span>
+          </div>
+          <!-- Slide-up detail panel -->
+          <div class="card-detail-panel">
+            <div class="card-detail-grid">
+              <div class="card-detail-item">
+                <div class="detail-label">주행</div>
+                <div class="detail-value">{{ "{:,}".format(listing.vehicle.mileage) }}km</div>
+              </div>
+              <div class="card-detail-item">
+                <div class="detail-label">연료</div>
+                <div class="detail-value">{{ listing.vehicle.fuel_type }}</div>
+              </div>
+              <div class="card-detail-item">
+                <div class="detail-label">지역</div>
+                <div class="detail-value">{{ listing.vehicle.region or '미지정' }}</div>
+              </div>
+            </div>
           </div>
           <div class="card-footer">
             <span>조회 {{ listing.view_count }}</span>
@@ -354,19 +966,44 @@ body { background: var(--bg) !important; color: var(--text) !important; }
 
     {% if total_pages > 1 %}
     <div class="pag-wrap">
-      {% for p in range(1, total_pages + 1) %}
-      {% if p <= 10 or (p > current_page - 3 and p < current_page + 3) or p == total_pages %}
-      <a href="?page={{ p }}{% for k, v in filters.items() if v and k != 'page' %}&{{ k }}={{ v }}{% endfor %}"
-         class="pag-btn {{ 'active' if p == current_page }}">{{ p }}</a>
+      {% if current_page > 1 %}
+      <a href="?page={{ current_page - 1 }}{% for k, v in filters.items() if v and k != 'page' %}&{{ k }}={{ v }}{% endfor %}"
+         class="pag-btn" aria-label="이전 페이지">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+      </a>
       {% endif %}
+
+      {% for p in range(1, total_pages + 1) %}
+        {% if p == 1 or p == total_pages or (p >= current_page - 2 and p <= current_page + 2) %}
+          <a href="?page={{ p }}{% for k, v in filters.items() if v and k != 'page' %}&{{ k }}={{ v }}{% endfor %}"
+             class="pag-btn {{ 'active' if p == current_page }}">{{ p }}</a>
+        {% elif p == current_page - 3 or p == current_page + 3 %}
+          <span class="pag-ellipsis">...</span>
+        {% endif %}
       {% endfor %}
+
+      {% if current_page < total_pages %}
+      <a href="?page={{ current_page + 1 }}{% for k, v in filters.items() if v and k != 'page' %}&{{ k }}={{ v }}{% endfor %}"
+         class="pag-btn" aria-label="다음 페이지">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+      </a>
+      {% endif %}
     </div>
     {% endif %}
 
     {% else %}
     <div class="empty-state">
-      <p>검색 조건에 맞는 매물이 없습니다.</p>
-      <a href="/listings">필터 초기화</a>
+      <div class="empty-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
+        </svg>
+      </div>
+      <h3>검색 결과가 없습니다</h3>
+      <p>설정한 조건에 맞는 매물을 찾지 못했습니다.<br>필터를 변경하거나 초기화해 보세요.</p>
+      <a href="/listings" class="btn-reset-empty">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.992 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182"/></svg>
+        전체 매물 보기
+      </a>
     </div>
     {% endif %}
   </div>
@@ -375,12 +1012,25 @@ body { background: var(--bg) !important; color: var(--text) !important; }
 
 {% block scripts %}
 <script>
+// Sort pills click handler
+document.querySelectorAll('.sort-pill').forEach(pill => {
+  pill.addEventListener('click', function() {
+    const sortVal = this.dataset.sort;
+    const url = new URL(window.location);
+    url.searchParams.set('sort', sortVal);
+    url.searchParams.delete('page');
+    window.location.href = url.toString();
+  });
+});
+
+// Keep hidden select in sync (for any external JS that reads it)
 document.getElementById('sort-select').addEventListener('change', function() {
   const url = new URL(window.location);
   url.searchParams.set('sort', this.value);
   url.searchParams.delete('page');
   window.location.href = url.toString();
 });
+
 document.getElementById('filter-form').addEventListener('submit', function(e) {
   e.preventDefault();
   const data = new FormData(this);

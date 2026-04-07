@@ -91,3 +91,7 @@ runs/
 *.mov
 *.mkv
 backend/app/static/videos/
+.claude/scheduled_tasks.lock
+backend/carnerf.db
+train_damage*.log
+train_v3.log

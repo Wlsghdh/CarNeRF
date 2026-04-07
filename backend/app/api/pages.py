@@ -16,7 +16,7 @@ templates = Jinja2Templates(directory="app/templates")
 def home(request: Request, db: Session = Depends(get_db), user: Optional[User] = Depends(get_current_user)):
     featured = (
         db.query(Listing)
-        .options(joinedload(Listing.vehicle))
+        .options(joinedload(Listing.vehicle).joinedload(Vehicle.diagnosis))
         .filter(Listing.status == "active")
         .order_by(Listing.view_count.desc())
         .limit(4)
@@ -59,6 +59,9 @@ def listings_page(
     PAGE_SIZE = 12
 
     q = db.query(Listing).options(joinedload(Listing.vehicle)).filter(Listing.status == "active").join(Vehicle)
+
+    # 3D 모델이 있는 차량만 표시
+    q = q.filter(Vehicle.model_3d_status == "ready")
 
     if brand:
         q = q.filter(Vehicle.brand == brand)
