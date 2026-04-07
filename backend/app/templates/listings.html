@@ -187,7 +187,7 @@ body {
 
 .btn-filter {
   width: 100%;
-  background: linear-gradient(135deg, var(--accent), #2563EB);
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
   color: #fff;
   border: none;
   border-radius: 12px;
@@ -261,7 +261,7 @@ body {
   background: rgba(200,169,110,0.06);
 }
 .sort-pill.active {
-  background: linear-gradient(135deg, var(--accent), #2563EB);
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
   border-color: transparent;
   color: #fff;
   box-shadow: 0 2px 12px rgba(200,169,110,0.3);
@@ -298,15 +298,17 @@ body {
   z-index: 1;
 }
 .car-card:hover::before {
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  opacity: 0.6;
+  background: linear-gradient(135deg, var(--accent), var(--accent2), var(--accent));
+  opacity: 0.85;
 }
 .car-card:hover {
-  transform: perspective(1000px) rotateY(2deg) rotateX(-1deg) translateY(-8px);
+  transform: perspective(1000px) rotateY(2deg) rotateX(-1deg) translateY(-10px);
   box-shadow:
-    0 24px 60px rgba(0,0,0,0.45),
-    0 0 50px var(--glow),
-    -4px 0 20px rgba(200,169,110,0.05);
+    0 32px 80px rgba(0,0,0,0.55),
+    0 0 60px rgba(200,169,110,0.18),
+    0 0 0 1px rgba(200,169,110,0.15),
+    -6px 0 28px rgba(200,169,110,0.08);
+  border-color: rgba(200,169,110,0.25);
 }
 .card-img {
   aspect-ratio: 16/10;
@@ -566,7 +568,7 @@ body {
   box-shadow: 0 4px 16px rgba(200,169,110,0.15);
 }
 .pag-btn.active {
-  background: linear-gradient(135deg, var(--accent), #2563EB);
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
   border-color: transparent;
   color: #fff;
   box-shadow: 0 4px 20px rgba(200,169,110,0.35);
@@ -618,7 +620,7 @@ body {
   align-items: center;
   gap: 6px;
   color: #fff;
-  background: linear-gradient(135deg, var(--accent), #2563EB);
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
@@ -656,7 +658,7 @@ body {
   color: var(--accent);
 }
 .search-btn {
-  background: linear-gradient(135deg, var(--accent), #2563EB);
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
   color: #fff;
   border: none;
   border-radius: 12px;

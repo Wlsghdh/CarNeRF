@@ -428,7 +428,7 @@ html:not(.dark) .defect-summary-panel { background: rgba(241,245,249,0.9); }
 .action-row { display: flex; gap: 10px; }
 .btn-contact {
   flex: 1;
-  background: linear-gradient(135deg, #C8A96E, #3B82F6);
+  background: linear-gradient(135deg, #C8A96E, #D4B896);
   color: #fff; border: none;
   border-radius: 12px; padding: 14px;
   font-size: 14px; font-weight: 700;
@@ -1775,7 +1775,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <div style="padding:16px 24px;">
           <div style="background:#161B24;border:1px solid rgba(255,255,255,0.08);border-radius:14px;overflow:hidden;aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;">
-            <img src="${defect.annotated_image_url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+            <img src="${defect.annotated_image_url}" alt="${defect.type_kr} 결함 분석 이미지 - 심각도 ${defect.severity}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
             <div style="display:none;flex-direction:column;align-items:center;gap:8px;color:#64748B;">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
               <span style="font-size:13px;">결함 부위 이미지</span>
