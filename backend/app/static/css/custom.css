@@ -12,13 +12,13 @@ html { scroll-behavior: smooth; }
 }
 
 .gradient-animate {
-  background: linear-gradient(135deg, #C8A96E, #D4B896, #8B5CF6, #C8A96E);
+  background: linear-gradient(135deg, #C8A96E, #D4B896, #E8DFC8, #C8A96E);
   background-size: 300% 300%;
   animation: gradient-shift 6s ease infinite;
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #C8A96E, #818CF8);
+  background: linear-gradient(135deg, #C8A96E, #D4B896);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

@@ -60,21 +60,21 @@ def main():
         description="CarNeRF HQ 학습 오케스트레이터",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-최적 하이퍼파라미터 (기본값):
+최적 하이퍼파라미터 (기본값 - PSNR 34+ 목표):
   --images images_masked        배경 제거된 RGBA 이미지
   --depths depths               depth regularization
   --antialiasing                앨리어싱 제거
-  --iterations 60000            학습 반복 횟수
-  --densify_grad_threshold 0.00007  공격적 densification
-  --densify_until_iter 35000    densification 기간 연장
-  --opacity_reset_interval 3000 안정적 리셋 간격
-  --lambda_dssim 0.2            PSNR 최적 가중치
+  --iterations 100000           학습 반복 횟수 (60K→100K)
+  --densify_grad_threshold 0.00004  공격적 densification (0.00007→0.00004)
+  --densify_until_iter 55000    densification 기간 연장 (35K→55K)
+  --opacity_reset_interval 2000 안정적 리셋 간격 (3K→2K)
+  --lambda_dssim 0.15           PSNR 최적 가중치 (0.2→0.15)
 """,
     )
     parser.add_argument("--source_path", required=True, help="COLMAP dense 결과 경로")
     parser.add_argument("--output_path", required=True, help="학습 결과 저장 경로")
     parser.add_argument("--export_path", default="", help="Export 경로 (비어있으면 output_path/export)")
-    parser.add_argument("--iterations", type=int, default=60000, help="학습 반복 횟수 (기본값: 60000)")
+    parser.add_argument("--iterations", type=int, default=100000, help="학습 반복 횟수 (기본값: 100000)")
     parser.add_argument("--max_gaussians", type=int, default=2_000_000, help="최대 가우시안 수 (기본값: 2,000,000)")
 
     # 개별 단계 스킵
@@ -87,11 +87,11 @@ def main():
     parser.add_argument("--depths", type=str, default="depths", help="depth 폴더명 (빈 문자열=미사용)")
     parser.add_argument("--antialiasing", action="store_true", default=True, help="anti-aliasing (기본값: ON)")
     parser.add_argument("--no_antialiasing", action="store_true", help="anti-aliasing 비활성화")
-    parser.add_argument("--densify_grad_threshold", type=float, default=0.00007)
-    parser.add_argument("--densify_until_iter", type=int, default=35000)
-    parser.add_argument("--opacity_reset_interval", type=int, default=3000)
-    parser.add_argument("--lambda_dssim", type=float, default=0.2)
-    parser.add_argument("--position_lr_max_steps", type=int, default=60000)
+    parser.add_argument("--densify_grad_threshold", type=float, default=0.00004)
+    parser.add_argument("--densify_until_iter", type=int, default=55000)
+    parser.add_argument("--opacity_reset_interval", type=int, default=2000)
+    parser.add_argument("--lambda_dssim", type=float, default=0.15)
+    parser.add_argument("--position_lr_max_steps", type=int, default=100000)
 
     # Export 파라미터
     parser.add_argument("--max_scale_factor", type=float, default=10.0, help="볼륨 pruning 스케일 팩터")
