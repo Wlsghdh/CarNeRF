@@ -591,9 +591,25 @@ textarea.dk-input { resize: none; line-height: 1.6; }
         <div class="step-num">2</div>
         <div class="step-title">가격 정보</div>
       </div>
-      <div class="field" style="max-width:300px;">
-        <label>판매 가격 (만원)<span class="req">*</span></label>
-        <input type="number" name="price" required min="0" placeholder="3000" class="dk-input">
+      <!-- AI 시세 조회 -->
+      <div id="ai-price-box" style="margin-bottom:20px;padding:20px;border:1px solid rgba(200,169,110,0.2);border-radius:12px;background:rgba(200,169,110,0.03);display:none;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:#C8A96E;fill:none;stroke-width:2;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+          </svg>
+          <span style="font-size:14px;font-weight:700;color:var(--text, #E2E8F0);">AI 예상 시세</span>
+          <span id="ai-price-type" style="font-size:10px;padding:2px 8px;border-radius:4px;background:rgba(200,169,110,0.15);color:#C8A96E;font-weight:600;"></span>
+        </div>
+        <div id="ai-price-result" style="font-size:13px;color:var(--text-muted, #94A3B8);line-height:1.8;"></div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap;">
+        <div class="field" style="max-width:300px;flex:1;">
+          <label>판매 가격 (만원)<span class="req">*</span></label>
+          <input type="number" name="price" required min="0" placeholder="3000" class="dk-input" id="sell-price-input">
+        </div>
+        <button type="button" onclick="fetchAIPrice()" style="height:42px;padding:0 20px;border:1px solid rgba(200,169,110,0.4);background:rgba(200,169,110,0.08);color:#C8A96E;font-size:12px;font-weight:600;border-radius:8px;cursor:pointer;white-space:nowrap;transition:all 0.2s;" onmouseover="this.style.background='rgba(200,169,110,0.15)'" onmouseout="this.style.background='rgba(200,169,110,0.08)'">
+          AI 시세 조회
+        </button>
       </div>
       <div class="check-row" style="margin-top:12px;">
         <input type="checkbox" name="is_negotiable" id="neg" checked>
@@ -747,6 +763,44 @@ textarea.dk-input { resize: none; line-height: 1.6; }
 
 {% block scripts %}
 <script>
+// AI 시세 조회
+async function fetchAIPrice() {
+  const form = document.getElementById('sell-form') || document.querySelector('form');
+  const fd = new FormData(form);
+  const brand = fd.get('brand'), model = fd.get('model'), year = fd.get('year'),
+        mileage = fd.get('mileage'), fuel = fd.get('fuel_type');
+  if (!brand || !model || !year || !mileage || !fuel) {
+    alert('차량 정보(브랜드, 모델, 연식, 주행거리, 연료)를 먼저 입력해주세요.');
+    return;
+  }
+  const box = document.getElementById('ai-price-box');
+  const result = document.getElementById('ai-price-result');
+  box.style.display = 'block';
+  result.innerHTML = '<div style="display:flex;align-items:center;gap:8px;"><div class="spinner" style="width:16px;height:16px;border:2px solid rgba(200,169,110,0.2);border-top-color:#C8A96E;border-radius:50%;animation:spin 0.8s linear infinite;"></div> AI가 시세를 분석 중...</div>';
+  try {
+    const res = await fetch('/api/predict/price', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        brand, model, year: parseInt(year), mileage: parseInt(mileage),
+        fuel_type: fuel, engine_cc: parseInt(fd.get('engine_cc') || 0),
+        region: fd.get('region') || '서울',
+      })
+    });
+    const data = await res.json();
+    document.getElementById('ai-price-type').textContent = data.model_type === 'ml' ? 'ML 모델' : '추정값';
+    const conf = Math.round((data.confidence || 0.8) * 100);
+    result.innerHTML = `
+      <div style="font-size:28px;font-weight:900;color:#C8A96E;margin-bottom:4px;">${data.predicted_price.toLocaleString()}만원</div>
+      <div style="color:var(--text-muted,#94A3B8);">예상 범위: ${data.price_range_low.toLocaleString()} ~ ${data.price_range_high.toLocaleString()}만원</div>
+      <div style="margin-top:8px;font-size:12px;color:var(--text-muted,#64748B);">신뢰도 ${conf}% &middot; 이 가격을 참고하여 판매가를 설정하세요</div>
+      <button type="button" onclick="document.getElementById('sell-price-input').value=${data.predicted_price};this.textContent='적용됨!';this.disabled=true;" style="margin-top:12px;padding:6px 16px;font-size:12px;font-weight:600;border:1px solid rgba(200,169,110,0.3);background:transparent;color:#C8A96E;border-radius:6px;cursor:pointer;transition:all 0.2s;">이 가격으로 설정</button>
+    `;
+  } catch(e) {
+    result.innerHTML = '<span style="color:#EF4444;">시세 조회에 실패했습니다. 다시 시도해주세요.</span>';
+  }
+}
+
 // Drag and drop for image upload
 (function() {
   const zone = document.getElementById('image-upload-zone');

@@ -60,9 +60,6 @@ def listings_page(
 
     q = db.query(Listing).options(joinedload(Listing.vehicle)).filter(Listing.status == "active").join(Vehicle)
 
-    # 3D 모델이 있는 차량만 표시
-    q = q.filter(Vehicle.model_3d_status == "ready")
-
     if brand:
         q = q.filter(Vehicle.brand == brand)
     if fuel_type:
