@@ -12,6 +12,12 @@ router = APIRouter(tags=["pages"])
 templates = Jinja2Templates(directory="app/templates")
 
 
+@router.get("/promo-viewer")
+def promo_viewer(request: Request):
+    """Public 3DGS viewer for promo screen-recording (no auth, fullscreen)."""
+    return templates.TemplateResponse("promo_viewer.html", {"request": request})
+
+
 @router.get("/")
 def home(request: Request, db: Session = Depends(get_db), user: Optional[User] = Depends(get_current_user)):
     featured = (

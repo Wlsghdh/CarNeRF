@@ -90,6 +90,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 # Static files (absolute paths for reliability)
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "app", "static")), name="static")
 app.mount("/uploads", StaticFiles(directory=os.path.join(BASE_DIR, "uploads")), name="uploads")
+app.mount("/promo", StaticFiles(directory=os.path.join(BASE_DIR, "..", "promo_assets"), html=True), name="promo")
 
 # API routes
 app.include_router(auth.router)

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>CarNeRF · 5-AI Flow</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: #FFFFFF;
+    font-family: 'Pretendard Variable', -apple-system, sans-serif;
+    color: #0A0A0A;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .stage {
+    width: 1920px;
+    min-height: 1080px;
+    margin: 0 auto;
+    padding: 70px 90px;
+    background: #FFFFFF;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 60px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid #E8E8E8;
+  }
+  .header .eyebrow {
+    color: #C8A96E;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.4em;
+    margin-bottom: 12px;
+  }
+  .header h1 {
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: #0A0A0A;
+  }
+  .header h1 .gold { color: #C8A96E; }
+  .header .desc {
+    margin-top: 10px;
+    font-size: 15px;
+    color: #6B6B6B;
+    font-weight: 400;
+  }
+
+  /* Pipeline layout: input | 5 nodes (column) | output */
+  .pipeline {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr 1fr;
+    align-items: center;
+    gap: 60px;
+    margin-bottom: 50px;
+    position: relative;
+  }
+
+  .endpoint {
+    background: #0A0A0A;
+    color: #FFFFFF;
+    border-radius: 16px;
+    padding: 36px 32px;
+    text-align: center;
+  }
+  .endpoint .lbl {
+    font-size: 11px;
+    color: #C8A96E;
+    font-weight: 600;
+    letter-spacing: 0.4em;
+    margin-bottom: 14px;
+  }
+  .endpoint .title {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: #FFFFFF;
+    margin-bottom: 4px;
+  }
+  .endpoint .desc {
+    font-size: 13px;
+    color: #BFBFBF;
+    margin-top: 6px;
+  }
+  .endpoint .icon {
+    font-size: 48px;
+    margin-bottom: 8px;
+  }
+
+  .nodes {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .node {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 16px;
+    align-items: center;
+    background: #FFFFFF;
+    border: 1.5px solid #C8A96E;
+    border-radius: 14px;
+    padding: 18px 22px;
+    box-shadow: 0 2px 0 #EDE7DA;
+  }
+  .node .num {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: #C8A96E;
+    color: #FFFFFF;
+    font-size: 18px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+  }
+  .node .text {
+    line-height: 1.35;
+  }
+  .node .title {
+    font-size: 17px;
+    font-weight: 800;
+    color: #0A0A0A;
+    letter-spacing: -0.02em;
+    margin-bottom: 2px;
+  }
+  .node .title .tech {
+    color: #C8A96E;
+    font-weight: 700;
+    font-size: 14px;
+    margin-left: 6px;
+  }
+  .node .role {
+    font-size: 13px;
+    color: #6B6B6B;
+    font-weight: 500;
+  }
+  .node .data {
+    font-size: 11px;
+    color: #999999;
+    margin-top: 4px;
+    letter-spacing: 0.02em;
+  }
+
+  /* Flow arrows: SVG overlay */
+  .flow-svg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+  }
+
+  /* Bottom output legend */
+  .legend {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 30px;
+    padding-top: 30px;
+    border-top: 1px solid #E8E8E8;
+  }
+  .legend-item {
+    text-align: center;
+  }
+  .legend-item .num {
+    font-size: 32px;
+    font-weight: 800;
+    color: #C8A96E;
+    letter-spacing: -0.03em;
+    font-family: 'Inter', sans-serif;
+  }
+  .legend-item .lbl {
+    font-size: 13px;
+    color: #6B6B6B;
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
+  .footer {
+    margin-top: 40px;
+    text-align: center;
+    color: #999999;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div class="header">
+    <div class="eyebrow">CARNERF · 5-AI INTEGRATED PIPELINE</div>
+    <h1>5개의 AI가 만드는 <span class="gold">하나의 진단</span></h1>
+    <div class="desc">차량 영상 한 번 → 5단계 AI 자동 처리 → 1페이지 진단 리포트</div>
+  </div>
+
+  <!-- Pipeline -->
+  <div class="pipeline">
+    <!-- Input -->
+    <div class="endpoint">
+      <div class="lbl">INPUT</div>
+      <div class="icon">🎥</div>
+      <div class="title">차량 영상</div>
+      <div class="desc">스마트폰 60초 촬영</div>
+    </div>
+
+    <!-- 5 AI Nodes -->
+    <div class="nodes">
+      <div class="node">
+        <div class="num">1</div>
+        <div class="text">
+          <div class="title">3D 재구성<span class="tech">Gaussian Splatting</span></div>
+          <div class="role">차량 영상 → 360° 디지털 트윈</div>
+          <div class="data">DATA · 자체 촬영 영상 200대+</div>
+        </div>
+      </div>
+
+      <div class="node">
+        <div class="num">2</div>
+        <div class="text">
+          <div class="title">카메라 위치 추정<span class="tech">COLMAP</span></div>
+          <div class="role">SfM 기반 3D 입력 데이터 생성</div>
+          <div class="data">DATA · 영상 프레임</div>
+        </div>
+      </div>
+
+      <div class="node">
+        <div class="num">3</div>
+        <div class="text">
+          <div class="title">결함 탐지<span class="tech">YOLOv8</span></div>
+          <div class="role">스크래치·덴트·도색 자동 마킹</div>
+          <div class="data">DATA · Roboflow + 자체 라벨</div>
+        </div>
+      </div>
+
+      <div class="node">
+        <div class="num">4</div>
+        <div class="text">
+          <div class="title">시세 예측<span class="tech">LightGBM</span></div>
+          <div class="role">적정 가격 ±10% 산정</div>
+          <div class="data">DATA · 실거래 5만 건+</div>
+        </div>
+      </div>
+
+      <div class="node">
+        <div class="num">5</div>
+        <div class="text">
+          <div class="title">차량 요약<span class="tech">GPT-4o + RAG</span></div>
+          <div class="role">고질병·리콜 1페이지 자동 요약</div>
+          <div class="data">DATA · 카탈로그·리콜DB·동호회</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Output -->
+    <div class="endpoint" style="background: #C8A96E; color: #FFFFFF;">
+      <div class="lbl" style="color: #FFFFFF;">OUTPUT</div>
+      <div class="icon">📄</div>
+      <div class="title" style="color: #FFFFFF;">AI 진단 리포트</div>
+      <div class="desc" style="color: #FFFFFF; opacity: 0.85;">3D 뷰어 + 결함 + 시세 + 요약</div>
+    </div>
+
+    <!-- Flow lines (SVG) -->
+    <svg class="flow-svg" preserveAspectRatio="none">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5"
+                markerWidth="8" markerHeight="8" orient="auto">
+          <path d="M0,0 L10,5 L0,10 Z" fill="#C8A96E"/>
+        </marker>
+      </defs>
+    </svg>
+  </div>
+
+  <!-- Bottom data legend -->
+  <div class="legend">
+    <div class="legend-item">
+      <div class="num">200+</div>
+      <div class="lbl">자체 촬영 차량 영상</div>
+    </div>
+    <div class="legend-item">
+      <div class="num">50,000+</div>
+      <div class="lbl">실거래 시세 데이터</div>
+    </div>
+    <div class="legend-item">
+      <div class="num">1 page</div>
+      <div class="lbl">자동 요약 리포트</div>
+    </div>
+  </div>
+
+  <div class="footer">CARNERF · AI ARCHITECTURE · 2026</div>
+
+</div>
+</body>
+</html>

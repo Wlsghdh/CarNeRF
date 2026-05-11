@@ -67,11 +67,12 @@ html:not(.dark) .btn-f:hover{background:#333;color:#fff}
 
 /* ═══ SPLIT-SCREEN SECTIONS ═══ */
 .split-section{display:flex;min-height:100vh}
-.split-text{flex:1;display:flex;flex-direction:column;justify-content:center;padding:80px 60px;background:#000}
+.split-text{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;padding:80px 80px;background:#000}
+.split-text > .reveal{max-width:460px;text-align:left}
 .split-img{flex:1;position:relative;overflow:hidden}
 .split-img img{width:100%;height:100%;object-fit:cover}
 .split-section:nth-child(even){flex-direction:row-reverse}
-.split-section:nth-child(even) .split-text{background:#0a0a0a}
+.split-section:nth-child(even) .split-text{align-items:flex-start;background:#0a0a0a}
 .split-num{font-size:80px;font-weight:900;color:#C8A96E;line-height:1;margin-bottom:24px}
 .split-title{font-size:36px;font-weight:900;color:#fff;margin-bottom:20px;letter-spacing:-1px}
 .split-desc{font-size:16px;color:rgba(255,255,255,0.5);line-height:1.9;max-width:420px}
@@ -80,7 +81,8 @@ html:not(.dark) .btn-f:hover{background:#333;color:#fff}
 .split-heading h2{font-size:clamp(32px,6vw,56px);font-weight:900;color:#fff;letter-spacing:-2px;line-height:1.1}
 @media(max-width:768px){
   .split-section{flex-direction:column!important;min-height:auto}
-  .split-text{padding:60px 24px;min-height:50vh}
+  .split-text{padding:60px 24px;min-height:50vh;align-items:center!important}
+  .split-text > .reveal{text-align:center!important;max-width:100%}
   .split-img{min-height:50vh}
   .split-num{font-size:56px}
   .split-title{font-size:28px}

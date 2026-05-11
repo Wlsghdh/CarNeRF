@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>CarNeRF · Tech Stack</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: #FFFFFF;
+    font-family: 'Pretendard Variable', -apple-system, sans-serif;
+    color: #0A0A0A;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .stage {
+    width: 1920px;
+    min-height: 1080px;
+    margin: 0 auto;
+    padding: 80px 100px;
+    background: #FFFFFF;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 60px;
+    padding-bottom: 30px;
+    border-bottom: 1px solid #E8E8E8;
+  }
+  .header .eyebrow {
+    color: #C8A96E;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.4em;
+    margin-bottom: 12px;
+  }
+  .header h1 {
+    font-size: 38px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: #0A0A0A;
+  }
+  .header h1 .gold { color: #C8A96E; }
+  .header .desc {
+    margin-top: 12px;
+    font-size: 16px;
+    color: #6B6B6B;
+    font-weight: 400;
+  }
+
+  /* Category grid */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+  }
+
+  .card {
+    background: #FFFFFF;
+    border: 1px solid #EDE7DA;
+    border-radius: 14px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0;
+    width: 4px; height: 100%;
+    background: #C8A96E;
+  }
+  .card .cat-num {
+    font-size: 13px;
+    color: #C8A96E;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    margin-bottom: 6px;
+  }
+  .card h2 {
+    font-size: 22px;
+    font-weight: 800;
+    color: #0A0A0A;
+    margin-bottom: 4px;
+    letter-spacing: -0.025em;
+  }
+  .card .sub {
+    font-size: 13px;
+    color: #6B6B6B;
+    margin-bottom: 22px;
+  }
+
+  .tech-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .tech {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #FAF7EF;
+    border: 1px solid #EDE7DA;
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #0A0A0A;
+    transition: all 0.2s;
+  }
+  .tech i, .tech svg, .tech img {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+  }
+  .tech.gold {
+    background: #C8A96E;
+    color: #FFFFFF;
+    border-color: #C8A96E;
+  }
+  .tech.dark {
+    background: #0A0A0A;
+    color: #FFFFFF;
+    border-color: #0A0A0A;
+  }
+
+  /* Pipeline footer */
+  .pipeline {
+    margin-top: 60px;
+    padding-top: 40px;
+    border-top: 1px solid #E8E8E8;
+  }
+  .pipeline h3 {
+    font-size: 16px;
+    color: #C8A96E;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    flex-wrap: wrap;
+  }
+  .flow .step {
+    background: #FAF7EF;
+    border: 1.5px solid #C8A96E;
+    color: #0A0A0A;
+    border-radius: 10px;
+    padding: 14px 22px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .flow .step .small {
+    display: block;
+    font-size: 11px;
+    color: #6B6B6B;
+    font-weight: 500;
+    margin-top: 2px;
+  }
+  .flow .arrow {
+    color: #C8A96E;
+    font-size: 20px;
+    margin: 0 14px;
+    font-weight: 800;
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid #E8E8E8;
+    text-align: center;
+    color: #999999;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="eyebrow">CARNERF · TECHNOLOGY STACK</div>
+    <h1>CarNeRF의 <span class="gold">기술 구성도</span></h1>
+    <div class="desc">영상 입력부터 AI 진단 리포트 출력까지 — 전 영역에서 활용되는 기술들</div>
+  </div>
+
+  <!-- GRID -->
+  <div class="grid">
+
+    <!-- 1. Backend -->
+    <div class="card">
+      <div class="cat-num">01 / BACKEND</div>
+      <h2>백엔드</h2>
+      <div class="sub">서버, DB, 인증, 라우팅</div>
+      <div class="tech-list">
+        <span class="tech"><i class="devicon-fastapi-plain"></i>FastAPI</span>
+        <span class="tech"><i class="devicon-python-plain"></i>Python 3.11</span>
+        <span class="tech"><i class="devicon-sqlite-plain"></i>SQLite</span>
+        <span class="tech">🔐 JWT</span>
+        <span class="tech">🧩 Jinja2</span>
+      </div>
+    </div>
+
+    <!-- 2. Frontend -->
+    <div class="card">
+      <div class="cat-num">02 / FRONTEND</div>
+      <h2>프런트엔드</h2>
+      <div class="sub">UI, 3D 웹뷰어</div>
+      <div class="tech-list">
+        <span class="tech"><i class="devicon-html5-plain"></i>HTML5</span>
+        <span class="tech"><i class="devicon-css3-plain"></i>CSS3</span>
+        <span class="tech"><i class="devicon-javascript-plain"></i>JavaScript</span>
+        <span class="tech"><i class="devicon-tailwindcss-plain"></i>Tailwind</span>
+        <span class="tech"><i class="devicon-threejs-original"></i>Three.js</span>
+      </div>
+    </div>
+
+    <!-- 3. 3D / CV -->
+    <div class="card">
+      <div class="cat-num">03 / 3D · COMPUTER VISION</div>
+      <h2>3D 재구성 · 비전</h2>
+      <div class="sub">차량 → 3D 디지털 트윈</div>
+      <div class="tech-list">
+        <span class="tech gold">3D Gaussian Splatting</span>
+        <span class="tech">COLMAP</span>
+        <span class="tech">YOLOv8</span>
+        <span class="tech"><i class="devicon-opencv-plain"></i>OpenCV</span>
+      </div>
+    </div>
+
+    <!-- 4. ML -->
+    <div class="card">
+      <div class="cat-num">04 / MACHINE LEARNING</div>
+      <h2>머신러닝</h2>
+      <div class="sub">결함 탐지 · 시세 예측</div>
+      <div class="tech-list">
+        <span class="tech"><i class="devicon-pytorch-plain"></i>PyTorch 2.5</span>
+        <span class="tech">LightGBM</span>
+        <span class="tech">scikit-learn</span>
+        <span class="tech"><i class="devicon-pandas-plain"></i>pandas</span>
+      </div>
+    </div>
+
+    <!-- 5. LLM / RAG -->
+    <div class="card">
+      <div class="cat-num">05 / LLM · RAG</div>
+      <h2>LLM · 검색증강생성</h2>
+      <div class="sub">차량 요약 리포트 자동 생성</div>
+      <div class="tech-list">
+        <span class="tech gold">GPT-4o</span>
+        <span class="tech">LangChain</span>
+        <span class="tech">ChromaDB</span>
+        <span class="tech">RAG</span>
+      </div>
+    </div>
+
+    <!-- 6. Infra -->
+    <div class="card">
+      <div class="cat-num">06 / INFRASTRUCTURE</div>
+      <h2>인프라 · 데이터</h2>
+      <div class="sub">GPU · 컨테이너 · CI/CD</div>
+      <div class="tech-list">
+        <span class="tech dark">A100 GPU</span>
+        <span class="tech">CUDA 12.2</span>
+        <span class="tech"><i class="devicon-docker-plain"></i>Docker</span>
+        <span class="tech"><i class="devicon-github-original"></i>GitHub Actions</span>
+        <span class="tech">Roboflow</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PIPELINE -->
+  <div class="pipeline">
+    <h3>END · TO · END  PIPELINE</h3>
+    <div class="flow">
+      <div class="step">차량 영상<span class="small">스마트폰 60s</span></div>
+      <div class="arrow">→</div>
+      <div class="step">3D 재구성<span class="small">Gaussian Splatting</span></div>
+      <div class="arrow">→</div>
+      <div class="step">AI 진단<span class="small">YOLOv8 · LightGBM</span></div>
+      <div class="arrow">→</div>
+      <div class="step">차량 요약<span class="small">GPT-4o + RAG</span></div>
+      <div class="arrow">→</div>
+      <div class="step">진단 리포트<span class="small">웹뷰어 + PDF</span></div>
+    </div>
+  </div>
+
+  <div class="footer">CARNERF · 2026 · AI-POWERED USED CAR PLATFORM</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>CarNeRF</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT/fonts/variable/woff2/SUIT-Variable.css">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.min.css" />
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: #000;
+    overflow: hidden;
+    font-family: 'SUIT Variable', 'Pretendard Variable', 'Pretendard',
+                 -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+    color: #fff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.01em;
+  }
+
+  .stage {
+    position: fixed; inset: 0;
+    background: #000;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .frame {
+    position: relative;
+    width: 100vw;
+    height: 56.25vw;
+    max-height: 100vh;
+    max-width: 177.78vh;
+    overflow: hidden;
+    background: #000;
+  }
+
+  /* ============ CUT (video) ============ */
+  .cut {
+    position: absolute; inset: 0;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
+  .cut.active { opacity: 1; }
+
+  .cut video {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    /* Cinematic clean: bright neutral with subtle desaturation */
+    filter: brightness(0.98) contrast(1.02) saturate(0.92);
+  }
+
+  /* CUT3 uses a pre-cleaned 1280x720 mp4 (cut3_3d_split_clean.mp4)
+     where black bars and the split gap have been removed by ffmpeg.
+     No special CSS override needed — base .cut video rules apply. */
+
+  /* Subtle bottom darken for text legibility */
+  .scrim {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 55%;
+    pointer-events: none;
+    background: linear-gradient(180deg,
+      rgba(0,0,0,0) 0%,
+      rgba(0,0,0,0.50) 100%);
+    z-index: 5;
+  }
+
+  /* ============ PROGRESS SCENE (screenshot marquee) ============ */
+  .progress-bg {
+    position: absolute; inset: 0;
+    overflow: hidden;
+    z-index: 1;
+    background: #000;
+  }
+  .progress-bg::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 2;
+    pointer-events: none;
+  }
+  .ss-row {
+    display: flex;
+    gap: 1.6vw;
+    white-space: nowrap;
+    padding: 0.8vh 0;
+    will-change: transform;
+  }
+  .ss-row img {
+    height: 27vh;
+    border-radius: 10px;
+    flex-shrink: 0;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.06);
+    filter: brightness(0.85) saturate(0.95);
+  }
+  .ss-rows {
+    position: absolute; inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1.2vh;
+  }
+  .ss-row.left {
+    animation: scrollLeft 38s linear infinite;
+  }
+  .ss-row.right {
+    animation: scrollRight 46s linear infinite;
+  }
+  .ss-row.left2 {
+    animation: scrollLeft 52s linear infinite;
+  }
+  @keyframes scrollLeft {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  @keyframes scrollRight {
+    from { transform: translateX(-50%); }
+    to   { transform: translateX(0); }
+  }
+
+  /* ============ NARRATIVE TEXT (cinematic, bottom-centered) ============ */
+  .text {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    pointer-events: none;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0 5vw 9vh;
+  }
+
+  .block {
+    text-align: center;
+    max-width: 1200px;
+  }
+
+  /* Match home hero typography exactly: Pretendard 900, large, tight tracking */
+  .head {
+    font-family: 'Pretendard Variable', 'Pretendard', 'SUIT Variable', sans-serif;
+    font-weight: 900;
+    font-size: clamp(40px, 8vw, 80px);
+    color: #fff;
+    letter-spacing: -2px;
+    line-height: 1.05;
+    opacity: 0;
+    transform: translateY(30px);
+    transition:
+      opacity 0.9s cubic-bezier(0.2,0.8,0.2,1) 0.3s,
+      transform 0.9s cubic-bezier(0.2,0.8,0.2,1) 0.3s;
+  }
+  .head .accent { color: #C8A96E; font-weight: 900; }
+
+  .sub {
+    font-family: 'Pretendard Variable', 'Pretendard', 'SUIT Variable', sans-serif;
+    font-weight: 400;
+    font-size: clamp(15px, 1.8vw, 18px);
+    color: rgba(255,255,255,0.6);
+    letter-spacing: -0.01em;
+    line-height: 1.8;
+    margin-top: 24px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+      opacity 0.8s ease 0.7s,
+      transform 0.8s ease 0.7s;
+  }
+
+  .cut.active .head,
+  .cut.active .sub { opacity: 1; transform: translateY(0); }
+
+  /* ============ START SCREEN ============ */
+  .start {
+    position: absolute; inset: 0;
+    z-index: 100;
+    background: #000;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: opacity 0.7s ease;
+  }
+  .start.hidden { opacity: 0; pointer-events: none; }
+  .start-title {
+    font-family: 'SUIT Variable', sans-serif;
+    font-weight: 700;
+    font-size: clamp(4rem, 8.5vw, 8.5rem);
+    letter-spacing: -0.05em;
+    line-height: 1;
+    color: #fff;
+  }
+  .start-title .accent { color: #C8A96E; }
+  .start-sub {
+    margin-top: 1.4rem;
+    font-weight: 400;
+    color: rgba(255,255,255,0.7);
+    font-size: clamp(1.05rem, 1.5vw, 1.45rem);
+  }
+  .start-btn {
+    margin-top: 3rem;
+    padding: 0.95rem 2.2rem;
+    border: none; border-radius: 999px;
+    background: #C8A96E; color: #000;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: transform 0.25s ease, background 0.25s ease;
+  }
+  .start-btn:hover { background: #d8b87a; transform: translateY(-1px); }
+
+  /* ============ END ============ */
+  .end {
+    position: absolute; inset: 0;
+    z-index: 50;
+    background: #000;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1.2s ease;
+  }
+  .end.show { opacity: 1; }
+  .end-title {
+    font-family: 'SUIT Variable', sans-serif;
+    font-weight: 700;
+    font-size: clamp(3rem, 6.5vw, 6.5rem);
+    color: #fff;
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 1s ease 0.3s, transform 1s ease 0.3s;
+  }
+  .end-title .accent { color: #C8A96E; }
+  .end-sub {
+    margin-top: 1.5rem;
+    font-weight: 400;
+    color: rgba(255,255,255,0.6);
+    font-size: clamp(0.9rem, 1.2vw, 1.1rem);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    opacity: 0;
+    transition: opacity 1s ease 0.9s;
+  }
+  .end.show .end-title { opacity: 1; transform: translateY(0); }
+  .end.show .end-sub { opacity: 1; }
+
+  .playing { cursor: none; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="frame" id="frame">
+
+    <!-- ============ CUT 1 — 문제 제기 ============ -->
+    <div class="cut" id="cut1">
+      <video src="01_raw_videos/cut1_rainy_lot.mp4" muted playsinline preload="auto"></video>
+      <div class="scrim"></div>
+      <div class="text">
+        <div class="block">
+          <div class="head">중고차 시장,<br>정말 믿을 수 <span class="accent">있나요?</span></div>
+          <div class="sub">정보는 부족하고, 신뢰는 더 부족합니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ CUT 2 — 답답함 ============ -->
+    <div class="cut" id="cut2">
+      <video src="01_raw_videos/cut2_hand_inspect.mp4" muted playsinline preload="auto"></video>
+      <div class="scrim"></div>
+      <div class="text">
+        <div class="block">
+          <div class="head">왜, <span class="accent">직접</span> 봐야만<br>믿을 수 있는가.</div>
+          <div class="sub">사진 몇 장으론 알 수 없는 것들이 있습니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ CUT 3 — 해결의 시작 (3D 스캔) ============ -->
+    <div class="cut" id="cut3">
+      <video src="01_raw_videos/cut3_3d_split_clean.mp4" muted playsinline preload="auto"></video>
+      <div class="scrim"></div>
+      <div class="text">
+        <div class="block">
+          <div class="head">한 번의 촬영으로,<br>차량의 <span class="accent">모든 면</span>을.</div>
+          <div class="sub">3D Gaussian Splatting이 차량 전체를 손바닥 위에 올려놓습니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ CUT 4 — 시세 신뢰 ============ -->
+    <div class="cut" id="cut4">
+      <video src="01_raw_videos/cut4_price_chart.mp4" muted playsinline preload="auto"></video>
+      <div class="scrim"></div>
+      <div class="text">
+        <div class="block">
+          <div class="head"><span class="accent">감(感)</span>이 아닌,<br>데이터입니다.</div>
+          <div class="sub">5만 건의 실거래가, 당신 차의 적정 가격을 말합니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ CUT 5 — 결함 탐지 ============ -->
+    <div class="cut" id="cut5">
+      <video src="01_raw_videos/cut5_defect_yolo.mp4" muted playsinline preload="auto"></video>
+      <div class="scrim"></div>
+      <div class="text">
+        <div class="block">
+          <div class="head">사람이 놓친 것을,<br><span class="accent">AI는</span> 봅니다.</div>
+          <div class="sub">스크래치, 덴트, 도색 — 빠짐없이 자동으로 잡아냅니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ CUT 6 — AI 차량 요약 (전용 RAG) ============ -->
+    <div class="cut" id="cut6">
+      <video src="01_raw_videos/cut6_ai_summary.mp4" muted playsinline preload="auto"></video>
+      <div class="scrim"></div>
+      <div class="text">
+        <div class="block">
+          <div class="head">AI가, 당신의 차를<br><span class="accent">이해</span>합니다.</div>
+          <div class="sub">차량 도메인 <span style="color:#C8A96E">전용 RAG</span>가 모든 데이터를 종합해 한눈에 정리합니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ CUT 7 — 안심 거래 ============ -->
+    <div class="cut" id="cut7">
+      <video src="01_raw_videos/cut7_trade.mp4" muted playsinline preload="auto"></video>
+      <div class="scrim"></div>
+      <div class="text">
+        <div class="block">
+          <div class="head">이제, <span class="accent">안심하고</span><br>만나세요.</div>
+          <div class="sub">에스크로 결제와 AI 진단 리포트로 거래의 모든 순간을 보호합니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ CUT 8 — 진행 중 (스크린샷 마퀴) ============ -->
+    <div class="cut" id="cut8">
+      <div class="progress-bg">
+        <div class="ss-rows">
+          <!-- Row 1 (scroll left) -->
+          <div class="ss-row left">
+            <img src="04_screenshots/ss01.png" alt="">
+            <img src="04_screenshots/ss02.png" alt="">
+            <img src="04_screenshots/ss03.png" alt="">
+            <img src="04_screenshots/ss04.png" alt="">
+            <img src="04_screenshots/ss01.png" alt="">
+            <img src="04_screenshots/ss02.png" alt="">
+            <img src="04_screenshots/ss03.png" alt="">
+            <img src="04_screenshots/ss04.png" alt="">
+          </div>
+          <!-- Row 2 (scroll right) -->
+          <div class="ss-row right">
+            <img src="04_screenshots/ss05.png" alt="">
+            <img src="04_screenshots/ss06.png" alt="">
+            <img src="04_screenshots/ss07.png" alt="">
+            <img src="04_screenshots/ss08.png" alt="">
+            <img src="04_screenshots/ss05.png" alt="">
+            <img src="04_screenshots/ss06.png" alt="">
+            <img src="04_screenshots/ss07.png" alt="">
+            <img src="04_screenshots/ss08.png" alt="">
+          </div>
+          <!-- Row 3 (scroll left, slower) -->
+          <div class="ss-row left2">
+            <img src="04_screenshots/ss09.png" alt="">
+            <img src="04_screenshots/ss10.png" alt="">
+            <img src="04_screenshots/ss11.png" alt="">
+            <img src="04_screenshots/ss01.png" alt="">
+            <img src="04_screenshots/ss09.png" alt="">
+            <img src="04_screenshots/ss10.png" alt="">
+            <img src="04_screenshots/ss11.png" alt="">
+            <img src="04_screenshots/ss01.png" alt="">
+          </div>
+        </div>
+      </div>
+      <div class="text">
+        <div class="block">
+          <div class="head">CarNeRF는,<br><span class="accent">지금도</span> 만들어지고 있습니다.</div>
+          <div class="sub">베타 출시를 향해 — 매일, 한 걸음씩.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ END ============ -->
+    <div class="end" id="end">
+      <div class="end-title">신뢰는,<br><span class="accent">기술이</span> 만듭니다.</div>
+      <div class="end-sub">CarNeRF</div>
+    </div>
+
+    <!-- ============ START ============ -->
+    <div class="start" id="start">
+      <div class="start-title">Car<span class="accent">NeRF</span></div>
+      <div class="start-sub">중고차, 다시 신뢰하다.</div>
+      <button class="start-btn">재생하기</button>
+    </div>
+
+    <!-- ============ BGM ============
+         Drop a file at 02_bgm/bgm.mp3 (or .wav). It auto-plays
+         when the user clicks Play, fades in/out with the promo. -->
+    <audio id="bgm" preload="auto" loop>
+      <source src="02_bgm/bgm.mp3" type="audio/mpeg">
+      <source src="02_bgm/bgm.wav" type="audio/wav">
+    </audio>
+
+  </div>
+</div>
+
+<script>
+/* ============ TIMELINE ============
+   Each scene transitions when its video ends (no looping).
+   - cuts list defines scene order
+   - On video.ended → start crossfade → next cut
+   - All videos preloaded before playback starts for reliable autoplay */
+// Each entry: { id, dur?, hold? }
+//   dur  — fixed duration (ms) for video cuts; trims long sources to a uniform pace
+//   hold — duration (ms) for static scenes (no video)
+const SCENE_DUR = 5500;  // unified per-scene length, matching cut2
+const cuts = [
+  { id: 'cut1', dur: SCENE_DUR },
+  { id: 'cut2', dur: SCENE_DUR },
+  { id: 'cut3', dur: SCENE_DUR },
+  { id: 'cut4', dur: SCENE_DUR },
+  { id: 'cut5', dur: SCENE_DUR },
+  { id: 'cut6', dur: SCENE_DUR },
+  { id: 'cut7', dur: SCENE_DUR },
+  { id: 'cut8', hold: SCENE_DUR }   // progress / screenshot marquee
+];
+const FADE = 350;       // crossfade duration ms (tight, snappy)
+const END_HOLD = 4500;  // end card hold ms
+
+const startEl = document.getElementById('start');
+const startBtn = startEl.querySelector('.start-btn');
+const endEl = document.getElementById('end');
+const frameEl = document.getElementById('frame');
+
+const allVideos = cuts
+  .map(c => document.getElementById(c.id).querySelector('video'))
+  .filter(Boolean);
+
+/* ---- Preload all videos before allowing playback ---- */
+function preloadAll() {
+  return Promise.all(allVideos.map(v => new Promise(resolve => {
+    if (v.readyState >= 3) return resolve();           // HAVE_FUTURE_DATA
+    const onReady = () => { v.removeEventListener('canplay', onReady); resolve(); };
+    v.addEventListener('canplay', onReady);
+    v.load();
+    // safety timeout (don't block forever on slow networks)
+    setTimeout(resolve, 8000);
+  })));
+}
+
+/* ---- Cycle through cuts ---- */
+function playCut(index) {
+  if (index >= cuts.length) {
+    endEl.classList.add('show');
+    if (bgm && !bgm.paused) fadeAudio(bgm, bgm.volume, 0, 2500);
+    setTimeout(() => {
+      frameEl.addEventListener('click', () => location.reload(), { once: true });
+    }, END_HOLD);
+    return;
+  }
+  const cut = cuts[index];
+  const cutEl = document.getElementById(cut.id);
+  const videoEl = cutEl.querySelector('video');
+
+  cutEl.classList.add('active');
+
+  let advanced = false;
+  const advance = () => {
+    if (advanced) return;
+    advanced = true;
+    cutEl.classList.remove('active');
+    setTimeout(() => {
+      if (videoEl) videoEl.pause();
+      playCut(index + 1);
+    }, FADE);
+  };
+
+  // Static (no-video) scene: hold for `cut.hold` ms then advance
+  if (!videoEl) {
+    setTimeout(advance, cut.hold || SCENE_DUR);
+    return;
+  }
+
+  videoEl.currentTime = 0;
+  // Fixed-duration scenes: advance after `cut.dur` regardless of source length
+  setTimeout(advance, cut.dur || SCENE_DUR);
+  // Also advance early if the video happens to finish first
+  videoEl.addEventListener('ended', advance, { once: true });
+
+  videoEl.play().catch(err => {
+    console.warn('autoplay blocked:', err);
+    setTimeout(advance, SCENE_DUR);
+  });
+}
+
+/* ---- BGM helpers ---- */
+const bgm = document.getElementById('bgm');
+function fadeAudio(el, from, to, ms) {
+  const start = performance.now();
+  el.volume = from;
+  function step(now) {
+    const t = Math.min(1, (now - start) / ms);
+    el.volume = from + (to - from) * t;
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+/* ---- Start button: preload then play ---- */
+startBtn.addEventListener('click', async () => {
+  startBtn.disabled = true;
+  startBtn.textContent = '준비 중...';
+  await preloadAll();
+  startEl.classList.add('hidden');
+  document.body.classList.add('playing');
+  if (frameEl.requestFullscreen) {
+    try { await frameEl.requestFullscreen(); } catch {}
+  }
+  // Try to start BGM with 1.2s fade-in (silently fails if file missing)
+  if (bgm) {
+    bgm.volume = 0;
+    bgm.play().then(() => fadeAudio(bgm, 0, 0.7, 1200)).catch(() => {});
+  }
+  setTimeout(() => playCut(0), 400);
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'f' || e.key === 'F') {
+    if (!document.fullscreenElement) frameEl.requestFullscreen();
+    else document.exitFullscreen();
+  }
+  if (e.key === 'Escape') document.body.classList.remove('playing');
+});
+</script>
+</body>
+</html>
