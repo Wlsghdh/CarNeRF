@@ -33,6 +33,24 @@ export function PriceChart({ estimate }: { estimate: PriceEstimate }) {
 
       {curve.length > 0 && (
         <View className="mt-5">
+          <View className="flex-row mb-1" style={{ gap: 4 }}>
+            {curve.map((p, i) => {
+              const tight = curve.length > 6;
+              const show =
+                !tight || i === 0 || i === curve.length - 1 || i % 2 === 0;
+              return (
+                <View key={`lbl-${i}`} className="flex-1 items-center">
+                  {show ? (
+                    <Text
+                      style={{ fontFamily: 'Pretendard-SemiBold' }}
+                      className="text-[#C8A96E] text-[9px]">
+                      {p.price.toLocaleString()}만
+                    </Text>
+                  ) : null}
+                </View>
+              );
+            })}
+          </View>
           <View className="flex-row items-end justify-between h-32" style={{ gap: 4 }}>
             {curve.map((p, i) => {
               const h = ((p.price - min) / span) * 100;

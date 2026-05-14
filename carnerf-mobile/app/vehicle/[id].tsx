@@ -7,7 +7,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AISummary } from '../../components/vehicle/AISummary';
 import { DefectBars } from '../../components/vehicle/DefectBars';
+import { OptionMatrix } from '../../components/vehicle/OptionMatrix';
 import { PriceChart } from '../../components/vehicle/PriceChart';
+import { PriceTrendChart } from '../../components/vehicle/PriceTrendChart';
+import { VehicleSpecCard } from '../../components/vehicle/VehicleSpecCard';
+import { WarrantyCard } from '../../components/vehicle/WarrantyCard';
 import { Button } from '../../components/ui/Button';
 import { aiApi } from '../../lib/api/ai';
 import { defectApi } from '../../lib/api/defect';
@@ -31,7 +35,7 @@ export default function VehicleDetailScreen() {
     queryFn: () => listingsApi.get(listingId),
     enabled: Number.isFinite(listingId),
   });
-  const vehicleId = listingQ.data?.vehicle_id;
+  const vehicleId = listingQ.data?.vehicle?.id ?? listingQ.data?.vehicle_id;
 
   const summaryQ = useQuery({
     queryKey: ['ai-summary', vehicleId],
@@ -175,22 +179,54 @@ export default function VehicleDetailScreen() {
           <View className="h-3" />
           {predictQ.data ? <PriceChart estimate={predictQ.data} /> : null}
 
-          {marketQ.data ? (
-            <>
-              <View className="h-3" />
-              <View className="bg-[#0E1117] border border-white/5 rounded-2xl p-5">
-                <Text style={{ fontFamily: 'Pretendard-Bold' }} className="text-white">
-                  시세 비교
-                </Text>
-                <View className="flex-row mt-3 gap-3">
-                  <PriceCell label="내부 평균" value={marketQ.data.internal_average} />
-                  {marketQ.data.external_average ? (
-                    <PriceCell label="외부 평균" value={marketQ.data.external_average} />
-                  ) : null}
+          {marketQ.data ? (() => {
+            const m = marketQ.data as any;
+            const internal = m.internal_data?.avg_price ?? m.internal_average;
+            const overall = m.overall_avg_price ?? m.external_average;
+            return (
+              <>
+                <View className="h-3" />
+                <View className="bg-[#0E1117] border border-white/5 rounded-2xl p-5">
+                  <Text style={{ fontFamily: 'Pretendard-Bold' }} className="text-white">
+                    시세 비교
+                  </Text>
+                  <View className="flex-row mt-3 gap-3">
+                    <PriceCell label="내부 평균" value={internal} />
+                    {Number.isFinite(overall) ? (
+                      <PriceCell label="전체 평균" value={overall} />
+                    ) : null}
+                  </View>
                 </View>
-              </View>
-            </>
-          ) : null}
+              </>
+            );
+          })() : null}
+        </View>
+
+        <View className="px-5 mt-6">
+          <SectionTitle title="옵션 정보" />
+          <OptionMatrix owned={v?.options ?? []} />
+        </View>
+
+        <View className="px-5 mt-6">
+          <SectionTitle title="차량 정보" />
+          <VehicleSpecCard vehicle={v} />
+        </View>
+
+        {vehicleId ? (
+          <View className="px-5 mt-6">
+            <SectionTitle title="가격 추세" />
+            <PriceTrendChart vehicleId={vehicleId} ownPrice={l.price} />
+          </View>
+        ) : null}
+
+        <View className="px-5 mt-6">
+          <SectionTitle title="A/S 보증" />
+          <WarrantyCard
+            brand={v?.brand ?? ''}
+            firstRegisteredAt={v?.first_registered_at ?? null}
+            inspectionDate={v?.inspection_date ?? null}
+            mileage={v?.mileage ?? 0}
+          />
         </View>
 
         <View className="px-5 mt-6">
@@ -224,18 +260,7 @@ export default function VehicleDetailScreen() {
       </ScrollView>
 
       <View className="absolute bottom-0 left-0 right-0 bg-[#0a0a0a] border-t border-white/5 px-5 pb-8 pt-3">
-        <View className="flex-row gap-3">
-          <Button
-            label={wished ? '찜 해제' : '찜하기'}
-            variant="outline"
-            onPress={() => toggleWish.mutate()}
-            leading={<Heart size={16} color={wished ? '#C8A96E' : '#FFF'} />}
-            className="flex-1"
-          />
-          <View style={{ flex: 2 }}>
-            <Button label="판매자 문의" leading={<MessageCircle size={16} color="#000" />} />
-          </View>
-        </View>
+        <Button label="판매자 문의" leading={<MessageCircle size={16} color="#000" />} />
       </View>
     </View>
   );
@@ -249,14 +274,17 @@ function SectionTitle({ title }: { title: string }) {
   );
 }
 
-function PriceCell({ label, value }: { label: string; value: number }) {
+function PriceCell({ label, value }: { label: string; value: number | null | undefined }) {
+  const display = Number.isFinite(value as number)
+    ? (value as number).toLocaleString()
+    : '—';
   return (
     <View className="flex-1 bg-white/5 rounded-xl p-3">
       <Text style={{ fontFamily: 'Pretendard' }} className="text-ink-mute text-[11px]">
         {label}
       </Text>
       <Text style={{ fontFamily: 'Pretendard-Bold' }} className="text-white text-lg mt-1">
-        {value.toLocaleString()}
+        {display}
         <Text style={{ fontFamily: 'Pretendard' }} className="text-ink-mute text-xs">
           {' '}만원
         </Text>

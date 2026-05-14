@@ -1,19 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { ArrowRight, Bell, Box, ShieldCheck, Sparkles, TrendingUp } from 'lucide-react-native';
-import { ActivityIndicator, FlatList, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Logo } from '../../components/Brand';
-import { VehicleCard } from '../../components/vehicle/VehicleCard';
-import { listingsApi } from '../../lib/api/listings';
+import { AgeRecommendSection } from '../../components/home/AgeRecommendSection';
+import { WeeklySpecialsSection } from '../../components/home/WeeklySpecialsSection';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { data: featured, isLoading } = useQuery({
-    queryKey: ['listings', 'featured'],
-    queryFn: () => listingsApi.list({ sort: 'newest', limit: 10 }),
-  });
 
   return (
     <SafeAreaView className="flex-1 bg-bg" edges={['top']}>
@@ -57,44 +52,9 @@ export default function HomeScreen() {
           <FeatureChip icon={<TrendingUp size={22} color="#C8A96E" />} label="시세 예측" />
         </View>
 
-        <View className="px-5 mt-8 mb-3 flex-row items-end justify-between">
-          <Text style={{ fontFamily: 'Pretendard-Bold' }} className="text-white text-lg">
-            추천 매물
-          </Text>
-          <Pressable onPress={() => router.push('/listings')} className="flex-row items-center">
-            <Text style={{ fontFamily: 'Pretendard-SemiBold' }} className="text-[#C8A96E] text-xs">
-              전체보기
-            </Text>
-            <ArrowRight size={12} color="#C8A96E" />
-          </Pressable>
-        </View>
+        <WeeklySpecialsSection />
 
-        {isLoading ? (
-          <View className="px-5 py-10 items-center">
-            <ActivityIndicator color="#C8A96E" />
-          </View>
-        ) : (
-          <FlatList
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            data={featured ?? []}
-            keyExtractor={(l) => String(l.id)}
-            contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
-            renderItem={({ item }) => (
-              <View style={{ width: 280 }}>
-                <VehicleCard
-                  listing={item}
-                  onPress={() => router.push({ pathname: '/vehicle/[id]', params: { id: item.id } })}
-                />
-              </View>
-            )}
-            ListEmptyComponent={
-              <Text style={{ fontFamily: 'Pretendard' }} className="text-ink-mute px-5">
-                매물이 아직 없습니다
-              </Text>
-            }
-          />
-        )}
+        <AgeRecommendSection />
 
         <View className="px-5 mt-8">
           <Text style={{ fontFamily: 'Pretendard-Bold' }} className="text-white text-lg mb-3">

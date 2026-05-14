@@ -34,6 +34,33 @@ export interface Vehicle {
   thumbnail_url?: string;
   model_3d_url?: string;
   model_3d_status: Model3DStatus;
+  options?: string[];
+  body_type?: 'sedan' | 'suv' | 'hatchback' | 'coupe' | 'wagon' | null;
+  drive_type?: '2WD' | '4WD' | 'AWD' | null;
+  seats?: number | null;
+  vin_last4?: string | null;
+  accident_count?: number;
+  flood_history?: boolean;
+  owner_change_count?: number;
+  first_registered_at?: string | null;
+  inspection_date?: string | null;
+  plate_number_masked?: string | null;
+}
+
+export interface PriceDistribution {
+  transactions: { date: string; price: number; mileage: number; source: string }[];
+  listings: { date: string; price: number }[];
+  stats: {
+    min: number;
+    max: number;
+    avg: number;
+    p25: number;
+    p50: number;
+    p75: number;
+    sample_size: number;
+  } | null;
+  current_price: number | null;
+  range: string;
 }
 
 export interface Listing {

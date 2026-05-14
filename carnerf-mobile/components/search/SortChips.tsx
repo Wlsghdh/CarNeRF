@@ -5,10 +5,10 @@ import { Chip } from '../ui/Chip';
 
 const ITEMS: { value: Sort; label: string }[] = [
   { value: 'newest', label: '최신순' },
-  { value: 'price_asc', label: '낮은 가격' },
-  { value: 'price_desc', label: '높은 가격' },
+  { value: 'price_asc', label: '낮은가격' },
+  { value: 'price_desc', label: '높은가격' },
   { value: 'mileage', label: '주행거리' },
-  { value: 'region_match', label: '내 지역' },
+  { value: 'region_match', label: '지역순' },
 ];
 
 export function SortChips({ value, onChange }: { value: Sort; onChange: (s: Sort) => void }) {
@@ -18,7 +18,7 @@ export function SortChips({ value, onChange }: { value: Sort; onChange: (s: Sort
       showsHorizontalScrollIndicator={false}
       data={ITEMS}
       keyExtractor={(i) => i.value}
-      contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
+      contentContainerStyle={{ paddingHorizontal: 20, gap: 8, paddingVertical: 2 }}
       renderItem={({ item }) => (
         <Chip label={item.label} active={value === item.value} onPress={() => onChange(item.value)} />
       )}

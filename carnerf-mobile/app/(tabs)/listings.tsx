@@ -104,7 +104,7 @@ export default function ListingsScreen() {
         </Pressable>
       </View>
 
-      <View className="px-5">
+      <View className="px-5 pb-2">
         <NLSearchBar
           value={query}
           onChangeText={setQuery}
@@ -119,58 +119,88 @@ export default function ListingsScreen() {
       </View>
 
       {aiMode && !aiResult && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 20, gap: 8, paddingTop: 10 }}>
-          {AI_SUGGESTIONS.map((s) => (
-            <Pressable
-              key={s}
-              onPress={() => {
-                setQuery(s);
-                aiSearch.mutate(s);
-              }}
-              className="px-3 h-8 rounded-full bg-[#C8A96E]/15 border border-[#C8A96E]/40 flex-row items-center">
-              <Sparkles size={12} color="#C8A96E" />
-              <Text
-                style={{ fontFamily: 'Pretendard-SemiBold' }}
-                className="text-[#C8A96E] text-[11px] ml-1">
-                {s}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
+        <View className="mt-3">
+          <Text
+            style={{ fontFamily: 'Pretendard-SemiBold' }}
+            className="text-ink-mute text-[11px] px-5 mb-2 tracking-wide">
+            AI 추천 검색
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20, gap: 8, paddingVertical: 2 }}>
+            {AI_SUGGESTIONS.map((s) => (
+              <Pressable
+                key={s}
+                onPress={() => {
+                  setQuery(s);
+                  aiSearch.mutate(s);
+                }}
+                className="px-3 h-8 rounded-full bg-[#C8A96E]/15 border border-[#C8A96E]/40 flex-row items-center">
+                <Sparkles size={12} color="#C8A96E" />
+                <Text
+                  style={{ fontFamily: 'Pretendard-SemiBold' }}
+                  className="text-[#C8A96E] text-[11px] ml-1">
+                  {s}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
       )}
 
-      {!aiMode && popularQ.data && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 20, gap: 8, paddingTop: 10 }}>
-          {popularQ.data.keywords.map((k) => (
-            <Chip
-              key={k.text}
-              label={`# ${k.text}`}
-              active={appliedSearch === k.text}
-              onPress={() => {
-                setQuery(k.text);
-                setAppliedSearch(k.text);
-              }}
-            />
-          ))}
-        </ScrollView>
+      {!aiMode && popularQ.data && popularQ.data.keywords.length > 0 && (
+        <View className="mt-3">
+          <Text
+            style={{ fontFamily: 'Pretendard-SemiBold' }}
+            className="text-ink-mute text-[11px] px-5 mb-2 tracking-wide">
+            인기 검색어
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20, gap: 8, paddingVertical: 2 }}>
+            {popularQ.data.keywords.map((k) => (
+              <Chip
+                key={k.text}
+                label={`# ${k.text}`}
+                active={appliedSearch === k.text}
+                onPress={() => {
+                  setQuery(k.text);
+                  setAppliedSearch(k.text);
+                }}
+              />
+            ))}
+          </ScrollView>
+        </View>
       )}
 
-      {aiMode && aiResult && <ParsedFilters filters={aiResult.parsed} />}
+      {aiMode && aiResult && (
+        <View className="mt-3">
+          <Text
+            style={{ fontFamily: 'Pretendard-SemiBold' }}
+            className="text-ink-mute text-[11px] px-5 mb-2 tracking-wide">
+            AI가 이해한 조건
+          </Text>
+          <ParsedFilters filters={aiResult.parsed} />
+        </View>
+      )}
 
-      <View className="mt-3">
+      <View className="h-px bg-white/5 mx-5 my-3" />
+
+      <View>
+        <Text
+          style={{ fontFamily: 'Pretendard-SemiBold' }}
+          className="text-ink-mute text-[11px] px-5 mb-2 tracking-wide">
+          정렬
+        </Text>
         <SortChips value={sort} onChange={setSort} />
       </View>
 
       <FlatList
         data={items}
         keyExtractor={(x) => String(x.listing.id)}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 24 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 24 }}
         onEndReached={() => listingsQ.hasNextPage && !listingsQ.isFetchingNextPage && listingsQ.fetchNextPage()}
         onEndReachedThreshold={0.4}
         renderItem={({ item }) => (

@@ -14,9 +14,10 @@ import { listingsApi } from '../../lib/api/listings';
 import { pipelineApi } from '../../lib/api/pipeline';
 import { predictApi } from '../../lib/api/predict';
 import { uploadApi } from '../../lib/api/upload';
+import { CAR_OPTIONS, CATEGORY_LABEL, CATEGORY_ORDER } from '../../lib/constants/options';
 import { PipelineStatus, Quality } from '../../lib/types';
 
-const STEPS = ['기본정보', 'AI 시세', '가격', '사진', '3D 영상'];
+const STEPS = ['기본정보', '옵션', 'AI 시세', '가격', '사진', '3D 영상'];
 
 const BRANDS = ['현대', '기아', '제네시스', '쉐보레', 'BMW', '벤츠', '아우디', '렉서스', '포르쉐'];
 const FUELS = ['가솔린', '디젤', 'LPG', '하이브리드', '전기'];
@@ -35,6 +36,8 @@ export default function SellScreen() {
   const [transmission, setTransmission] = useState('자동');
   const [engineCc, setEngineCc] = useState('');
   const [region, setRegion] = useState('서울');
+
+  const [options, setOptions] = useState<string[]>([]);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -109,6 +112,7 @@ export default function SellScreen() {
         price: Number(price),
         is_negotiable: negotiable,
         image_urls: imageUrls,
+        options,
       });
       if (video) {
         const job = await pipelineApi.start({ video, vehicle_id: listing.vehicle?.id, quality });
@@ -131,7 +135,7 @@ export default function SellScreen() {
 
   const canNext = useMemo(() => {
     if (step === 0) return brand && model && year && mileage && fuel && transmission;
-    if (step === 2) return !!price && Number(price) > 0;
+    if (step === 3) return !!price && Number(price) > 0;
     return true;
   }, [step, brand, model, year, mileage, fuel, transmission, price]);
 
@@ -197,6 +201,55 @@ export default function SellScreen() {
         {step === 1 && (
           <View>
             <Text style={{ fontFamily: 'Pretendard' }} className="text-ink-mute text-sm mb-4">
+              차량이 보유한 옵션을 선택하세요. 매물 노출 점수에 반영됩니다.
+            </Text>
+            {CATEGORY_ORDER.map((cat) => {
+              const items = CAR_OPTIONS.filter((o) => o.category === cat);
+              if (items.length === 0) return null;
+              return (
+                <View key={cat} className="mb-5">
+                  <Text
+                    style={{ fontFamily: 'Pretendard-Bold' }}
+                    className="text-white text-sm mb-2">
+                    {CATEGORY_LABEL[cat]}
+                  </Text>
+                  <View className="flex-row flex-wrap" style={{ gap: 6 }}>
+                    {items.map((o) => {
+                      const active = options.includes(o.key);
+                      return (
+                        <Pressable
+                          key={o.key}
+                          onPress={() =>
+                            setOptions((prev) =>
+                              active ? prev.filter((k) => k !== o.key) : [...prev, o.key],
+                            )
+                          }
+                          className={`px-3 py-2 rounded-full border ${
+                            active
+                              ? 'bg-[#C8A96E] border-[#C8A96E]'
+                              : 'bg-[#0E1117] border-white/10'
+                          }`}>
+                          <Text
+                            style={{ fontFamily: 'Pretendard-SemiBold' }}
+                            className={`text-[11px] ${active ? 'text-black' : 'text-ink-soft'}`}>
+                            {o.label}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+              );
+            })}
+            <Text style={{ fontFamily: 'Pretendard' }} className="text-ink-mute text-xs mt-1">
+              선택 {options.length} / {CAR_OPTIONS.length}
+            </Text>
+          </View>
+        )}
+
+        {step === 2 && (
+          <View>
+            <Text style={{ fontFamily: 'Pretendard' }} className="text-ink-mute text-sm mb-4">
               AI가 입력하신 차량 정보를 바탕으로 예상 시세를 계산합니다.
             </Text>
             <Button
@@ -229,7 +282,7 @@ export default function SellScreen() {
           </View>
         )}
 
-        {step === 2 && (
+        {step === 3 && (
           <View>
             <Input
               label="판매가 (만원)"
@@ -264,7 +317,7 @@ export default function SellScreen() {
           </View>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <View>
             <Text style={{ fontFamily: 'Pretendard' }} className="text-ink-mute text-sm mb-4">
               차량 사진 최대 10장
@@ -287,7 +340,7 @@ export default function SellScreen() {
           </View>
         )}
 
-        {step === 4 && (
+        {step === 5 && (
           <View>
             <Text style={{ fontFamily: 'Pretendard' }} className="text-ink-mute text-sm mb-4">
               차량 한 바퀴 30~60초 영상을 업로드하면 3D 모델이 자동 생성됩니다.

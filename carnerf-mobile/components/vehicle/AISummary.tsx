@@ -50,11 +50,12 @@ function PointList({
 }: {
   icon: React.ReactNode;
   title: string;
-  items: string[];
+  items: unknown;
   muted?: boolean;
   warning?: boolean;
 }) {
-  if (!items?.length) return null;
+  const list = toStringArray(items);
+  if (!list.length) return null;
   return (
     <View className="mt-4">
       <View className="flex-row items-center mb-2">
@@ -65,7 +66,7 @@ function PointList({
           {title}
         </Text>
       </View>
-      {items.map((it, i) => (
+      {list.map((it, i) => (
         <Text
           key={i}
           style={{ fontFamily: 'Pretendard' }}
@@ -75,4 +76,18 @@ function PointList({
       ))}
     </View>
   );
+}
+
+function toStringArray(v: unknown): string[] {
+  if (Array.isArray(v)) {
+    return v.filter((x) => typeof x === 'string' && x.trim().length > 0) as string[];
+  }
+  if (typeof v === 'string' && v.trim().length > 0) {
+    try {
+      const parsed = JSON.parse(v);
+      if (Array.isArray(parsed)) return toStringArray(parsed);
+    } catch {}
+    return [v.trim()];
+  }
+  return [];
 }
