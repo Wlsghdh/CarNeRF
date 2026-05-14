@@ -1,201 +1,193 @@
-# CarNeRF - 차량 3D 재구성 프로젝트
+# CarNeRF — 차량 3D 재구성 + AI 진단 플랫폼
 
-> Gaussian Splatting 기반 차량 3D 재구성 파이프라인
+> **FastGS (CVPR 2026)** 기반 차량 3D 재구성 · AI 결함 탐지 · 중고차 거래 통합 플랫폼
 
-## 프로젝트 소개
+![FastGS Teaser](docs/assets/fastgs_teaser.png)
 
-CarNeRF는 차량 영상 또는 사진으로부터 고품질 3D 모델을 생성하는 프로젝트입니다.
-기존 NeRF(Neural Radiance Fields) 방식 대비 훨씬 빠른 학습과 렌더링 속도를 제공하는
-**3D Gaussian Splatting** 기술을 핵심으로 활용합니다.
-
-### 주요 특징
-
-- **빠른 학습 속도**: A100 GPU 기준 차량 1대당 약 20~40분 학습 완료
-- **고품질 렌더링**: 차량 외관의 세밀한 디테일(도장, 반사, 곡면)까지 재현
-- **웹 뷰어 제공**: 학습된 3D 모델을 브라우저에서 바로 확인 가능
-- **자동화 파이프라인**: 영상 입력부터 3D 모델 내보내기까지 단일 스크립트로 실행
+> *3D Gaussian Splatting 학습 가속 — vanilla 3DGS 대비 최대 **15× 빠름***
 
 ---
 
-## 디렉토리 구조
+## 프로젝트 개요
+
+CarNeRF는 차량 영상 한 편으로부터 **고품질 3D 모델 + AI 진단 보고서 + 시세 분석**을 자동 생성하는 중고차 거래 플랫폼입니다. 핵심 3D 재구성 엔진으로 **CVPR 2026** 의 **FastGS** 를 채택하여, A100 한 장에서 차량 1대당 약 **2~3분** 만에 학습이 완료됩니다.
+
+### 핵심 특징
+
+| 기능 | 설명 |
+|---|---|
+| **FastGS 학습** | CVPR 2026 SOTA — 30K iter ≈ 2~3분 (vanilla 3DGS 60K 대비 15× 가속) |
+| **AI 결함 탐지** | YOLOv8 기반 외장 결함 자동 탐지 + 3D 좌표 매핑 |
+| **시세 예측** | LightGBM 가격 모델 v2 (실 거래 데이터 기반) |
+| **AI 차량 요약** | 전용 RAG 기반 차량 설명 자동 생성 |
+| **웹 뷰어** | three.js 기반 인터랙티브 3D 뷰어 (SSR + WebGL) |
+| **모바일 앱** | Expo (React Native) 기반 컴패니언 앱 |
+
+### 데모 영상
+
+저장소에 포함된 `CarNerf.mp4` 가 전체 플랫폼 데모입니다 (대용량으로 Git에는 포함되지 않음 — Release 또는 별도 배포 채널 참고).
+
+---
+
+## 빠른 시작
+
+### 1. 환경 셋업
+
+CarNeRF는 두 개의 conda env 를 사용합니다.
+
+```bash
+# 메인 env — Backend / Frontend / CV 파이프라인
+conda create -n jjh python=3.11 -y
+conda activate jjh
+pip install -r requirements.txt
+bash scripts/setup_env.sh    # COLMAP, rembg 등 의존성 자동 설치
+
+# FastGS 학습 전용 env — py3.7 / torch1.12 / cu11.6 / nvcc 11.8
+git clone --recursive https://github.com/fastgs/FastGS.git third_party/FastGS
+cd third_party/FastGS
+conda env create -f environment.yml
+conda activate fastgs
+conda install -c nvidia/label/cuda-11.8.0 -c conda-forge cuda-nvcc cuda-cccl cuda-cudart-dev cuda-libraries-dev ninja -y
+export CUDA_HOME=$CONDA_PREFIX TORCH_CUDA_ARCH_LIST="8.0"
+pip install submodules/diff-gaussian-rasterization_fastgs submodules/simple-knn submodules/fused-ssim
+```
+
+자세한 설정은 [docs/SETUP.md](docs/SETUP.md) 참고.
+
+### 2. 영상 한 편으로 전체 파이프라인 실행
+
+```bash
+# HQ 모드 — 배경 제거 + FastGS Big 파라미터 (기본 엔진: fastgs)
+python scripts/run_pipeline.py \
+    --input data/raw/my_car.mp4 \
+    --name my_car \
+    --hq \
+    --engine fastgs
+
+# 결과: backend/app/static/models/my_car/model.splat (웹 뷰어 즉시 사용)
+```
+
+엔진 선택:
+- `--engine fastgs` (기본, 권장) — CVPR 2026 FastGS, 30K iter 약 2~3분
+- `--engine vanilla` — INRIA 3DGS, 60K iter 약 30~40분 (호환성 fallback)
+
+### 3. 학습 직접 실행 (COLMAP 완료 후)
+
+```bash
+# FastGS 학습 (별도 env)
+python scripts/train_fastgs.py \
+    --source_path data/colmap_output/my_car/dense \
+    --output_path data/gaussian_output/my_car_v1 \
+    --iterations 30000 \
+    --grad_abs_thresh 0.0009 \
+    --densification_interval 500 \
+    --mult 0.7 \
+    --antialiasing
+
+# Web export
+python scripts/export_model.py \
+    --input data/gaussian_output/my_car_v1/point_cloud/iteration_30000/point_cloud.ply \
+    --output backend/app/static/models/my_car \
+    --format both \
+    --max_gaussians 1000000
+```
+
+### 4. 웹 서버 실행
+
+```bash
+cd backend && python run.py
+# → http://localhost:5199
+# 차량 상세 페이지에서 3D 뷰어 즉시 확인
+```
+
+---
+
+## 파이프라인
+
+```
+영상 ──▶ 프레임 추출 ──▶ COLMAP SfM ──▶ rembg(배경제거) ──▶ FastGS 학습 ──▶ Web Export
+       (40초)         (10~30분)       (5~10분)          (2~3분)         (즉시)
+```
+
+| 단계 | 소요 (A100) | 비고 |
+|---|---|---|
+| 프레임 추출 | ~40초 | 200 프레임, 흔들림 필터링 |
+| COLMAP SfM | 10~30분 | `OPENBLAS_NUM_THREADS=1` 필수 |
+| rembg 배경 제거 | 5~10분 | CPU fallback (`u2net`) |
+| **FastGS 학습** | **2~3분** | A100, 30K iter |
+| 모델 Export | <1초 | volume pruning + .splat 변환 |
+
+> 실측: 평균 1대당 약 30~50분 (영상 길이/품질에 따라 변동)
+
+---
+
+## 아키텍처
 
 ```
 Project_2026_1/
-├── README.md                   # 프로젝트 개요 (현재 문서)
-├── requirements.txt            # Python 의존성 패키지 목록
-│
-├── docs/                       # 문서
-│   ├── PIPELINE_FLOW.md        #   파이프라인 상세 흐름
-│   ├── DATA_GUIDE.md           #   데이터 수집 가이드
-│   └── SETUP.md                #   환경 설정 가이드
-│
-├── scripts/                    # 실행 스크립트
-│   ├── run_pipeline.py         #   전체 파이프라인 통합 실행
-│   ├── extract_frames.py       #   영상에서 프레임 추출
-│   ├── run_colmap.py           #   COLMAP SfM 실행
-│   ├── train_gaussian.py       #   Gaussian Splatting 학습
-│   ├── export_model.py         #   학습된 모델 내보내기
-│   └── setup_env.sh            #   환경 설정 자동화 스크립트
-│
-├── data/                       # 데이터 디렉토리
-│   ├── raw/                    #   원본 영상/사진
-│   ├── frames/                 #   추출된 프레임 이미지
-│   ├── colmap_output/          #   COLMAP SfM 결과물
-│   └── gaussian_output/        #   Gaussian Splatting 학습 결과물
-│
-├── third_party/                # 외부 라이브러리
-│   └── gaussian-splatting/     #   3D Gaussian Splatting 공식 저장소
-│
-└── web_viewer/                 # 웹 기반 3D 뷰어
-    ├── index.html
-    ├── main.js
-    └── style.css
+├── backend/                     FastAPI + Jinja2 SSR + SQLite + JWT
+│   └── app/api/                 30+ REST endpoints (vehicles, listings, pipeline, ai, ...)
+├── carnerf-mobile/              Expo (React Native) 모바일 앱
+├── scripts/                     CV / ML / 3D 파이프라인 스크립트
+│   ├── run_pipeline.py             전체 파이프라인 통합 (engine 분기)
+│   ├── train_fastgs.py             FastGS 래퍼 (별도 conda env 자동 호출)
+│   ├── train_gaussian.py           Vanilla 3DGS 래퍼 (fallback)
+│   ├── train_hq.py                 HQ 학습 오케스트레이터
+│   ├── train_damage_detector.py    YOLOv8 결함 탐지 학습
+│   └── train_price_model.py        LightGBM 가격 모델
+├── third_party/
+│   ├── FastGS/                     CVPR 2026 — 메인 엔진 (gitignore)
+│   ├── gaussian-splatting/         INRIA 3DGS — fallback
+│   ├── 2d-gaussian-splatting/      2DGS — 표면 재구성 옵션
+│   └── 3dgs-mcmc/                  3DGS-MCMC — 분포 최적화 옵션
+└── docs/                        설정 / 데이터 / API 가이드
 ```
-
----
-
-## 빠른 시작 가이드
-
-### 1. 환경 설정
-
-```bash
-# conda 환경 생성 및 활성화
-conda create -n carnerf python=3.10 -y
-conda activate carnerf
-
-# 의존성 설치
-pip install -r requirements.txt
-
-# 환경 설정 스크립트 실행 (COLMAP, Gaussian Splatting 등)
-bash scripts/setup_env.sh
-```
-
-> 상세한 설정 방법은 [docs/SETUP.md](docs/SETUP.md)를 참고하세요.
-
-### 2. 데이터 준비
-
-차량 영상 또는 사진을 `data/raw/` 디렉토리에 배치합니다.
-
-```bash
-# 예시: 영상 파일 복사
-cp /path/to/car_video.mp4 data/raw/
-```
-
-> 데이터 촬영 가이드는 [docs/DATA_GUIDE.md](docs/DATA_GUIDE.md)를 참고하세요.
-
-### 3. 전체 파이프라인 실행
-
-```bash
-conda activate carnerf
-
-# 전체 파이프라인 한 번에 실행
-python scripts/run_pipeline.py \
-    --input data/raw/car_video.mp4 \
-    --output data/gaussian_output/car_01
-```
-
-### 4. 개별 단계 실행 (선택사항)
-
-필요한 경우 각 단계를 개별적으로 실행할 수 있습니다.
-
-```bash
-# Step 1: 프레임 추출
-python scripts/extract_frames.py \
-    --video data/raw/car_video.mp4 \
-    --output data/frames/car_01 \
-    --fps 2
-
-# Step 2: COLMAP SfM 실행
-python scripts/run_colmap.py \
-    --images data/frames/car_01 \
-    --output data/colmap_output/car_01
-
-# Step 3: Gaussian Splatting 학습
-python scripts/train_gaussian.py \
-    --source data/colmap_output/car_01 \
-    --output data/gaussian_output/car_01 \
-    --iterations 30000
-
-# Step 4: 모델 내보내기
-python scripts/export_model.py \
-    --model data/gaussian_output/car_01 \
-    --format ply
-```
-
-### 5. 결과 확인 (웹 뷰어)
-
-```bash
-# 간단한 HTTP 서버로 웹 뷰어 실행
-cd web_viewer
-python -m http.server 8080
-```
-
-브라우저에서 `http://localhost:8080`으로 접속하여 3D 모델을 확인합니다.
-
----
-
-## 파이프라인 개요
-
-```
-입력 영상/사진 → 프레임 추출 → COLMAP SfM → Gaussian Splatting 학습 → 3D 모델 내보내기 → 웹 뷰어
-```
-
-| 단계 | 설명 | 소요 시간 (A100) |
-|------|------|------------------|
-| 프레임 추출 | 영상에서 학습용 이미지 프레임 추출 | ~1분 |
-| COLMAP SfM | 카메라 포즈 추정 및 희소 포인트 클라우드 생성 | 5~15분 |
-| Gaussian Splatting 학습 | 3D Gaussian 표현 최적화 | 20~40분 |
-| 모델 내보내기 | PLY 또는 뷰어 호환 형식으로 변환 | ~1분 |
-
-> 파이프라인 상세 흐름은 [docs/PIPELINE_FLOW.md](docs/PIPELINE_FLOW.md)를 참고하세요.
 
 ---
 
 ## 기술 스택
 
 | 구분 | 기술 |
-|------|------|
-| 3D 재구성 | 3D Gaussian Splatting |
+|---|---|
+| 3D 재구성 | **FastGS (CVPR 2026)** · 3D Gaussian Splatting (fallback) |
 | Structure-from-Motion | COLMAP |
-| 딥러닝 프레임워크 | PyTorch 2.0+ |
-| GPU | NVIDIA A100 (권장) |
-| 웹 뷰어 | Three.js 기반 커스텀 뷰어 |
-| 언어 | Python 3.10+ |
+| AI 결함 탐지 | YOLOv8 |
+| 가격 예측 | LightGBM v2 |
+| AI 요약 | 전용 RAG + OpenAI API |
+| 딥러닝 | PyTorch 2.5 (메인) · PyTorch 1.12 (FastGS 학습) |
+| Backend | FastAPI + Jinja2 + SQLite |
+| Mobile | Expo (React Native) |
+| Frontend | Tailwind CSS + Three.js |
+| GPU | NVIDIA A100 80GB |
 
 ---
 
-## 참고 문헌 및 크레딧
+## 참고 문헌
 
 ### 핵심 논문
 
-1. **3D Gaussian Splatting for Real-Time Radiance Field Rendering**
-   - Kerbl, B., Kopanas, G., Leimkuehler, T., & Drettakis, G. (2023)
-   - ACM Transactions on Graphics (SIGGRAPH 2023)
-   - [논문 링크](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/)
+1. **FastGS: Training 3D Gaussian Splatting in 100 Seconds** *(CVPR 2026)*
+   - [Project Page](https://fastgs.github.io/) · [Paper](https://arxiv.org/abs/2511.04283) · [GitHub](https://github.com/fastgs/FastGS)
 
-2. **NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis**
-   - Mildenhall, B. et al. (2020)
-   - ECCV 2020
-   - [논문 링크](https://www.matthewtancik.com/nerf)
+2. **3D Gaussian Splatting for Real-Time Radiance Field Rendering** *(SIGGRAPH 2023)*
+   - Kerbl et al., INRIA · [Project Page](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/)
 
-3. **COLMAP - Structure-from-Motion and Multi-View Stereo**
-   - Schoenberger, J.L., & Frahm, J.M. (2016)
-   - CVPR 2016
-   - [공식 문서](https://colmap.github.io/)
+3. **COLMAP — Structure-from-Motion and Multi-View Stereo** *(CVPR 2016)*
+   - Schoenberger & Frahm · [Docs](https://colmap.github.io/)
 
-### 오픈소스 프로젝트
+### 오픈소스
 
-- [3D Gaussian Splatting 공식 저장소](https://github.com/graphdeco-inria/gaussian-splatting) - INRIA
-- [COLMAP](https://github.com/colmap/colmap) - ETH Zurich
-- [Tanks and Temples Benchmark](https://www.tanksandtemples.org/)
-
-### 라이선스
-
-본 프로젝트는 연구 목적으로 개발되었습니다.
-사용된 외부 라이브러리 및 모델의 라이선스를 각각 확인해 주세요.
+- [FastGS](https://github.com/fastgs/FastGS) — CVPR 2026
+- [Gaussian Splatting](https://github.com/graphdeco-inria/gaussian-splatting) — INRIA
+- [COLMAP](https://github.com/colmap/colmap) — ETH Zurich
+- [Ultralytics YOLOv8](https://github.com/ultralytics/ultralytics)
 
 ---
 
+## 라이선스
+
+본 프로젝트는 연구/교육 목적으로 개발되었습니다. FastGS / 3DGS / COLMAP 등 외부 라이브러리는 각 라이선스를 따릅니다 (대부분 비상업/연구 한정).
+
 ## 문의
 
-프로젝트 관련 문의사항이 있으시면 이슈를 등록해 주세요.
+이슈는 [GitHub Issues](https://github.com/Wlsghdh/CarNeRF/issues) 로 등록 부탁드립니다.
