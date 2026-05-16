@@ -694,6 +694,118 @@ body {
   font-weight: 600;
 }
 
+/* ── SEARCH MODE TOGGLE (키워드 / AI) ── */
+.search-mode-toggle {
+  display: inline-flex;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 100px;
+  padding: 3px;
+  margin-bottom: 12px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.mode-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.25s;
+  letter-spacing: 0.2px;
+}
+.mode-btn:hover { color: var(--text); }
+.mode-btn.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(200,169,110,0.3);
+}
+.mode-btn .ai-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #C8A96E;
+  margin-right: 6px;
+  vertical-align: middle;
+  box-shadow: 0 0 8px rgba(200,169,110,0.6);
+}
+.mode-btn.active .ai-dot { background: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.8); }
+
+/* AI 검색 결과 카드 발췌 영역 */
+.ai-excerpt-box {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: rgba(200,169,110,0.06);
+  border: 1px solid rgba(200,169,110,0.25);
+  border-radius: 10px;
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--text);
+}
+.ai-excerpt-box .ai-tag {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  color: #C8A96E;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+.ai-excerpt-box .ai-score {
+  float: right;
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.ai-excerpt-box .ai-source-tag {
+  display: block;
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+/* AI 검색 상단 상태 배너 */
+.ai-status-banner {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: rgba(200,169,110,0.08);
+  border: 1px solid rgba(200,169,110,0.25);
+  border-radius: 10px;
+  font-size: 12px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ai-status-banner strong { color: #C8A96E; }
+
+/* AI 시드 쿼리 칩 */
+.ai-seed-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.ai-seed-chip {
+  background: var(--glass-bg);
+  border: 1px solid rgba(200,169,110,0.25);
+  color: var(--text);
+  font-size: 11px;
+  padding: 5px 12px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ai-seed-chip:hover {
+  background: rgba(200,169,110,0.1);
+  border-color: rgba(200,169,110,0.5);
+}
+
 /* ── LAYOUT ── */
 .listings-layout {
   max-width: 1320px;
@@ -845,6 +957,10 @@ body {
   <div class="main-col">
     <!-- 검색 바 -->
     <div class="search-bar-wrap animate-in animate-in-delay-1">
+      <div class="search-mode-toggle" id="search-mode-toggle">
+        <button type="button" class="mode-btn active" data-mode="keyword">키워드</button>
+        <button type="button" class="mode-btn" data-mode="semantic"><span class="ai-dot"></span>AI 검색</button>
+      </div>
       <form id="search-form" class="search-bar-form" onsubmit="doSearch(event)">
         <div class="search-input-wrap">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -854,8 +970,16 @@ body {
         </div>
         <button type="submit" class="search-btn">검색</button>
       </form>
+      <div id="ai-seed-chips" class="ai-seed-chips" style="display:none;">
+        <button type="button" class="ai-seed-chip" data-q="조용한 패밀리 SUV">조용한 패밀리 SUV</button>
+        <button type="button" class="ai-seed-chip" data-q="고속도로 장거리 편한 세단">장거리 편한 세단</button>
+        <button type="button" class="ai-seed-chip" data-q="연비 좋은 하이브리드">연비 좋은 하이브리드</button>
+        <button type="button" class="ai-seed-chip" data-q="전기차 빠른 충전">빠른 충전 전기차</button>
+        <button type="button" class="ai-seed-chip" data-q="첫차 추천 경차">첫차 추천 경차</button>
+      </div>
+      <div id="ai-status" class="ai-status-banner" style="display:none;"></div>
       {% if filters.search %}
-      <div class="search-result-tag">
+      <div class="search-result-tag" id="keyword-result-tag">
         "<span>{{ filters.search }}</span>" 검색 결과
         <a href="/listings" style="color:var(--muted);text-decoration:none;margin-left:4px;font-size:11px;">&#10005;</a>
       </div>
@@ -1048,8 +1172,12 @@ document.getElementById('filter-form').addEventListener('submit', function(e) {
 });
 function doSearch(e) {
   e.preventDefault();
-  const url = new URL(window.location);
   const search = document.getElementById('search-input').value.trim();
+  if (getSearchMode() === 'semantic') {
+    if (search) runSemanticSearch(search);
+    return;
+  }
+  const url = new URL(window.location);
   if (search) {
     url.searchParams.set('search', search);
   } else {
@@ -1058,6 +1186,141 @@ function doSearch(e) {
   url.searchParams.delete('page');
   window.location.href = url.toString();
 }
+
+// ── AI 검색 모드 ──
+const SEARCH_MODE_KEY = 'listings_search_mode';
+
+function getSearchMode() {
+  return localStorage.getItem(SEARCH_MODE_KEY) || 'keyword';
+}
+
+function setSearchMode(mode) {
+  localStorage.setItem(SEARCH_MODE_KEY, mode);
+  applySearchModeUI(mode);
+}
+
+function applySearchModeUI(mode) {
+  document.querySelectorAll('#search-mode-toggle .mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
+  const input = document.getElementById('search-input');
+  const chips = document.getElementById('ai-seed-chips');
+  const keywordTag = document.getElementById('keyword-result-tag');
+  if (mode === 'semantic') {
+    input.placeholder = '자연어로 검색 — "조용한 패밀리 SUV", "장거리 편한 세단"...';
+    chips.style.display = 'flex';
+    if (keywordTag) keywordTag.style.display = 'none';
+  } else {
+    input.placeholder = '브랜드, 모델, 키워드로 검색...';
+    chips.style.display = 'none';
+    if (keywordTag) keywordTag.style.display = '';
+    // AI 결과 상태 클리어 (그리드는 다음 페이지 로드 시 서버가 복원)
+    const status = document.getElementById('ai-status');
+    if (status) status.style.display = 'none';
+  }
+}
+
+document.querySelectorAll('#search-mode-toggle .mode-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    setSearchMode(this.dataset.mode);
+  });
+});
+
+document.querySelectorAll('.ai-seed-chip').forEach(chip => {
+  chip.addEventListener('click', function() {
+    const q = this.dataset.q;
+    document.getElementById('search-input').value = q;
+    runSemanticSearch(q);
+  });
+});
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function fmtNumber(n) {
+  return Number(n).toLocaleString('ko-KR');
+}
+
+function renderSemanticResults(query, results) {
+  const grid = document.getElementById('listings-grid');
+  const status = document.getElementById('ai-status');
+  const totalCount = document.getElementById('total-count');
+  // 페이지네이션 / 정렬 / 결과없음 영역 숨기기
+  document.querySelectorAll('.pag-wrap, .empty-state').forEach(el => el.style.display = 'none');
+  if (totalCount) totalCount.textContent = results.length;
+
+  status.style.display = 'flex';
+  if (results.length === 0) {
+    status.innerHTML = `<span>"<strong>${escapeHtml(query)}</strong>" 와 매칭되는 리뷰가 인덱스에 없습니다. 다른 키워드를 시도해 보세요.</span>`;
+    if (grid) grid.innerHTML = '';
+    return;
+  }
+  status.innerHTML = `<span><strong>AI 검색</strong> "${escapeHtml(query)}" · 리뷰 ${results.length}건 매칭</span>`;
+
+  if (!grid) return;
+  grid.innerHTML = results.map((r, i) => `
+    <a href="/vehicles/${r.vehicle_id}" class="car-card" style="animation-delay:${i * 0.04}s;">
+      <div class="card-img">
+        <img src="${escapeHtml(r.thumbnail_url || '/static/images/placeholder-car.svg')}"
+             alt="${escapeHtml(r.brand + ' ' + r.model + ' ' + r.year + '년식')}"
+             loading="lazy"
+             onerror="this.onerror=null;this.src='/static/images/placeholder-car.svg';">
+        <div class="card-img-overlay"></div>
+        ${r.has_3d ? `<span class="badge-3d">3D 뷰어</span>` : ''}
+      </div>
+      <div class="card-body">
+        <div class="card-meta-top">${escapeHtml(r.brand)} ${escapeHtml(r.model)} · ${r.year}년</div>
+        <div class="card-title">${escapeHtml(r.title)}</div>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;">
+          <div class="card-price">${fmtNumber(r.price)}<span class="price-unit">만원</span></div>
+        </div>
+        <div class="card-specs">
+          <span>${fmtNumber(r.mileage)}km</span>
+          <div class="spec-dot"></div>
+          <span>${escapeHtml(r.fuel_type)}</span>
+          <div class="spec-dot"></div>
+          <span>${escapeHtml(r.region || '미지정')}</span>
+        </div>
+        <div class="ai-excerpt-box">
+          <span class="ai-tag">AI 매칭 발췌</span>
+          <span class="ai-score">match ${r.match_score.toFixed(2)}</span>
+          <div style="clear:both;"></div>
+          ${escapeHtml(r.match_excerpt)}
+          <span class="ai-source-tag">${escapeHtml(r.match_source)}</span>
+        </div>
+      </div>
+    </a>
+  `).join('');
+}
+
+async function runSemanticSearch(query) {
+  const status = document.getElementById('ai-status');
+  status.style.display = 'flex';
+  status.innerHTML = `<span><strong>AI 검색 중...</strong> "${escapeHtml(query)}"</span>`;
+
+  // Show skeleton
+  const grid = document.getElementById('listings-grid');
+  const skeleton = document.getElementById('skeleton-loader');
+  if (grid) grid.style.display = 'none';
+  if (skeleton) skeleton.style.display = 'grid';
+
+  try {
+    const res = await fetch(`/api/search/semantic?q=${encodeURIComponent(query)}&limit=12`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (skeleton) skeleton.style.display = 'none';
+    if (grid) grid.style.display = '';
+    renderSemanticResults(data.query, data.results);
+  } catch (err) {
+    if (skeleton) skeleton.style.display = 'none';
+    if (grid) grid.style.display = '';
+    status.innerHTML = `<span style="color:#EF4444;">AI 검색 실패: ${escapeHtml(err.message)}</span>`;
+  }
+}
+
+// 초기 모드 적용
+applySearchModeUI(getSearchMode());
 // 최근 본 차량 저장
 document.querySelectorAll('.car-card').forEach(card => {
   card.addEventListener('click', function() {

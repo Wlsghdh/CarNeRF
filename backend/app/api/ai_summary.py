@@ -1,29 +1,256 @@
-"""AI 차량 요약 API - ChatGPT API를 사용한 차량 특징/장단점 요약"""
+"""AI 차량 요약 API - ChatGPT + RAG + 결함 인식 + DB 캐싱"""
+import hashlib
+import json
 import os
+from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, get_current_user
-from app.models import Vehicle, Listing, DiagnosisReport, UserReview, User
+from app.models import Vehicle, Listing, DiagnosisReport, UserReview, User, AIAnalysisCache
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 
+# 프롬프트/스키마가 바뀌면 이 값을 올려서 캐시를 일괄 무효화한다.
+PROMPT_VERSION = "v10-short-gloss-2026-05-16"
+
+
+# 한국 중고차 성능기록부·진단서에 자주 등장하는 전문 용어 → 일반인 풀이 사전.
+# system_prompt에 주입해 GPT가 첫 등장 시 괄호로 자동 풀이하게 함.
+TERMINOLOGY_GLOSSARY: dict[str, str] = {
+    # 외판 부위
+    "펜더": "앞바퀴 위 외판",
+    "휀더": "앞바퀴 위 외판",
+    "쿼터패널": "뒷바퀴 위 측면판",
+    "사이드실": "차체 옆 아래 부분",
+    "휠하우스": "바퀴 안쪽 공간",
+    "대쉬패널": "엔진룸과 실내 격벽",
+    # 수리/사고 분류
+    "단순교환": "외판만 교체, 사고차 아님",
+    "외판교환": "외판만 교체, 뼈대 무관",
+    "골격손상": "차체 뼈대 손상, 사고차",
+    # 차량 부품·시스템 약어
+    "DPF": "디젤 매연 필터",
+    "EGR": "배기가스 재순환 장치",
+    "CVT": "무단변속기",
+    "DCT": "듀얼 클러치 변속기",
+    "BSD": "후측방 사각 감지",
+    "LDWS": "차선 이탈 경보",
+    "ECU": "차량 제어 컴퓨터",
+    "SOH": "배터리 잔여 수명",
+    # 검사 결과 용어
+    "누유": "기름 누출",
+    "누수": "냉각수·기름 누출",
+    "슬립": "변속기 미끄럼",
+    "백래쉬": "기어 사이 유격",
+}
+
+
+def _glossary_for_prompt(text_blob: str) -> str:
+    """text_blob에 등장하는 용어만 골라 system_prompt용 미니 사전 문자열로 반환."""
+    hits = [(t, g) for t, g in TERMINOLOGY_GLOSSARY.items() if t in text_blob]
+    if not hits:
+        return ""
+    return "\n".join(f"  · {t} = {g}" for t, g in hits)
+
+
+def _apply_inline_gloss(result: dict) -> dict:
+    """ChatGPT 응답 텍스트 필드에서 전문 용어 첫 등장에 괄호 풀이 자동 삽입.
+
+    응답 전체에서 용어당 1회만 풀이. summary → pros → cons → known_issues → review_summary 순회.
+    이미 괄호 풀이가 붙어있으면(다음 문자가 '(') 스킵.
+    """
+    applied: set[str] = set()
+
+    def gloss_text(text: str) -> str:
+        if not text:
+            return text
+        nonlocal applied
+        for term, gloss in TERMINOLOGY_GLOSSARY.items():
+            if term in applied:
+                continue
+            idx = text.find(term)
+            if idx < 0:
+                continue
+            end = idx + len(term)
+            # 이미 괄호 풀이가 있으면 적용된 것으로 마킹
+            if end < len(text) and text[end] == '(':
+                applied.add(term)
+                continue
+            text = text[:end] + f"({gloss})" + text[end:]
+            applied.add(term)
+        return text
+
+    if isinstance(result.get("summary"), str):
+        result["summary"] = gloss_text(result["summary"])
+    if isinstance(result.get("pros"), list):
+        result["pros"] = [gloss_text(p) for p in result["pros"]]
+    if isinstance(result.get("cons"), list):
+        result["cons"] = [gloss_text(c) for c in result["cons"]]
+    if isinstance(result.get("known_issues"), str):
+        result["known_issues"] = gloss_text(result["known_issues"])
+    if isinstance(result.get("review_summary"), str):
+        result["review_summary"] = gloss_text(result["review_summary"])
+    return result
+
+
+def _retrieve_review_excerpts(brand: str, model: str, k: int = 5) -> tuple[str, list[dict]]:
+    """RAG로 차종별 리뷰 청크 검색.
+
+    Returns:
+        (excerpts_text, sources): 발췌 텍스트와 출처 메타 리스트.
+        RAG 모듈/Chroma 미준비 시 ("", []) 반환 (graceful degradation).
+    """
+    try:
+        from app.rag.retriever import retrieve, get_sources
+    except Exception:
+        return "", []
+    try:
+        chunks = retrieve(brand=brand, model=model, k=k)
+    except Exception:
+        return "", []
+    if not chunks:
+        return "", []
+    excerpts = []
+    for i, c in enumerate(chunks, 1):
+        excerpts.append(f"[발췌{i}] ({c.title} — {c.source})\n{c.text}")
+    return "\n\n".join(excerpts), get_sources(chunks)
+
+
+def _get_defect_findings(vehicle: Vehicle) -> dict:
+    """차량 결함 정보 조회. defect.py의 resolve_defects 재사용."""
+    try:
+        from app.api.defect import resolve_defects
+    except Exception:
+        return {"defect_count": 0, "defects": [], "total_defect_score": 0, "severity_level": "양호"}
+    try:
+        return resolve_defects(vehicle.id, vehicle)
+    except Exception:
+        return {"defect_count": 0, "defects": [], "total_defect_score": 0, "severity_level": "양호"}
+
+
+def _retrieve_defect_explanations_for(defects: dict, max_total: int = 6) -> tuple[str, list[dict]]:
+    """발견된 각 결함 종류별로 일반인용 풀이 청크 retrieval.
+
+    동일 종류 결함이 여러 개여도 한 번만 검색. 최대 max_total건의 풀이 발췌 반환.
+    Returns: (excerpts_text, sources_list)
+    """
+    try:
+        from app.rag.retriever import retrieve_defect_explanations
+    except Exception:
+        return "", []
+
+    seen_types = set()
+    all_chunks = []
+    for d in defects.get("defects", []):
+        kind = d.get("type_kr") or d.get("type") or "결함"
+        severity = d.get("severity", "")
+        key = (kind, severity)
+        if key in seen_types:
+            continue
+        seen_types.add(key)
+        try:
+            chunks = retrieve_defect_explanations(kind, severity, k=2)
+        except Exception:
+            chunks = []
+        for c in chunks:
+            all_chunks.append({
+                "for_defect": kind,
+                "severity": severity,
+                "chunk": c,
+            })
+        if len(all_chunks) >= max_total:
+            break
+
+    all_chunks = all_chunks[:max_total]
+    if not all_chunks:
+        return "", []
+
+    excerpts = []
+    for i, item in enumerate(all_chunks, 1):
+        c = item["chunk"]
+        excerpts.append(
+            f"[결함풀이{i}] (결함 종류: {item['for_defect']}, 출처: {c.title} — {c.source})\n{c.text}"
+        )
+    seen_urls = set()
+    sources_unique = []
+    for item in all_chunks:
+        c = item["chunk"]
+        if c.url in seen_urls:
+            continue
+        seen_urls.add(c.url)
+        sources_unique.append({"url": c.url, "title": c.title, "source": c.source, "kind": "defect_guide"})
+    return "\n\n".join(excerpts), sources_unique
+
+
+# (결함 종류, 심각도) → (예상 수리비 만원 범위, 안전 영향) 매핑
+# 외관 결함은 안전 영향 없음을 명시, 부식만 구조 영향 가능성 언급
+_REPAIR_COST_MAP = {
+    ("scratch", "경미"):     ("5~15만원",   "안전 문제는 없음 — 시각적 손상"),
+    ("scratch", "중간"):     ("20~40만원",  "안전 문제는 없음 — 도색 복원 권장"),
+    ("scratch", "심각"):     ("50~100만원", "안전 문제는 없음 — 판금+도색 필요"),
+    ("dent", "경미"):        ("10~20만원",  "안전 문제는 없음 — 덴트 복원(PDR) 가능"),
+    ("dent", "중간"):        ("30~60만원",  "안전 문제는 없음 — 판금 필요"),
+    ("dent", "심각"):        ("80~150만원", "구조 점검 권장 — 강한 충격 흔적 가능성"),
+    ("paint", "경미"):       ("10~25만원",  "안전 문제는 없음 — 부분 도색"),
+    ("paint", "중간"):       ("30~70만원",  "안전 문제는 없음 — 패널 도색"),
+    ("paint", "심각"):       ("80~200만원", "안전 문제는 없음 — 다수 패널 도색"),
+    ("corrosion", "경미"):   ("15~30만원",  "장기 부식 진행 가능 — 방청 처리 권장"),
+    ("corrosion", "중간"):   ("50~100만원", "구조 점검 권장 — 부식 부위 확장 가능"),
+    ("corrosion", "심각"):   ("150만원+",   "정밀 점검 필수 — 차체 안전 영향 가능"),
+}
+
+
+def _annotate_defect(defect: dict) -> dict:
+    """결함 dict에 예상 수리비·안전 영향 추가 (in-place 아닌 새 dict)."""
+    dtype = (defect.get("type") or "").lower()
+    severity = defect.get("severity", "")
+    key_candidates = [(dtype, severity)]
+    if "scratch" in dtype or "스크래치" in (defect.get("type_kr") or ""):
+        key_candidates.append(("scratch", severity))
+    if "dent" in dtype or "덴트" in (defect.get("type_kr") or ""):
+        key_candidates.append(("dent", severity))
+    if "paint" in dtype or "도색" in (defect.get("type_kr") or ""):
+        key_candidates.append(("paint", severity))
+    if "corrosion" in dtype or "부식" in (defect.get("type_kr") or ""):
+        key_candidates.append(("corrosion", severity))
+
+    cost, safety = None, None
+    for k in key_candidates:
+        if k in _REPAIR_COST_MAP:
+            cost, safety = _REPAIR_COST_MAP[k]
+            break
+    out = dict(defect)
+    if cost:
+        out["estimated_repair_cost"] = cost
+        out["safety_note"] = safety
+    return out
+
+
+def _grade_from_score(score: float) -> str:
+    """진단 점수 → 일반인 등급."""
+    if score >= 90:  return "우수"
+    if score >= 80:  return "양호"
+    if score >= 70:  return "보통"
+    if score >= 60:  return "주의"
+    return "미흡"
+
 
 def _build_vehicle_prompt(vehicle: Vehicle, listing: Optional[Listing],
                           diagnosis: Optional[DiagnosisReport],
-                          reviews: list[UserReview]) -> str:
+                          reviews: list[UserReview],
+                          defects: Optional[dict] = None) -> str:
     """차량 정보를 기반으로 ChatGPT 프롬프트를 생성"""
-    info = f"""차량 정보:
-- 브랜드/모델: {vehicle.brand} {vehicle.model}
-- 연식: {vehicle.year}년
+    year_age = 2026 - vehicle.year
+    info = f"""━━━ 이 차량 핵심 정보 (개별 매물) ━━━
+- 브랜드/모델: {vehicle.brand} {vehicle.model} {vehicle.year}년식 ({year_age}년 경과)
 - 트림: {vehicle.trim or '정보없음'}
-- 연료: {vehicle.fuel_type}
-- 변속기: {vehicle.transmission}
-- 주행거리: {vehicle.mileage:,}km
+- 연료/변속기: {vehicle.fuel_type} / {vehicle.transmission}
+- 주행거리: {vehicle.mileage:,}km (연평균 {vehicle.mileage // max(year_age, 1):,}km)
 - 배기량: {vehicle.engine_cc or 0}cc
 - 지역: {vehicle.region or '미지정'}
 """
@@ -34,15 +261,35 @@ def _build_vehicle_prompt(vehicle: Vehicle, listing: Optional[Listing],
 
     if diagnosis:
         info += f"""
-AI 진단 결과:
-- 종합 점수: {diagnosis.overall_score}점
-- 외관: {diagnosis.exterior_score}점, 내부: {diagnosis.interior_score}점, 엔진: {diagnosis.engine_score}점
+━━━ 이 차량 AI 진단 결과 ━━━
+- 종합: {diagnosis.overall_score}점 → 등급 {_grade_from_score(diagnosis.overall_score)}
+- 외관: {diagnosis.exterior_score}점 ({_grade_from_score(diagnosis.exterior_score)})
+- 내부: {diagnosis.interior_score}점 ({_grade_from_score(diagnosis.interior_score)})
+- 엔진: {diagnosis.engine_score}점 ({_grade_from_score(diagnosis.engine_score)})
 - 사고이력: {diagnosis.accident_history or '정보없음'}
-- AI 소견: {diagnosis.report_summary or ''}
+- AI 소견: {diagnosis.report_summary or '(없음)'}
 """
 
+    if defects and defects.get("defect_count", 0) > 0:
+        info += f"""
+━━━ 이 차량 외관 결함 (YOLOv8 탐지) ━━━
+- 결함 점수: {defects.get('total_defect_score', 0)}점 / 등급: {defects.get('severity_level', '양호')}
+- 발견 결함 {defects.get('defect_count', 0)}건 (예상 수리비·안전 영향 포함):
+"""
+        for i, d in enumerate(defects.get("defects", [])[:10], 1):
+            ann = _annotate_defect(d)
+            sev = ann.get("severity", "정보없음")
+            kind = ann.get("type_kr") or ann.get("type") or "결함"
+            conf = ann.get("confidence", 0)
+            desc = ann.get("description") or ""
+            cost = ann.get("estimated_repair_cost") or "추정 어려움"
+            safety = ann.get("safety_note") or ""
+            info += (f"  {i}) {kind} ({sev}, 신뢰도 {int(conf*100)}%) — {desc}\n"
+                     f"     · 예상 수리비: {cost}\n"
+                     f"     · 안전 영향: {safety}\n")
+
     if reviews:
-        info += "\n실제 구매/판매 후기:\n"
+        info += "\n━━━ 이 차량 실 사용자 후기 ━━━\n"
         for r in reviews[:5]:
             info += f"- [{r.review_type}] (평점 {r.rating}/5): {r.content}\n"
 
@@ -152,9 +399,45 @@ def _generate_mock_summary(vehicle: Vehicle, listing: Optional[Listing],
     }
 
 
+def _compute_input_hash(vehicle: Vehicle, listing: Optional[Listing],
+                        diagnosis: Optional[DiagnosisReport],
+                        reviews: list[UserReview], defects: dict,
+                        sources: list[dict]) -> str:
+    """입력 상태가 변하면 캐시 무효화 — vehicle/listing/diagnosis/defects/reviews/sources/prompt_version 직렬화 후 SHA256."""
+    payload = {
+        "_prompt_version": PROMPT_VERSION,
+        "v": {
+            "brand": vehicle.brand, "model": vehicle.model, "year": vehicle.year,
+            "trim": vehicle.trim, "fuel": vehicle.fuel_type, "mileage": vehicle.mileage,
+            "engine_cc": vehicle.engine_cc, "transmission": vehicle.transmission,
+        },
+        "l": {"price": listing.price, "desc": listing.description} if listing else None,
+        "d": {
+            "overall": diagnosis.overall_score, "ext": diagnosis.exterior_score,
+            "int": diagnosis.interior_score, "eng": diagnosis.engine_score,
+            "acc": diagnosis.accident_history, "summary": diagnosis.report_summary,
+        } if diagnosis else None,
+        "def": {
+            "count": defects.get("defect_count", 0),
+            "score": defects.get("total_defect_score", 0),
+            "level": defects.get("severity_level", ""),
+            "items": [
+                {"type": d.get("type_kr") or d.get("type"), "sev": d.get("severity"),
+                 "conf": round(d.get("confidence", 0), 2), "desc": d.get("description")}
+                for d in defects.get("defects", [])[:10]
+            ],
+        },
+        "r": [{"rating": r.rating, "content": r.content, "type": r.review_type} for r in reviews[:5]],
+        "src": [{"url": s.get("url"), "title": s.get("title")} for s in sources],
+    }
+    blob = json.dumps(payload, ensure_ascii=False, sort_keys=True)
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
 @router.get("/vehicle-summary/{vehicle_id}")
 def get_vehicle_summary(
     vehicle_id: int,
+    force: bool = Query(False, description="True면 캐시 무시하고 ChatGPT 재호출"),
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
 ):
@@ -166,40 +449,158 @@ def get_vehicle_summary(
     diagnosis = db.query(DiagnosisReport).filter(DiagnosisReport.vehicle_id == vehicle_id).first()
     reviews = db.query(UserReview).filter(UserReview.vehicle_id == vehicle_id).all()
 
+    # RAG + 결함 (캐시 hit 시에도 재계산 필요 — hash 비교용)
+    excerpts, sources = _retrieve_review_excerpts(vehicle.brand, vehicle.model, k=5)
+    defects = _get_defect_findings(vehicle)
+    defect_excerpts, defect_sources = _retrieve_defect_explanations_for(defects)
+    input_hash = _compute_input_hash(vehicle, listing, diagnosis, reviews, defects, sources + defect_sources)
+
+    # 캐시 조회 (force=True면 무시)
+    cache_row = db.query(AIAnalysisCache).filter(AIAnalysisCache.vehicle_id == vehicle_id).first()
+    if cache_row and cache_row.input_hash == input_hash and not force:
+        try:
+            cached = json.loads(cache_row.data_json)
+            cached["cached"] = True
+            cached["generated_at"] = cache_row.generated_at.isoformat() if cache_row.generated_at else None
+            return cached
+        except Exception:
+            pass  # 캐시 손상 시 그냥 새로 생성
+
     # OpenAI API 사용 (키가 있을 때)
     if OPENAI_API_KEY:
         try:
             import openai
             client = openai.OpenAI(api_key=OPENAI_API_KEY)
-            vehicle_info = _build_vehicle_prompt(vehicle, listing, diagnosis, reviews)
+            vehicle_info = _build_vehicle_prompt(vehicle, listing, diagnosis, reviews, defects)
+
+            system_prompt = (
+                "당신은 비전문가 구매자에게 **이 개별 매물**을 설명하는 분석가입니다.\n"
+                "당신의 임무는 모델 마케팅이 아니라, '이 차량의 진단 점수·결함·메타'를 일반인 언어로 풀어 쓰는 것입니다.\n\n"
+
+                "【summary 작성 규칙 — 반드시 4문장, 아래 순서 그대로】\n"
+                "  ① **이 차량 메타**: '이 차량은 [브랜드 모델 연식], [경과년수]년 경과, 주행거리 [N]km, [사고이력]입니다.'\n"
+                "  ② **진단 등급 풀이**: 'AI 진단은 [전반 등급]으로, 외관 [등급]·내부 [등급]·엔진 [등급]입니다.' (점수 숫자 X)\n"
+                "  ③ **결함 또는 시세 관찰**:\n"
+                "       - 결함 N건 있으면: '외관에서 [부위] [종류] 등 N건이 발견되어 [총 수리비 추정]이 추가로 들 수 있습니다.'\n"
+                "       - 결함 없으면: '외관 결함은 발견되지 않았으며, 현재 매물가는 [N]만원입니다.'\n"
+                "  ④ **권고**: '주행거리·진단·결함을 종합하면 [사도 좋다/주의 필요/네고 여지]'\n\n"
+
+                "【summary에서 절대 쓰지 말 것 — 위반 시 무효】\n"
+                "  ✘ 모델 일반론: '가족용', '패밀리카', '스포티', '정숙성', '디자인이 좋은', '고속 연비 우수' 등\n"
+                "  ✘ 카탈로그·마케팅 표현: '안정적인 주행 성능', '넓은 실내'\n"
+                "  ✘ 추상적 호감 표현: '매력적', '인기 모델'\n"
+                "  → 이런 모델 평가는 **review_summary**나 **known_issues**에만 사용하세요.\n\n"
+
+                "【pros 규칙】 이 차량 메타·진단 결과 기반만 (예: '연식 대비 낮은 주행거리', '무사고', '진단 우수 등급')\n"
+                "【cons 규칙 — 한 줄로 간결하게】\n"
+                "  - 형식: `[부위] [결함 종류]` 만. 예: '전면 좌측 휀더 주변 스크래치', '후면 테일게이트 미세 덴트'\n"
+                "  - **금지**: 예상 수리비 숫자, '안전 문제 없음' 같은 안전영향, '[참고: ...]' 추가 코멘트, 심각도 라벨\n"
+                "  - 수리비 합산·세부 디테일은 summary 셋째 문장에만 적습니다.\n"
+                "  - 결함 없으면 이 차량의 다른 약점(주행거리·연식·시세) 짧게 1~2개.\n"
+                "【known_issues】 같은 차종 고질병 (RAG 발췌 근거). 발췌에 없으면 null.\n"
+                "【review_summary】 같은 차종 구매자 평 1~2문장. 발췌 근거.\n\n"
+
+                "【표현 규칙】\n"
+                "  - 점수 숫자 금지 → '우수/양호/보통/주의/미흡' 등급 한국어로만\n"
+                "  - 전문 용어는 응답 본문에서 **첫 등장 시 괄호로 풀어쓰기**. 두 번째부터는 풀이 생략.\n"
+                "    예: '단순교환(차체 뼈대 아닌 외판만 교체)', '쿼터패널(뒷바퀴 위 측면판)', 'DPF(디젤 매연 필터)'\n\n"
+            )
+            # 입력에 실제로 등장하는 용어만 사전으로 주입
+            input_blob = vehicle_info + (excerpts or "") + (defect_excerpts or "")
+            gloss = _glossary_for_prompt(input_blob)
+            if gloss:
+                system_prompt += (
+                    "━━━ 🔴 매우 중요: 전문 용어 자동 풀이 (반드시 지킬 것) ━━━\n"
+                    "아래 용어가 응답(summary/pros/cons/known_issues/review_summary)에 등장할 때 "
+                    "**처음 한 번만 반드시** 괄호 풀이를 붙이세요. 일반인 구매자가 이해할 수 있게 하기 위함입니다.\n\n"
+                    f"{gloss}\n\n"
+                    "✅ 올바른 예:\n"
+                    "  - '단순교환(차체 뼈대가 아닌 외판만 교체된 가벼운 수리) 1회 이력이 있습니다.'\n"
+                    "  - '좌측 펜더(앞바퀴 위 외판) 도색 흔적이 있습니다.'\n"
+                    "  - 'DPF(디젤 매연 필터) 클리닝 권장.'\n"
+                    "❌ 잘못된 예 (괄호 풀이 누락):\n"
+                    "  - '단순교환 1회 이력이 있습니다.'  ← 첫 등장인데 풀이 없음\n"
+                    "  - '좌측 펜더 도색 흔적'  ← 풀이 없음\n\n"
+                    "두 번째 등장부터는 풀이 생략 OK.\n\n"
+                )
+            if excerpts:
+                system_prompt += (
+                    "[관련 리뷰 발췌]는 **같은 차종**에 대한 외부 매체 리뷰입니다.\n"
+                    "known_issues와 review_summary 작성 시 이 발췌를 근거로 하고, 발췌에 없는 고질병은 추측하지 마세요.\n"
+                    "이 차량 개별 분석(summary/pros/cons)에는 발췌를 참고만 하고, 차량 메타·진단·결함을 우선 반영하세요.\n\n"
+                )
+
+            if defects.get("defect_count", 0) > 0:
+                system_prompt += (
+                    "[이 차량 외관 결함]이 포함되어 있습니다. 각 결함은 cons에 **'부위 + 결함 종류'만** 짧게 적으세요. "
+                    "수리비·안전영향·심각도·[참고:] 등 일체 금지. 그것들은 summary 셋째 문장에서 총합으로만 다룹니다.\n\n"
+                )
+
+            system_prompt += """반드시 아래 JSON 형식으로만 응답하세요. 모든 값은 한국어 자연어:
+{
+  "summary": "이 차량 컨텍스트로 시작하는 3~4문장 종합 요약 + 구매 권고",
+  "pros": ["이 차량의 강점들 (3~5개, 차량 메타·진단 우선)"],
+  "cons": ["이 차량의 약점들 (결함은 부위·수리비·안전영향 포함, 3~5개)"],
+  "known_issues": "같은 차종의 알려진 고질병 (없으면 null)",
+  "review_summary": "같은 차종 구매자들의 평 1~2문장 (없으면 null)"
+}"""
+
+            user_content = vehicle_info
+            if excerpts:
+                user_content += f"\n\n[관련 리뷰 발췌 — 같은 차종]\n{excerpts}"
+            if defect_excerpts:
+                user_content += f"\n\n[결함 풀이 발췌 — 검수/수리 가이드]\n{defect_excerpts}"
 
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role": "system", "content": """당신은 중고차 전문 분석가입니다.
-주어진 차량 정보를 바탕으로 구매자에게 유용한 분석을 제공하세요.
-반드시 아래 JSON 형식으로만 응답하세요:
-{
-  "summary": "차량 종합 요약 (2-3문장)",
-  "pros": ["장점1", "장점2", ...],
-  "cons": ["단점1", "단점2", ...],
-  "known_issues": "이 모델의 알려진 고질병이나 주의사항 (없으면 null)",
-  "review_summary": "실제 후기 요약 (후기가 있으면 1-2문장, 없으면 null)"
-}"""},
-                    {"role": "user", "content": vehicle_info},
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_content},
                 ],
                 temperature=0.7,
                 max_tokens=800,
             )
 
-            import json
             result = json.loads(response.choices[0].message.content)
+            # 전문 용어 자동 풀이 — GPT가 빼먹은 괄호 풀이를 결정론적으로 삽입
+            result = _apply_inline_gloss(result)
             result["vehicle_id"] = vehicle.id
             result["vehicle_name"] = f"{vehicle.brand} {vehicle.model} {vehicle.year}"
-            result["source"] = "chatgpt"
+            result["source"] = "chatgpt+rag" if (excerpts or defect_excerpts) else "chatgpt"
+            result["sources"] = sources
+            result["defect_sources"] = defect_sources
+            result["rag_used"] = bool(excerpts)
+            result["defect_rag_used"] = bool(defect_excerpts)
+            result["defect_count"] = defects.get("defect_count", 0)
+            result["cached"] = False
+
+            # 캐시 upsert
+            now = datetime.utcnow()
+            if cache_row:
+                cache_row.data_json = json.dumps(result, ensure_ascii=False)
+                cache_row.input_hash = input_hash
+                cache_row.source = result["source"]
+                cache_row.generated_at = now
+            else:
+                db.add(AIAnalysisCache(
+                    vehicle_id=vehicle_id,
+                    data_json=json.dumps(result, ensure_ascii=False),
+                    input_hash=input_hash,
+                    source=result["source"],
+                    generated_at=now,
+                ))
+            db.commit()
+            result["generated_at"] = now.isoformat()
             return result
         except Exception:
             pass
 
-    # Fallback: 모의 요약
-    return _generate_mock_summary(vehicle, listing, diagnosis)
+    # Fallback: 모의 요약 (sources 스키마 일관성 유지, 캐시는 저장 안 함)
+    result = _generate_mock_summary(vehicle, listing, diagnosis)
+    result["sources"] = sources
+    result["defect_sources"] = defect_sources
+    result["rag_used"] = bool(excerpts)
+    result["defect_rag_used"] = bool(defect_excerpts)
+    result["defect_count"] = defects.get("defect_count", 0)
+    result["cached"] = False
+    return result

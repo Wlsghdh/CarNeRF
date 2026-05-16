@@ -162,6 +162,72 @@ def compare_vehicles(
     return {"vehicles": comparisons, "summary": summary}
 
 
+@router.get("/semantic")
+def semantic_search(
+    q: str = Query(..., min_length=2, description="자연어 검색 쿼리"),
+    limit: int = Query(12, ge=1, le=24),
+    db: Session = Depends(get_db),
+):
+    """RAG 기반 의미 검색.
+
+    자연어 쿼리 → Chroma top-30 청크 → 차종별 best score 집계 → 매칭 차종의
+    active listing 1건씩 반환 (with 매칭 발췌).
+    """
+    try:
+        from app.rag.retriever import semantic_search_vehicles
+    except Exception:
+        raise HTTPException(status_code=503, detail="RAG 인덱스가 준비되지 않았습니다.")
+
+    try:
+        matches = semantic_search_vehicles(q, top_k_chunks=30, max_vehicles=limit * 2)
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"검색 중 오류: {e}")
+
+    results = []
+    for m in matches:
+        listing = (
+            db.query(Listing)
+            .options(joinedload(Listing.vehicle))
+            .join(Vehicle)
+            .filter(
+                Vehicle.brand == m.brand,
+                Vehicle.model == m.model,
+                Listing.status == "active",
+            )
+            .order_by(Listing.created_at.desc())
+            .first()
+        )
+        if not listing:
+            continue
+        excerpt = m.excerpt.strip()
+        if len(excerpt) > 180:
+            excerpt = excerpt[:180].rstrip() + "..."
+        results.append({
+            "listing_id": listing.id,
+            "vehicle_id": listing.vehicle_id,
+            "title": listing.title,
+            "price": listing.price,
+            "brand": listing.vehicle.brand,
+            "model": listing.vehicle.model,
+            "year": listing.vehicle.year,
+            "trim": listing.vehicle.trim,
+            "fuel_type": listing.vehicle.fuel_type,
+            "mileage": listing.vehicle.mileage,
+            "region": listing.vehicle.region,
+            "thumbnail_url": listing.vehicle.thumbnail_url,
+            "has_3d": listing.vehicle.model_3d_status == "ready",
+            "match_score": m.score,
+            "match_excerpt": excerpt,
+            "match_source": m.excerpt_source,
+            "match_url": m.excerpt_url,
+            "match_title": m.excerpt_title,
+        })
+        if len(results) >= limit:
+            break
+
+    return {"query": q, "method": "semantic", "results": results}
+
+
 @router.get("/popular-keywords")
 def popular_keywords(db: Session = Depends(get_db)):
     """인기 검색 키워드 (브랜드별 매물 수 기준)"""
