@@ -806,6 +806,39 @@ body {
   border-color: rgba(200,169,110,0.5);
 }
 
+/* GPT 파싱 결과 배지 */
+.ai-parsed-tags {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: rgba(200,169,110,0.04);
+  border: 1px solid rgba(200,169,110,0.18);
+  border-radius: 10px;
+  font-size: 11px;
+  color: var(--text);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.ai-parsed-tags .parsed-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #C8A96E;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-right: 6px;
+}
+.ai-parsed-tags .parsed-tag {
+  display: inline-block;
+  background: rgba(200,169,110,0.12);
+  border: 1px solid rgba(200,169,110,0.35);
+  color: var(--text);
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 100px;
+  font-weight: 500;
+}
+
 /* ── LAYOUT ── */
 .listings-layout {
   max-width: 1320px;
@@ -971,13 +1004,14 @@ body {
         <button type="submit" class="search-btn">검색</button>
       </form>
       <div id="ai-seed-chips" class="ai-seed-chips" style="display:none;">
+        <button type="button" class="ai-seed-chip" data-q="2000만원대 SUV">2000만원대 SUV</button>
+        <button type="button" class="ai-seed-chip" data-q="5만km 이하 그랜저">5만km 이하 그랜저</button>
+        <button type="button" class="ai-seed-chip" data-q="2020년식 이상 하이브리드">2020년식 이상 하이브리드</button>
         <button type="button" class="ai-seed-chip" data-q="조용한 패밀리 SUV">조용한 패밀리 SUV</button>
-        <button type="button" class="ai-seed-chip" data-q="고속도로 장거리 편한 세단">장거리 편한 세단</button>
-        <button type="button" class="ai-seed-chip" data-q="연비 좋은 하이브리드">연비 좋은 하이브리드</button>
-        <button type="button" class="ai-seed-chip" data-q="전기차 빠른 충전">빠른 충전 전기차</button>
-        <button type="button" class="ai-seed-chip" data-q="첫차 추천 경차">첫차 추천 경차</button>
+        <button type="button" class="ai-seed-chip" data-q="3천만원 이하 전기차">3천만원 이하 전기차</button>
       </div>
       <div id="ai-status" class="ai-status-banner" style="display:none;"></div>
+      <div id="ai-parsed-tags" class="ai-parsed-tags" style="display:none;"></div>
       {% if filters.search %}
       <div class="search-result-tag" id="keyword-result-tag">
         "<span>{{ filters.search }}</span>" 검색 결과
@@ -1217,6 +1251,8 @@ function applySearchModeUI(mode) {
     // AI 결과 상태 클리어 (그리드는 다음 페이지 로드 시 서버가 복원)
     const status = document.getElementById('ai-status');
     if (status) status.style.display = 'none';
+    const parsedBox = document.getElementById('ai-parsed-tags');
+    if (parsedBox) parsedBox.style.display = 'none';
   }
 }
 
@@ -1242,7 +1278,43 @@ function fmtNumber(n) {
   return Number(n).toLocaleString('ko-KR');
 }
 
-function renderSemanticResults(query, results) {
+function renderParsedTags(parsed) {
+  const box = document.getElementById('ai-parsed-tags');
+  if (!box) return;
+  if (!parsed || Object.keys(parsed).length === 0) {
+    box.style.display = 'none';
+    box.innerHTML = '';
+    return;
+  }
+  const tags = [];
+  if (parsed.brand) tags.push(parsed.brand);
+  if (parsed.fuel_type) tags.push(parsed.fuel_type);
+  if (parsed.price_min != null || parsed.price_max != null) {
+    const lo = parsed.price_min != null ? `${fmtNumber(parsed.price_min)}` : '0';
+    const hi = parsed.price_max != null ? `${fmtNumber(parsed.price_max)}` : '∞';
+    tags.push(`${lo}~${hi}만원`);
+  }
+  if (parsed.year_min != null || parsed.year_max != null) {
+    const lo = parsed.year_min != null ? parsed.year_min : '~';
+    const hi = parsed.year_max != null ? parsed.year_max : '~';
+    tags.push(`${lo}~${hi}년식`);
+  }
+  if (parsed.mileage_max != null) {
+    tags.push(`${(parsed.mileage_max / 10000).toFixed(0)}만km 이하`);
+  }
+  (parsed.keywords || []).slice(0, 5).forEach(k => tags.push(`#${k}`));
+
+  if (tags.length === 0) {
+    box.style.display = 'none';
+    return;
+  }
+  box.style.display = 'flex';
+  box.innerHTML =
+    `<span class="parsed-label">인식된 조건</span>` +
+    tags.map(t => `<span class="parsed-tag">${escapeHtml(t)}</span>`).join('');
+}
+
+function renderSemanticResults(query, results, parsed) {
   const grid = document.getElementById('listings-grid');
   const status = document.getElementById('ai-status');
   const totalCount = document.getElementById('total-count');
@@ -1250,16 +1322,19 @@ function renderSemanticResults(query, results) {
   document.querySelectorAll('.pag-wrap, .empty-state').forEach(el => el.style.display = 'none');
   if (totalCount) totalCount.textContent = results.length;
 
+  renderParsedTags(parsed);
+
   status.style.display = 'flex';
   if (results.length === 0) {
-    status.innerHTML = `<span>"<strong>${escapeHtml(query)}</strong>" 와 매칭되는 리뷰가 인덱스에 없습니다. 다른 키워드를 시도해 보세요.</span>`;
+    status.innerHTML = `<span>"<strong>${escapeHtml(query)}</strong>" 조건에 맞는 매물을 찾지 못했어요. 조건을 완화해 보세요.</span>`;
     if (grid) grid.innerHTML = '';
     return;
   }
-  status.innerHTML = `<span><strong>AI 검색</strong> "${escapeHtml(query)}" · 리뷰 ${results.length}건 매칭</span>`;
+  status.innerHTML = `<span><strong>AI 검색</strong> "${escapeHtml(query)}" · ${results.length}건 매칭</span>`;
 
   if (!grid) return;
-  grid.innerHTML = results.map((r, i) => `
+  grid.innerHTML = results.map((r, i) => {
+    return `
     <a href="/vehicles/${r.vehicle_id}" class="car-card" style="animation-delay:${i * 0.04}s;">
       <div class="card-img">
         <img src="${escapeHtml(r.thumbnail_url || '/static/images/placeholder-car.svg')}"
@@ -1268,6 +1343,7 @@ function renderSemanticResults(query, results) {
              onerror="this.onerror=null;this.src='/static/images/placeholder-car.svg';">
         <div class="card-img-overlay"></div>
         ${r.has_3d ? `<span class="badge-3d">3D 뷰어</span>` : ''}
+        <span class="badge-fixed" style="background:rgba(200,169,110,0.92);color:#0a0a0a;font-weight:700;">매칭 ${Math.round(r.match_score)}%</span>
       </div>
       <div class="card-body">
         <div class="card-meta-top">${escapeHtml(r.brand)} ${escapeHtml(r.model)} · ${r.year}년</div>
@@ -1282,16 +1358,15 @@ function renderSemanticResults(query, results) {
           <div class="spec-dot"></div>
           <span>${escapeHtml(r.region || '미지정')}</span>
         </div>
+        ${r.match_reason ? `
         <div class="ai-excerpt-box">
-          <span class="ai-tag">AI 매칭 발췌</span>
-          <span class="ai-score">match ${r.match_score.toFixed(2)}</span>
+          <span class="ai-tag">왜 이 차량?</span>
           <div style="clear:both;"></div>
-          ${escapeHtml(r.match_excerpt)}
-          <span class="ai-source-tag">${escapeHtml(r.match_source)}</span>
-        </div>
+          ${escapeHtml(r.match_reason)}
+        </div>` : ''}
       </div>
     </a>
-  `).join('');
+  `;}).join('');
 }
 
 async function runSemanticSearch(query) {
@@ -1311,7 +1386,7 @@ async function runSemanticSearch(query) {
     const data = await res.json();
     if (skeleton) skeleton.style.display = 'none';
     if (grid) grid.style.display = '';
-    renderSemanticResults(data.query, data.results);
+    renderSemanticResults(data.query, data.results, data.parsed);
   } catch (err) {
     if (skeleton) skeleton.style.display = 'none';
     if (grid) grid.style.display = '';

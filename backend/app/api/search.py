@@ -1,4 +1,6 @@
 """검색 자동완성 + 차량 비교 API"""
+import json
+import os
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -9,6 +11,166 @@ from app.dependencies import get_db
 from app.models import Vehicle, Listing, DiagnosisReport
 
 router = APIRouter(prefix="/api/search", tags=["search"])
+
+
+_PARSE_SYSTEM_PROMPT = """당신은 한국 중고차 검색 쿼리 파서입니다. 사용자 자연어를 구조화된 필터 JSON으로만 변환합니다.
+
+스키마(누락 키는 null):
+{
+  "price_min": 만원 단위 정수 | null,
+  "price_max": 만원 단위 정수 | null,
+  "year_min": 정수 | null,
+  "year_max": 정수 | null,
+  "mileage_max": km 단위 정수 | null,
+  "brand": "현대" | "기아" | "제네시스" | "BMW" | "벤츠" | "아우디" | ... | null,
+  "fuel_type": "가솔린" | "디젤" | "하이브리드" | "전기" | "LPG" | null,
+  "keywords": ["의미검색용 키워드 (SUV, 패밀리, 정숙, 장거리 등)"]
+}
+
+규칙:
+- "2000만원대" → price_min=2000, price_max=2999
+- "3천만원 이하" → price_max=3000
+- "1500만원~2500만원" → price_min=1500, price_max=2500
+- "2020년식 이상" → year_min=2020
+- "5만km 이하" → mileage_max=50000
+- "10만km 미만" → mileage_max=99999
+- "전기차" → fuel_type="전기"
+- 명시 안 된 값은 null. 절대 추측·기본값 금지.
+- keywords는 차종(SUV/세단/경차), 용도(패밀리/장거리/첫차), 특성(정숙/연비) 위주 1~5개.
+- JSON만 출력. 코드블록/설명 금지."""
+
+
+def _parse_query_with_gpt(query: str) -> dict:
+    """자연어 쿼리 → 구조화 필터 dict. 실패 시 빈 dict."""
+    api_key = os.getenv("OPENAI_API_KEY", "")
+    if not api_key:
+        return {}
+    try:
+        import openai
+        client = openai.OpenAI(api_key=api_key)
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": _PARSE_SYSTEM_PROMPT},
+                {"role": "user", "content": query},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.0,
+            max_tokens=200,
+        )
+        parsed = json.loads(resp.choices[0].message.content)
+        return {k: v for k, v in parsed.items() if v not in (None, "", [])}
+    except Exception:
+        return {}
+
+
+_MATCH_REASON_SYSTEM = """당신은 한국 중고차 추천 도우미입니다. 사용자의 자연어 쿼리에 대해, 각 차량마다 (1) 적합도 판단(fit) + (2) 한 줄 이유(reason)를 작성합니다.
+
+판단 기준 (fit):
+- true: 쿼리의 핵심 의도를 충족 (예: "캠핑용" → 카니발/SUV는 true)
+- false: 쿼리와 명백히 어긋남, "부족", "부적합", "어려움" 등 부정 표현이 자연스러운 경우 (예: "캠핑용" → 소형 세단은 false / "9인 가족" → 5인승 세단은 false)
+- 애매하면 true (사용자가 판단할 수 있게).
+
+reason 작성 규칙:
+- 40자 이내 한국어 평어체.
+- 차량명·연식·가격 반복 금지 (UI에 이미 표시됨).
+- 쿼리와의 연결 고리를 구체적으로 (예: "9인승 미니밴", "공인연비 17km/L", "정숙성 평 우수").
+- 일반 상식 수준 사실만. 트림별 옵션 등 모르는 건 만들지 마세요.
+- fit=false인 차량의 reason은 "왜 안 맞는지" 솔직히 적습니다.
+
+응답 형식 (모든 id 빠짐없이 포함):
+{"reasons": [{"id": 매물번호, "fit": true|false, "reason": "한 줄"}, ...]}
+JSON만 출력."""
+
+
+def _generate_match_reasons(query: str, results: list) -> dict:
+    """원본 쿼리에 대해 각 차량의 매칭 이유 한 줄 생성. {listing_id: reason} dict."""
+    api_key = os.getenv("OPENAI_API_KEY", "")
+    if not api_key or not results:
+        return {}
+    try:
+        import openai
+        client = openai.OpenAI(api_key=api_key)
+        vehicles_brief = [
+            {
+                "id": r["listing_id"],
+                "name": f"{r['brand']} {r['model']} {r['year']}년",
+                "trim": r.get("trim") or "",
+                "price_만원": r["price"],
+                "fuel": r["fuel_type"],
+                "mileage_km": r["mileage"],
+            }
+            for r in results
+        ]
+        user_content = (
+            f'사용자 쿼리: "{query}"\n\n'
+            f'차량 목록 (JSON):\n{json.dumps(vehicles_brief, ensure_ascii=False, indent=2)}'
+        )
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": _MATCH_REASON_SYSTEM},
+                {"role": "user", "content": user_content},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.3,
+            max_tokens=1200,
+        )
+        data = json.loads(resp.choices[0].message.content)
+        reasons = data.get("reasons", [])
+        out: dict = {}
+        for r in reasons:
+            if "id" not in r or "reason" not in r:
+                continue
+            out[int(r["id"])] = {
+                "reason": str(r["reason"]).strip(),
+                "fit": bool(r.get("fit", True)),
+            }
+        return out
+    except Exception:
+        return {}
+
+
+def _apply_parsed_filters(q_listing, parsed: dict):
+    if parsed.get("price_min") is not None:
+        q_listing = q_listing.filter(Listing.price >= parsed["price_min"])
+    if parsed.get("price_max") is not None:
+        q_listing = q_listing.filter(Listing.price <= parsed["price_max"])
+    if parsed.get("year_min") is not None:
+        q_listing = q_listing.filter(Vehicle.year >= parsed["year_min"])
+    if parsed.get("year_max") is not None:
+        q_listing = q_listing.filter(Vehicle.year <= parsed["year_max"])
+    if parsed.get("mileage_max") is not None:
+        q_listing = q_listing.filter(Vehicle.mileage <= parsed["mileage_max"])
+    if parsed.get("brand"):
+        q_listing = q_listing.filter(Vehicle.brand == parsed["brand"])
+    if parsed.get("fuel_type"):
+        q_listing = q_listing.filter(Vehicle.fuel_type == parsed["fuel_type"])
+    return q_listing
+
+
+def _build_result_dict(listing, match=None, score_default=50.0) -> dict:
+    v = listing.vehicle
+    return {
+        "listing_id": listing.id,
+        "vehicle_id": listing.vehicle_id,
+        "title": listing.title,
+        "price": listing.price,
+        "brand": v.brand,
+        "model": v.model,
+        "year": v.year,
+        "trim": v.trim,
+        "fuel_type": v.fuel_type,
+        "mileage": v.mileage,
+        "region": v.region,
+        "thumbnail_url": v.thumbnail_url,
+        "has_3d": v.model_3d_status == "ready",
+        "match_score": round(match.score * 100, 1) if match else score_default,
+        "match_excerpt": (match.excerpt.strip()[:180].rstrip() + "...") if match and len(match.excerpt.strip()) > 180 else (match.excerpt.strip() if match else ""),
+        "match_source": match.excerpt_source if match else "",
+        "match_url": match.excerpt_url if match else "",
+        "match_title": match.excerpt_title if match else "",
+    }
 
 
 @router.get("/autocomplete")
@@ -168,24 +330,36 @@ def semantic_search(
     limit: int = Query(12, ge=1, le=24),
     db: Session = Depends(get_db),
 ):
-    """RAG 기반 의미 검색.
+    """LLM 파싱 + RAG 의미 검색 하이브리드.
 
-    자연어 쿼리 → Chroma top-30 청크 → 차종별 best score 집계 → 매칭 차종의
-    active listing 1건씩 반환 (with 매칭 발췌).
+    1) GPT-4o-mini로 쿼리를 구조화 필터(가격/연식/연료/주행거리 등)와 키워드로 파싱
+    2) 키워드로 Chroma 의미 검색 → 매칭 (brand, model) 후보 + 발췌
+    3) 각 후보에 대해 구조화 필터를 만족하는 active listing 조회
+    4) 부족분은 구조화 필터만 적용한 listing으로 fallback
     """
     try:
         from app.rag.retriever import semantic_search_vehicles
     except Exception:
         raise HTTPException(status_code=503, detail="RAG 인덱스가 준비되지 않았습니다.")
 
+    parsed = _parse_query_with_gpt(q)
+    parse_source = "gpt-4o-mini" if parsed else "none"
+
+    # 의미 검색용 쿼리: 파싱된 키워드 우선, 없으면 원본
+    keywords = parsed.get("keywords") or []
+    search_query = " ".join(keywords) if keywords else q
+
     try:
-        matches = semantic_search_vehicles(q, top_k_chunks=30, max_vehicles=limit * 2)
+        matches = semantic_search_vehicles(search_query, top_k_chunks=30, max_vehicles=limit * 3)
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"검색 중 오류: {e}")
 
     results = []
+    seen_keys: set = set()
     for m in matches:
-        listing = (
+        if len(results) >= limit:
+            break
+        q_listing = (
             db.query(Listing)
             .options(joinedload(Listing.vehicle))
             .join(Vehicle)
@@ -194,38 +368,60 @@ def semantic_search(
                 Vehicle.model == m.model,
                 Listing.status == "active",
             )
-            .order_by(Listing.created_at.desc())
-            .first()
         )
+        q_listing = _apply_parsed_filters(q_listing, parsed)
+        listing = q_listing.order_by(Listing.created_at.desc()).first()
         if not listing:
             continue
-        excerpt = m.excerpt.strip()
-        if len(excerpt) > 180:
-            excerpt = excerpt[:180].rstrip() + "..."
-        results.append({
-            "listing_id": listing.id,
-            "vehicle_id": listing.vehicle_id,
-            "title": listing.title,
-            "price": listing.price,
-            "brand": listing.vehicle.brand,
-            "model": listing.vehicle.model,
-            "year": listing.vehicle.year,
-            "trim": listing.vehicle.trim,
-            "fuel_type": listing.vehicle.fuel_type,
-            "mileage": listing.vehicle.mileage,
-            "region": listing.vehicle.region,
-            "thumbnail_url": listing.vehicle.thumbnail_url,
-            "has_3d": listing.vehicle.model_3d_status == "ready",
-            "match_score": m.score,
-            "match_excerpt": excerpt,
-            "match_source": m.excerpt_source,
-            "match_url": m.excerpt_url,
-            "match_title": m.excerpt_title,
-        })
-        if len(results) >= limit:
-            break
+        results.append(_build_result_dict(listing, match=m))
+        seen_keys.add((m.brand, m.model))
 
-    return {"query": q, "method": "semantic", "results": results}
+    # Fallback: 구조화 필터가 있는데 의미 검색 매칭이 부족하면 구조화 필터만으로 채움
+    structural_keys = ["price_min", "price_max", "year_min", "year_max",
+                       "mileage_max", "brand", "fuel_type"]
+    has_structural = any(parsed.get(k) is not None for k in structural_keys)
+    if has_structural and len(results) < limit:
+        q_fallback = (
+            db.query(Listing)
+            .options(joinedload(Listing.vehicle))
+            .join(Vehicle)
+            .filter(Listing.status == "active")
+        )
+        q_fallback = _apply_parsed_filters(q_fallback, parsed)
+        for listing in q_fallback.order_by(Vehicle.year.desc()).all():
+            if len(results) >= limit:
+                break
+            key = (listing.vehicle.brand, listing.vehicle.model)
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+            results.append(_build_result_dict(listing, match=None, score_default=50.0))
+
+    # 결과별 매칭 이유 + 적합도 판단 (배치 GPT 호출, 1회)
+    reason_map = _generate_match_reasons(q, results)
+    filtered: list = []
+    excluded: int = 0
+    for r in results:
+        rd = reason_map.get(r["listing_id"])
+        if rd is None:
+            # GPT 판단 없음 — 안전하게 통과 (reason 비움)
+            r["match_reason"] = ""
+            filtered.append(r)
+        elif rd["fit"]:
+            r["match_reason"] = rd["reason"]
+            filtered.append(r)
+        else:
+            excluded += 1
+    results = filtered
+
+    return {
+        "query": q,
+        "method": "hybrid",
+        "parsed": parsed,
+        "parse_source": parse_source,
+        "excluded_unfit": excluded,
+        "results": results,
+    }
 
 
 @router.get("/popular-keywords")
