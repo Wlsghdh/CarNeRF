@@ -10,13 +10,14 @@ from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, get_current_user
 from app.models import Vehicle, Listing, DiagnosisReport, UserReview, User, AIAnalysisCache
+from app.rag.sanitize import sanitize_user_text, sanitize_review
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 
 # 프롬프트/스키마가 바뀌면 이 값을 올려서 캐시를 일괄 무효화한다.
-PROMPT_VERSION = "v10-short-gloss-2026-05-16"
+PROMPT_VERSION = "v12-defects-all-cons-major-2026-05-19"
 
 
 # 한국 중고차 성능기록부·진단서에 자주 등장하는 전문 용어 → 일반인 풀이 사전.
@@ -95,6 +96,145 @@ def _apply_inline_gloss(result: dict) -> dict:
         result["known_issues"] = gloss_text(result["known_issues"])
     if isinstance(result.get("review_summary"), str):
         result["review_summary"] = gloss_text(result["review_summary"])
+    return result
+
+
+# GPT가 "단점 없음" 등을 표현할 때 빈 배열 대신 ["null"], ["없음"] 같은 placeholder를
+# 넣는 경우가 있음. 프론트에 그대로 노출되면 부자연스러우니 후처리로 정리.
+_PLACEHOLDER_VALUES = {
+    "null", "none", "n/a", "na",
+    "없음", "해당없음", "해당 없음", "(없음)", "특이사항 없음",
+    "결함 없음", "단점 없음", "특별한 단점 없음", "특별한 단점이 없습니다",
+}
+
+
+def _clean_list_field(items) -> list:
+    if not isinstance(items, list):
+        return []
+    out = []
+    for x in items:
+        if not isinstance(x, str):
+            continue
+        s = x.strip()
+        if not s:
+            continue
+        if s.lower() in _PLACEHOLDER_VALUES:
+            continue
+        out.append(s)
+    return out
+
+
+def _clean_str_field(value):
+    if not isinstance(value, str):
+        return value
+    s = value.strip()
+    if not s or s.lower() in _PLACEHOLDER_VALUES:
+        return None
+    return value
+
+
+def _sanitize_result(result: dict) -> dict:
+    """GPT 응답 / 캐시 hit 결과를 프론트 노출 전 정리.
+
+    - cons/pros/known_issues 리스트의 'null', '없음' 같은 placeholder 제거
+    - 빈 cons는 ["특별한 단점은 발견되지 않았습니다"] 라는 사용자 친화 메시지로 채움
+      (장점만 있는 차량인데 cons가 비면 UI가 어색해지므로)
+    """
+    if not isinstance(result, dict):
+        return result
+    result["pros"] = _clean_list_field(result.get("pros"))
+    cons = _clean_list_field(result.get("cons"))
+    if not cons:
+        # 결함이 없거나 GPT가 단점을 못 찾은 경우, 명시적 메시지 1건 노출
+        cons = ["특별한 단점은 발견되지 않았습니다."]
+    result["cons"] = cons
+    if "known_issues" in result:
+        result["known_issues"] = _clean_str_field(result["known_issues"])
+    if "review_summary" in result:
+        result["review_summary"] = _clean_str_field(result["review_summary"])
+    return result
+
+
+_NO_CONS_MSG = "특별한 단점은 발견되지 않았습니다."
+
+
+_SEVERE_ACCIDENT_KEYWORDS = ("골격손상", "전손", "침수", "인사사고", "프레임", "사고차")
+
+
+def _augment_pros(result: dict, vehicle: Vehicle,
+                  listing: Optional[Listing],
+                  db: Session) -> dict:
+    """동급 시세 대비 매물가가 저렴하면 pros 1줄 자동 보충.
+
+    내부 거래 데이터(TransactionHistory)의 동일 brand+model 평균을 기준으로,
+    매물가가 7% 이상 저렴하면 "동급 시세 대비 저렴한 가격" 추가.
+    GPT가 이미 가격 관련 장점을 넣었으면 중복 추가하지 않는다.
+    """
+    if not isinstance(result, dict) or not listing or not vehicle:
+        return result
+
+    pros = list(result.get("pros") or [])
+
+    def already_has(keywords: tuple[str, ...]) -> bool:
+        return any(
+            any(k in p for k in keywords)
+            for p in pros if isinstance(p, str)
+        )
+
+    if already_has(("가격", "저렴", "가성비", "시세")):
+        return result
+
+    try:
+        from app.api.market_price import _get_internal_stats
+        stats = _get_internal_stats(db, vehicle.brand, vehicle.model)
+    except Exception:
+        stats = None
+
+    if not stats or not stats.get("avg_price") or stats.get("count", 0) < 3:
+        return result
+
+    avg = stats["avg_price"]
+    if listing.price <= avg * 0.93:
+        discount_pct = round((1 - listing.price / avg) * 100)
+        pros.append(f"동급 시세 평균보다 {discount_pct}% 저렴한 가격")
+        result["pros"] = pros[:6]
+
+    return result
+
+
+def _augment_cons(result: dict, vehicle: Vehicle,
+                  listing: Optional[Listing],
+                  diagnosis: Optional[DiagnosisReport]) -> dict:
+    """안전망 후처리 — GPT가 빠뜨릴 수 없는 **중대 사고**만 강제 보충.
+
+    단순교환·연식·주행거리 등은 GPT 판단에 맡긴다 (system prompt가 처리).
+    GPT 응답에 이미 비슷한 키워드가 있으면 중복 추가하지 않는다.
+    """
+    if not isinstance(result, dict):
+        return result
+
+    cons = list(result.get("cons") or [])
+    cons = [c for c in cons if c != _NO_CONS_MSG]
+
+    def already_has(keywords: tuple[str, ...]) -> bool:
+        return any(
+            any(k in c for k in keywords)
+            for c in cons if isinstance(c, str)
+        )
+
+    additions: list[str] = []
+
+    # 중대 사고만 강제 — 골격손상·전손·침수·인사사고 등
+    if diagnosis and diagnosis.accident_history:
+        acc = diagnosis.accident_history.strip()
+        is_severe = any(kw in acc for kw in _SEVERE_ACCIDENT_KEYWORDS)
+        if is_severe and not already_has(_SEVERE_ACCIDENT_KEYWORDS):
+            additions.append(f"{acc} 이력")
+
+    cons.extend(additions)
+    if not cons:
+        cons = [_NO_CONS_MSG]
+    result["cons"] = cons
     return result
 
 
@@ -257,7 +397,7 @@ def _build_vehicle_prompt(vehicle: Vehicle, listing: Optional[Listing],
     if listing:
         info += f"- 판매가: {listing.price:,}만원\n"
         if listing.description:
-            info += f"- 판매자 설명: {listing.description}\n"
+            info += f"- 판매자 설명: {sanitize_user_text(listing.description)}\n"
 
     if diagnosis:
         info += f"""
@@ -281,7 +421,7 @@ def _build_vehicle_prompt(vehicle: Vehicle, listing: Optional[Listing],
             sev = ann.get("severity", "정보없음")
             kind = ann.get("type_kr") or ann.get("type") or "결함"
             conf = ann.get("confidence", 0)
-            desc = ann.get("description") or ""
+            desc = sanitize_user_text(ann.get("description") or "", max_chars=200)
             cost = ann.get("estimated_repair_cost") or "추정 어려움"
             safety = ann.get("safety_note") or ""
             info += (f"  {i}) {kind} ({sev}, 신뢰도 {int(conf*100)}%) — {desc}\n"
@@ -291,7 +431,7 @@ def _build_vehicle_prompt(vehicle: Vehicle, listing: Optional[Listing],
     if reviews:
         info += "\n━━━ 이 차량 실 사용자 후기 ━━━\n"
         for r in reviews[:5]:
-            info += f"- [{r.review_type}] (평점 {r.rating}/5): {r.content}\n"
+            info += f"- [{r.review_type}] (평점 {r.rating}/5): {sanitize_review(r.content)}\n"
 
     return info
 
@@ -462,6 +602,9 @@ def get_vehicle_summary(
             cached = json.loads(cache_row.data_json)
             cached["cached"] = True
             cached["generated_at"] = cache_row.generated_at.isoformat() if cache_row.generated_at else None
+            cached = _sanitize_result(cached)
+            cached = _augment_cons(cached, vehicle, listing, diagnosis)
+            cached = _augment_pros(cached, vehicle, listing, db)
             return cached
         except Exception:
             pass  # 캐시 손상 시 그냥 새로 생성
@@ -492,11 +635,21 @@ def get_vehicle_summary(
                 "  → 이런 모델 평가는 **review_summary**나 **known_issues**에만 사용하세요.\n\n"
 
                 "【pros 규칙】 이 차량 메타·진단 결과 기반만 (예: '연식 대비 낮은 주행거리', '무사고', '진단 우수 등급')\n"
-                "【cons 규칙 — 한 줄로 간결하게】\n"
-                "  - 형식: `[부위] [결함 종류]` 만. 예: '전면 좌측 휀더 주변 스크래치', '후면 테일게이트 미세 덴트'\n"
-                "  - **금지**: 예상 수리비 숫자, '안전 문제 없음' 같은 안전영향, '[참고: ...]' 추가 코멘트, 심각도 라벨\n"
-                "  - 수리비 합산·세부 디테일은 summary 셋째 문장에만 적습니다.\n"
-                "  - 결함 없으면 이 차량의 다른 약점(주행거리·연식·시세) 짧게 1~2개.\n"
+                "【cons 규칙 — 외관 결함 전부 + 구매에 큰 영향 줄 약점만】\n"
+                "  cons는 **이 차량 구매 결정에 영향을 줄 만한 약점**입니다.\n\n"
+                "  ▶ **① 외관 결함 (YOLOv8 탐지)** — 입력의 결함 N건은 **갯수와 무관하게 전부 1줄씩 cons에 포함**.\n"
+                "    형식: `[부위] [결함 종류]` 예: '좌측 앞 도어 스크래치', '후면 테일게이트 미세 덴트'\n"
+                "    경미한 결함도 빼지 않음. 누락 금지.\n\n"
+                "  ▶ **② 비결함 약점** — 아래 카테고리를 점검하되, **'구매를 망설일 만큼 큰 문제'만 추가**:\n"
+                "    - 사고/수리 이력: 골격손상·전손·인사사고 등 **중대 사고만 cons에 포함**. 단순교환·외판교환 같은 가벼운 이력은 cons에 넣지 말 것 (summary 첫 문장에 사실로만 언급).\n"
+                "    - 연식: **15년 이상 경과**만. 5~10년대는 일반적이라 cons 제외.\n"
+                "    - 누적 주행거리: **15만km 이상**만. 10만km대도 가벼운 차종은 일반적이라 제외.\n"
+                "    - AI 진단 등급: '주의' 이하 항목만 cons (양호·우수는 제외).\n"
+                "    - 시세: 동급 시세 대비 **명확히 비싼 경우만** (애매하면 제외).\n\n"
+                "  ▶ **형식·금지**\n"
+                "    - 각 줄 한 가지 약점, 25자 이내, 짧고 명사형.\n"
+                "    - 금지: 수리비 숫자, 안전영향, 심각도 라벨, '[참고]' 코멘트.\n"
+                "    - 모든 카테고리에 해당사항 없으면 빈 배열 `[]`. **'null'·'없음' 같은 placeholder 금지**.\n"
                 "【known_issues】 같은 차종 고질병 (RAG 발췌 근거). 발췌에 없으면 null.\n"
                 "【review_summary】 같은 차종 구매자 평 1~2문장. 발췌 근거.\n\n"
 
@@ -564,6 +717,9 @@ def get_vehicle_summary(
             result = json.loads(response.choices[0].message.content)
             # 전문 용어 자동 풀이 — GPT가 빼먹은 괄호 풀이를 결정론적으로 삽입
             result = _apply_inline_gloss(result)
+            result = _sanitize_result(result)
+            result = _augment_cons(result, vehicle, listing, diagnosis)
+            result = _augment_pros(result, vehicle, listing, db)
             result["vehicle_id"] = vehicle.id
             result["vehicle_name"] = f"{vehicle.brand} {vehicle.model} {vehicle.year}"
             result["source"] = "chatgpt+rag" if (excerpts or defect_excerpts) else "chatgpt"
@@ -603,4 +759,7 @@ def get_vehicle_summary(
     result["defect_rag_used"] = bool(defect_excerpts)
     result["defect_count"] = defects.get("defect_count", 0)
     result["cached"] = False
+    result = _sanitize_result(result)
+    result = _augment_cons(result, vehicle, listing, diagnosis)
+    result = _augment_pros(result, vehicle, listing, db)
     return result

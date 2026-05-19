@@ -326,7 +326,7 @@ def compare_vehicles(
 
 @router.get("/semantic")
 def semantic_search(
-    q: str = Query(..., min_length=2, description="자연어 검색 쿼리"),
+    q: str = Query(..., min_length=2, max_length=200, description="자연어 검색 쿼리"),
     limit: int = Query(12, ge=1, le=24),
     db: Session = Depends(get_db),
 ):
@@ -339,9 +339,12 @@ def semantic_search(
     """
     try:
         from app.rag.retriever import semantic_search_vehicles
+        from app.rag.sanitize import sanitize_user_text
     except Exception:
         raise HTTPException(status_code=503, detail="RAG 인덱스가 준비되지 않았습니다.")
 
+    # 사용자 쿼리도 prompt injection 키워드 차단 (max_length는 FastAPI Query로 이미 200)
+    q = sanitize_user_text(q, max_chars=200)
     parsed = _parse_query_with_gpt(q)
     parse_source = "gpt-4o-mini" if parsed else "none"
 
@@ -397,22 +400,70 @@ def semantic_search(
             seen_keys.add(key)
             results.append(_build_result_dict(listing, match=None, score_default=50.0))
 
-    # 결과별 매칭 이유 + 적합도 판단 (배치 GPT 호출, 1회)
-    reason_map = _generate_match_reasons(q, results)
-    filtered: list = []
-    excluded: int = 0
-    for r in results:
-        rd = reason_map.get(r["listing_id"])
-        if rd is None:
-            # GPT 판단 없음 — 안전하게 통과 (reason 비움)
+    # 의미 키워드가 없는 쿼리(예: "2000만원대", "2020년 이상")는 차종 적합도 판단이 무의미.
+    # 구조 필터로 이미 통과한 결과를 GPT가 차종 매칭 기준으로 잘못 거를 수 있어 스킵.
+    has_semantic_intent = bool(keywords)
+
+    if has_semantic_intent:
+        # 결과별 매칭 이유 + 적합도 판단 (배치 GPT 호출, 1회)
+        reason_map = _generate_match_reasons(q, results)
+        filtered: list = []
+        excluded: int = 0
+        for r in results:
+            rd = reason_map.get(r["listing_id"])
+            if rd is None:
+                # GPT 판단 없음 — 안전하게 통과 (reason 비움)
+                r["match_reason"] = ""
+                filtered.append(r)
+            elif rd["fit"]:
+                r["match_reason"] = rd["reason"]
+                filtered.append(r)
+            else:
+                excluded += 1
+        results = filtered
+    else:
+        excluded = 0
+        for r in results:
             r["match_reason"] = ""
-            filtered.append(r)
-        elif rd["fit"]:
-            r["match_reason"] = rd["reason"]
-            filtered.append(r)
-        else:
-            excluded += 1
-    results = filtered
+
+    # 0건 fallback: 가격/주행거리 조건이 빡빡해 0건이고 의미검색 매칭은 있는 경우,
+    # 가격·주행거리 조건만 풀어서 "유사 매물" 후보를 별도 필드로 반환.
+    # 프론트는 본 results가 비면 near_results 섹션을 노출하면 됨.
+    near_results: list = []
+    price_or_mileage_filter = (
+        parsed.get("price_min") is not None
+        or parsed.get("price_max") is not None
+        or parsed.get("mileage_max") is not None
+    )
+    if not results and matches and price_or_mileage_filter:
+        near_parsed = {
+            k: v for k, v in parsed.items()
+            if k not in ("price_min", "price_max", "mileage_max")
+        }
+        near_seen: set = set()
+        near_limit = max(3, limit // 2)
+        for m in matches:
+            if len(near_results) >= near_limit:
+                break
+            if (m.brand, m.model) in near_seen:
+                continue
+            q_near = (
+                db.query(Listing)
+                .options(joinedload(Listing.vehicle))
+                .join(Vehicle)
+                .filter(
+                    Vehicle.brand == m.brand,
+                    Vehicle.model == m.model,
+                    Listing.status == "active",
+                )
+            )
+            q_near = _apply_parsed_filters(q_near, near_parsed)
+            listing = q_near.order_by(Listing.created_at.desc()).first()
+            if listing:
+                near = _build_result_dict(listing, match=m)
+                near["match_reason"] = ""
+                near_results.append(near)
+                near_seen.add((m.brand, m.model))
 
     return {
         "query": q,
@@ -421,6 +472,7 @@ def semantic_search(
         "parse_source": parse_source,
         "excluded_unfit": excluded,
         "results": results,
+        "near_results": near_results,
     }
 
 
