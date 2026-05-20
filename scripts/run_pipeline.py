@@ -60,19 +60,27 @@ def main():
     parser.add_argument("--name", required=True, help="프로젝트 이름 (결과 폴더명으로 사용)")
     parser.add_argument("--max_frames", type=int, default=80, help="최대 프레임 수 (기본값: 80)")
     parser.add_argument("--min_blur_score", type=float, default=100.0, help="최소 블러 점수 (기본값: 100)")
-    parser.add_argument("--iterations", type=int, default=7000, help="Gaussian Splatting 학습 반복 횟수 (기본값: 7000)")
+    parser.add_argument("--iterations", type=int, default=0,
+                        help="GS 학습 반복 (0=엔진별 기본: fastgs 30000, vanilla 7000/HQ 60000)")
     parser.add_argument("--max_gaussians", type=int, default=1_000_000, help="최대 가우시안 수 (기본값: 1,000,000)")
     parser.add_argument("--hq", action="store_true", help="HQ 모드: 배경 제거 + depth + 최적 파라미터")
+    parser.add_argument("--engine", choices=["fastgs", "vanilla"], default="fastgs",
+                        help="GS 엔진 (기본: fastgs — CVPR 2026)")
     args = parser.parse_args()
 
     # HQ 모드 기본값 오버라이드
     if args.hq:
         if args.max_frames == 80:
             args.max_frames = 200
-        if args.iterations == 7000:
-            args.iterations = 60000
         if args.max_gaussians == 1_000_000:
             args.max_gaussians = 2_000_000
+
+    # iterations 엔진별 기본값
+    if args.iterations == 0:
+        if args.engine == "fastgs":
+            args.iterations = 30000
+        else:
+            args.iterations = 60000 if args.hq else 7000
 
     input_path = os.path.abspath(args.input)
     if not os.path.exists(input_path):
@@ -125,6 +133,7 @@ def main():
 
     # HQ 모드: 배경 제거 + depth map 생성
     gs_extra_args = []
+    images_arg = None
     if args.hq:
         # 2a: 배경 제거
         images_masked_dir = os.path.join(colmap_dense_dir, "images_masked")
@@ -134,39 +143,68 @@ def main():
             "--output_dir", images_masked_dir,
         ])
         if success:
-            gs_extra_args.extend(["--images", "images_masked"])
+            images_arg = "images_masked"
         else:
             logger.warning("배경 제거 실패. 원본 이미지로 진행합니다.")
 
-        # 2b: Depth map 생성
-        success = run_step("Depth map 생성", [
-            sys.executable, os.path.join(SCRIPTS_DIR, "generate_depths.py"),
-            "--source_path", colmap_dense_dir,
-        ])
-        if success:
-            gs_extra_args.extend(["--depths", "depths"])
+        # 2b: Depth map 생성 (vanilla 엔진 전용 — FastGS 는 미사용)
+        if args.engine == "vanilla":
+            success = run_step("Depth map 생성", [
+                sys.executable, os.path.join(SCRIPTS_DIR, "generate_depths.py"),
+                "--source_path", colmap_dense_dir,
+            ])
+            if success:
+                gs_extra_args.extend(["--depths", "depths"])
+            else:
+                logger.warning("Depth map 생성 실패. depth 없이 진행합니다.")
+
+    # 엔진별 학습 명령
+    if args.engine == "fastgs":
+        # HQ 모드는 FastGS "big" 파라미터: densify 더 적극, grad threshold 낮춤
+        if args.hq:
+            grad_abs = "0.0004"
+            densify_interval = "100"
+            high_lr = "0.04"
         else:
-            logger.warning("Depth map 생성 실패. depth 없이 진행합니다.")
-
-        # HQ 최적 파라미터
-        gs_extra_args.extend([
-            "--antialiasing",
-            "--densify_grad_threshold", "0.00007",
-            "--densify_until_iter", "35000",
-            "--opacity_reset_interval", "3000",
-            "--lambda_dssim", "0.2",
-            "--position_lr_max_steps", str(args.iterations),
-            "--disable_viewer",
-        ])
-
-    train_cmd = [
-        sys.executable, os.path.join(SCRIPTS_DIR, "train_gaussian.py"),
-        "--source_path", colmap_dense_dir,
-        "--output_path", gaussian_dir,
-        "--iterations", str(args.iterations),
-    ] + gs_extra_args
-
-    success = run_step("Gaussian Splatting 학습", train_cmd)
+            grad_abs = "0.0009"
+            densify_interval = "500"
+            high_lr = "0.0"
+        train_cmd = [
+            sys.executable, os.path.join(SCRIPTS_DIR, "train_fastgs.py"),
+            "--source_path", colmap_dense_dir,
+            "--output_path", gaussian_dir,
+            "--iterations", str(args.iterations),
+            "--mult", "0.7",
+            "--grad_abs_thresh", grad_abs,
+            "--densification_interval", densify_interval,
+            "--highfeature_lr", high_lr,
+            "--save_iterations", str(args.iterations),
+        ]
+        if images_arg:
+            train_cmd.extend(["--images", images_arg])
+        if args.hq:
+            train_cmd.append("--antialiasing")
+        success = run_step("FastGS 학습 (CVPR 2026)", train_cmd)
+    else:
+        if images_arg:
+            gs_extra_args[:0] = ["--images", images_arg]
+        if args.hq:
+            gs_extra_args.extend([
+                "--antialiasing",
+                "--densify_grad_threshold", "0.00007",
+                "--densify_until_iter", "35000",
+                "--opacity_reset_interval", "3000",
+                "--lambda_dssim", "0.2",
+                "--position_lr_max_steps", str(args.iterations),
+                "--disable_viewer",
+            ])
+        train_cmd = [
+            sys.executable, os.path.join(SCRIPTS_DIR, "train_gaussian.py"),
+            "--source_path", colmap_dense_dir,
+            "--output_path", gaussian_dir,
+            "--iterations", str(args.iterations),
+        ] + gs_extra_args
+        success = run_step("Vanilla Gaussian Splatting 학습", train_cmd)
     if not success:
         logger.error("Gaussian Splatting 학습에 실패했습니다. 파이프라인을 중단합니다.")
         sys.exit(1)

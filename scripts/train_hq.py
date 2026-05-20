@@ -60,22 +60,31 @@ def main():
         description="CarNeRF HQ 학습 오케스트레이터",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-최적 하이퍼파라미터 (기본값):
+최적 하이퍼파라미터 (기본값 - PSNR 34+ 목표):
   --images images_masked        배경 제거된 RGBA 이미지
   --depths depths               depth regularization
   --antialiasing                앨리어싱 제거
-  --iterations 60000            학습 반복 횟수
-  --densify_grad_threshold 0.00007  공격적 densification
-  --densify_until_iter 35000    densification 기간 연장
-  --opacity_reset_interval 3000 안정적 리셋 간격
-  --lambda_dssim 0.2            PSNR 최적 가중치
+  --iterations 100000           학습 반복 횟수 (60K→100K)
+  --densify_grad_threshold 0.00004  공격적 densification (0.00007→0.00004)
+  --densify_until_iter 55000    densification 기간 연장 (35K→55K)
+  --opacity_reset_interval 2000 안정적 리셋 간격 (3K→2K)
+  --lambda_dssim 0.15           PSNR 최적 가중치 (0.2→0.15)
 """,
     )
     parser.add_argument("--source_path", required=True, help="COLMAP dense 결과 경로")
     parser.add_argument("--output_path", required=True, help="학습 결과 저장 경로")
     parser.add_argument("--export_path", default="", help="Export 경로 (비어있으면 output_path/export)")
-    parser.add_argument("--iterations", type=int, default=60000, help="학습 반복 횟수 (기본값: 60000)")
+    parser.add_argument("--engine", choices=["fastgs", "vanilla"], default="fastgs",
+                        help="GS 엔진 (기본: fastgs — CVPR 2026, 최대 15× 가속)")
+    parser.add_argument("--iterations", type=int, default=0,
+                        help="학습 반복 횟수 (0=엔진별 기본값: fastgs 30000, vanilla 100000)")
     parser.add_argument("--max_gaussians", type=int, default=2_000_000, help="최대 가우시안 수 (기본값: 2,000,000)")
+
+    # FastGS 전용 인자 (engine=fastgs 일 때만 사용)
+    parser.add_argument("--grad_abs_thresh", type=float, default=0.0009, help="[fastgs] gaussian score threshold")
+    parser.add_argument("--densification_interval", type=int, default=500, help="[fastgs] densification 간격")
+    parser.add_argument("--mult", type=float, default=0.7, help="[fastgs] rendering multiplier")
+    parser.add_argument("--highfeature_lr", type=float, default=0.04, help="[fastgs] high-freq LR (외부 0.04 권장)")
 
     # 개별 단계 스킵
     parser.add_argument("--skip_bg_removal", action="store_true", help="배경 제거 스킵")
@@ -87,11 +96,11 @@ def main():
     parser.add_argument("--depths", type=str, default="depths", help="depth 폴더명 (빈 문자열=미사용)")
     parser.add_argument("--antialiasing", action="store_true", default=True, help="anti-aliasing (기본값: ON)")
     parser.add_argument("--no_antialiasing", action="store_true", help="anti-aliasing 비활성화")
-    parser.add_argument("--densify_grad_threshold", type=float, default=0.00007)
-    parser.add_argument("--densify_until_iter", type=int, default=35000)
-    parser.add_argument("--opacity_reset_interval", type=int, default=3000)
-    parser.add_argument("--lambda_dssim", type=float, default=0.2)
-    parser.add_argument("--position_lr_max_steps", type=int, default=60000)
+    parser.add_argument("--densify_grad_threshold", type=float, default=0.00004)
+    parser.add_argument("--densify_until_iter", type=int, default=55000)
+    parser.add_argument("--opacity_reset_interval", type=int, default=2000)
+    parser.add_argument("--lambda_dssim", type=float, default=0.15)
+    parser.add_argument("--position_lr_max_steps", type=int, default=100000)
 
     # Export 파라미터
     parser.add_argument("--max_scale_factor", type=float, default=10.0, help="볼륨 pruning 스케일 팩터")
@@ -113,11 +122,16 @@ def main():
     if args.no_antialiasing:
         args.antialiasing = False
 
+    # 엔진별 iterations 기본값
+    if args.iterations == 0:
+        args.iterations = 30000 if args.engine == "fastgs" else 100000
+
     pipeline_start = time.time()
 
     logger.info("")
     logger.info("*" * 70)
     logger.info("  CarNeRF HQ 학습 파이프라인 시작")
+    logger.info(f"  엔진: {args.engine}")
     logger.info(f"  소스: {source_path}")
     logger.info(f"  출력: {output_path}")
     logger.info(f"  반복: {args.iterations}")
@@ -179,30 +193,46 @@ def main():
         args.depths = ""
 
     # ─────────────────────────────────────────────────────────────────
-    # 3단계: Gaussian Splatting 학습
+    # 3단계: Gaussian Splatting 학습 (engine 별 분기)
     # ─────────────────────────────────────────────────────────────────
-    train_cmd = [
-        sys.executable, os.path.join(SCRIPTS_DIR, "train_gaussian.py"),
-        "--source_path", source_path,
-        "--output_path", output_path,
-        "--iterations", str(args.iterations),
-        "--images", args.images,
-        "--densify_grad_threshold", str(args.densify_grad_threshold),
-        "--densify_until_iter", str(args.densify_until_iter),
-        "--opacity_reset_interval", str(args.opacity_reset_interval),
-        "--lambda_dssim", str(args.lambda_dssim),
-        "--position_lr_max_steps", str(args.position_lr_max_steps),
-        "--test_iterations", "7000", "30000", str(args.iterations),
-        "--save_iterations", "7000", "30000", str(args.iterations),
-        "--disable_viewer",
-    ]
-
-    if args.depths:
-        train_cmd.extend(["--depths", args.depths])
-    if args.antialiasing:
-        train_cmd.append("--antialiasing")
-
-    success = run_step("Gaussian Splatting 학습", train_cmd)
+    if args.engine == "fastgs":
+        train_cmd = [
+            sys.executable, os.path.join(SCRIPTS_DIR, "train_fastgs.py"),
+            "--source_path", source_path,
+            "--output_path", output_path,
+            "--iterations", str(args.iterations),
+            "--images", args.images,
+            "--grad_abs_thresh", str(args.grad_abs_thresh),
+            "--densification_interval", str(args.densification_interval),
+            "--mult", str(args.mult),
+            "--highfeature_lr", str(args.highfeature_lr),
+            "--save_iterations", str(args.iterations),
+        ]
+        if args.antialiasing:
+            train_cmd.append("--antialiasing")
+        # FastGS 는 depth regularization 미지원
+        success = run_step("FastGS 학습 (CVPR 2026)", train_cmd)
+    else:
+        train_cmd = [
+            sys.executable, os.path.join(SCRIPTS_DIR, "train_gaussian.py"),
+            "--source_path", source_path,
+            "--output_path", output_path,
+            "--iterations", str(args.iterations),
+            "--images", args.images,
+            "--densify_grad_threshold", str(args.densify_grad_threshold),
+            "--densify_until_iter", str(args.densify_until_iter),
+            "--opacity_reset_interval", str(args.opacity_reset_interval),
+            "--lambda_dssim", str(args.lambda_dssim),
+            "--position_lr_max_steps", str(args.position_lr_max_steps),
+            "--test_iterations", "7000", "30000", str(args.iterations),
+            "--save_iterations", "7000", "30000", str(args.iterations),
+            "--disable_viewer",
+        ]
+        if args.depths:
+            train_cmd.extend(["--depths", args.depths])
+        if args.antialiasing:
+            train_cmd.append("--antialiasing")
+        success = run_step("Vanilla Gaussian Splatting 학습", train_cmd)
     if not success:
         logger.error("Gaussian Splatting 학습 실패!")
         sys.exit(1)

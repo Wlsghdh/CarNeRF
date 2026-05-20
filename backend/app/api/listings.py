@@ -19,9 +19,11 @@ def list_listings(
     price_max: Optional[int] = None,
     year_min: Optional[int] = None,
     year_max: Optional[int] = None,
+    search: Optional[str] = Query(None),
     sort: Optional[str] = Query("newest", pattern="^(newest|price_asc|price_desc|mileage|region_match)$"),
     page: int = Query(1, ge=1),
     size: int = Query(12, ge=1, le=50),
+    has_3d: Optional[bool] = None,
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
 ):
@@ -31,6 +33,21 @@ def list_listings(
         q = q.join(Vehicle).filter(Vehicle.brand == brand)
     else:
         q = q.join(Vehicle)
+
+    # 키워드 검색
+    if search:
+        search_term = f"%{search}%"
+        q = q.filter(
+            (Listing.title.ilike(search_term)) |
+            (Listing.description.ilike(search_term)) |
+            (Vehicle.brand.ilike(search_term)) |
+            (Vehicle.model.ilike(search_term)) |
+            (Vehicle.trim.ilike(search_term))
+        )
+
+    # 3D 모델 유무 필터
+    if has_3d is True:
+        q = q.filter(Vehicle.model_3d_status == "ready")
 
     if region:
         q = q.filter(Vehicle.region == region)
@@ -73,6 +90,9 @@ def count_listings(
     price_max: Optional[int] = None,
     year_min: Optional[int] = None,
     year_max: Optional[int] = None,
+    search: Optional[str] = None,
+    has_3d: Optional[bool] = None,
+    page_size: int = Query(12, ge=1, le=50),
     db: Session = Depends(get_db),
 ):
     q = db.query(Listing).filter(Listing.status == "active").join(Vehicle)
@@ -88,7 +108,19 @@ def count_listings(
         q = q.filter(Vehicle.year >= year_min)
     if year_max is not None:
         q = q.filter(Vehicle.year <= year_max)
-    return {"count": q.count()}
+    if search:
+        term = f"%{search}%"
+        q = q.filter(
+            (Listing.title.ilike(term)) |
+            (Vehicle.brand.ilike(term)) |
+            (Vehicle.model.ilike(term))
+        )
+    if has_3d is True:
+        q = q.filter(Vehicle.model_3d_status == "ready")
+
+    total = q.count()
+    total_pages = (total + page_size - 1) // page_size
+    return {"count": total, "total_pages": total_pages}
 
 
 @router.get("/{listing_id}", response_model=ListingOut)
@@ -124,10 +156,16 @@ def create_listing(data: ListingCreate, user: User = Depends(require_user), db: 
         vehicle.color = data.color
         vehicle.engine_cc = data.engine_cc
         vehicle.region = data.region
-        if not vehicle.thumbnail_url:
+        # 이미지 URL이 있으면 첫 번째를 썸네일로 설정
+        if data.image_urls and len(data.image_urls) > 0:
+            vehicle.thumbnail_url = data.image_urls[0]
+        elif not vehicle.thumbnail_url:
             vehicle.thumbnail_url = "/static/images/placeholder-car.svg"
         db.flush()
     else:
+        thumbnail = "/static/images/placeholder-car.svg"
+        if data.image_urls and len(data.image_urls) > 0:
+            thumbnail = data.image_urls[0]
         vehicle = Vehicle(
             brand=data.brand,
             model=data.model,
@@ -139,7 +177,7 @@ def create_listing(data: ListingCreate, user: User = Depends(require_user), db: 
             color=data.color,
             engine_cc=data.engine_cc,
             region=data.region,
-            thumbnail_url="/static/images/placeholder-car.svg",
+            thumbnail_url=thumbnail,
         )
         db.add(vehicle)
         db.flush()

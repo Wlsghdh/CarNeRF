@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, Float, Boolean, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, Boolean, Text, DateTime, ForeignKey, Index
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -23,13 +23,20 @@ class User(Base):
     listings = relationship("Listing", back_populates="seller")
     reviews = relationship("UserReview", back_populates="author")
     point_transactions = relationship("PointTransaction", back_populates="user")
+    wishlists = relationship("Wishlist", back_populates="user")
+    login_histories = relationship("LoginHistory", back_populates="user")
 
 
 class Vehicle(Base):
     __tablename__ = "vehicles"
+    __table_args__ = (
+        Index("ix_vehicles_brand_model", "brand", "model"),
+        Index("ix_vehicles_year", "year"),
+        Index("ix_vehicles_region", "region"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
-    brand = Column(String(50), nullable=False)
+    brand = Column(String(50), nullable=False, index=True)
     model = Column(String(100), nullable=False)
     year = Column(Integer, nullable=False)
     trim = Column(String(100), nullable=True)
@@ -48,10 +55,15 @@ class Vehicle(Base):
     diagnosis = relationship("DiagnosisReport", back_populates="vehicle", uselist=False)
     reviews = relationship("UserReview", back_populates="vehicle")
     transaction_histories = relationship("TransactionHistory", back_populates="vehicle")
+    wishlists = relationship("Wishlist", back_populates="vehicle")
 
 
 class Listing(Base):
     __tablename__ = "listings"
+    __table_args__ = (
+        Index("ix_listings_status_price", "status", "price"),
+        Index("ix_listings_status_created", "status", "created_at"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     vehicle_id = Column(Integer, ForeignKey("vehicles.id"), nullable=False)
@@ -60,7 +72,7 @@ class Listing(Base):
     description = Column(Text, nullable=True)
     price = Column(Integer, nullable=False)  # 만원 단위
     is_negotiable = Column(Boolean, default=True)
-    status = Column(String(20), default="active")  # active, reserved, sold
+    status = Column(String(20), default="active", index=True)  # active, reserved, sold
     view_count = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -112,6 +124,36 @@ class UserReview(Base):
 
     vehicle = relationship("Vehicle", back_populates="reviews")
     author = relationship("User", back_populates="reviews")
+
+
+class LoginHistory(Base):
+    __tablename__ = "login_histories"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    ip_address = Column(String(50), nullable=True)
+    user_agent = Column(String(500), nullable=True)
+    device_type = Column(String(30), nullable=True)  # mobile, desktop, tablet
+    location = Column(String(100), nullable=True)
+    success = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="login_histories")
+
+
+class Wishlist(Base):
+    __tablename__ = "wishlists"
+    __table_args__ = (
+        Index("ix_wishlists_user_vehicle", "user_id", "vehicle_id", unique=True),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    vehicle_id = Column(Integer, ForeignKey("vehicles.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="wishlists")
+    vehicle = relationship("Vehicle", back_populates="wishlists")
 
 
 class TransactionHistory(Base):

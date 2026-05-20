@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 MODEL_DIR = os.path.join(os.path.dirname(BASE_DIR), "backend", "app", "ml_models")
 DEFECT_MODEL_PATH = os.path.join(MODEL_DIR, "defect_detector.pt")
 DEFECT_META_PATH = os.path.join(MODEL_DIR, "defect_meta.pkl")
+DEFECT_META_JSON_PATH = os.path.join(MODEL_DIR, "defect_meta.json")
 
 # ── 모델 로드 (서버 시작 시 1회) ──
 _defect_model = None
@@ -68,10 +69,14 @@ def _load_defect_model():
         _defect_model = YOLO(DEFECT_MODEL_PATH)
         logger.info(f"[결함탐지] YOLOv8 모델 로드 성공: {DEFECT_MODEL_PATH}")
 
-        if os.path.exists(DEFECT_META_PATH):
+        # Try JSON meta first (new format), then pkl (old format)
+        if os.path.exists(DEFECT_META_JSON_PATH):
+            _defect_meta = json.load(open(DEFECT_META_JSON_PATH))
+            logger.info(f"[결함탐지] 메타 로드 (JSON): classes={_defect_meta.get('classes', [])}")
+        elif os.path.exists(DEFECT_META_PATH):
             import joblib
             _defect_meta = joblib.load(DEFECT_META_PATH)
-            logger.info(f"[결함탐지] 메타 로드: classes={_defect_meta.get('classes', [])}")
+            logger.info(f"[결함탐지] 메타 로드 (PKL): classes={_defect_meta.get('classes', [])}")
 
         return True
     except Exception as e:
@@ -86,6 +91,7 @@ def _detect_from_image(image_path: str, conf_threshold: float = 0.3) -> list:
     detections = []
 
     classes = (_defect_meta or {}).get('classes', CLASSES)
+    is_binary = len(classes) == 1 and classes[0] == 'damage'
 
     for r in results:
         if r.boxes is None:
@@ -94,15 +100,27 @@ def _detect_from_image(image_path: str, conf_threshold: float = 0.3) -> list:
             cls_idx = int(box.cls[0])
             conf = float(box.conf[0])
             x1, y1, x2, y2 = box.xyxy[0].tolist()
-            cls_name = classes[cls_idx] if cls_idx < len(classes) else f"class_{cls_idx}"
 
             # bbox 크기로 심각도 판단
             area = (x2 - x1) * (y2 - y1)
             img_area = r.orig_shape[0] * r.orig_shape[1]
             area_ratio = area / img_area if img_area > 0 else 0
-            severity = SEVERITY_MAP.get(cls_name, {}).get(
-                'large' if area_ratio > 0.05 else 'default', '중간'
-            )
+
+            if is_binary:
+                # 이진 모델: bbox 크기와 위치로 damage 유형 추정
+                if area_ratio > 0.15:
+                    cls_name, severity = 'dent', '심각'
+                elif area_ratio > 0.05:
+                    cls_name, severity = 'dent', '중간'
+                elif area_ratio > 0.02:
+                    cls_name, severity = 'scratch', '중간'
+                else:
+                    cls_name, severity = 'scratch', '경미'
+            else:
+                cls_name = classes[cls_idx] if cls_idx < len(classes) else f"class_{cls_idx}"
+                severity = SEVERITY_MAP.get(cls_name, {}).get(
+                    'large' if area_ratio > 0.05 else 'default', '중간'
+                )
 
             detections.append({
                 "type": cls_name,
@@ -197,7 +215,57 @@ DEMO_DEFECTS = {
                 "annotated_image_url": "/static/images/placeholder-car.svg",
             },
         ],
-    }
+    },
+    5: {
+        "vehicle_id": 5,
+        "total_defect_score": 12.0,
+        "severity_level": "경미",
+        "defect_count": 2,
+        "source": "demo",
+        "defects": [
+            {
+                "id": 1, "type": "paint_damage", "type_kr": "도색 손상",
+                "severity": "경미", "confidence": 0.78,
+                "position_3d": [-2.5, -0.3, 0.8], "marker_color": "#10B981",
+                "source_frame": "frame_0025.jpg",
+                "description": "후면 범퍼 하단 미세 도색 벗겨짐 (도색 이력 확인)",
+                "annotated_image_url": "/static/images/placeholder-car.svg",
+            },
+            {
+                "id": 2, "type": "scratch", "type_kr": "스크래치",
+                "severity": "경미", "confidence": 0.61,
+                "position_3d": [1.8, -0.6, -1.5], "marker_color": "#10B981",
+                "source_frame": "frame_0058.jpg",
+                "description": "우측 사이드 미러 주변 미세 스크래치",
+                "annotated_image_url": "/static/images/placeholder-car.svg",
+            },
+        ],
+    },
+    12: {
+        "vehicle_id": 12,
+        "total_defect_score": 18.0,
+        "severity_level": "경미",
+        "defect_count": 2,
+        "source": "demo",
+        "defects": [
+            {
+                "id": 1, "type": "scratch", "type_kr": "스크래치",
+                "severity": "경미", "confidence": 0.69,
+                "position_3d": [1.5, -0.4, 2.0], "marker_color": "#10B981",
+                "source_frame": "frame_0031.jpg",
+                "description": "전면 좌측 휀더 주변 경미한 스크래치",
+                "annotated_image_url": "/static/images/placeholder-car.svg",
+            },
+            {
+                "id": 2, "type": "dent", "type_kr": "덴트",
+                "severity": "경미", "confidence": 0.58,
+                "position_3d": [-1.2, -0.3, -0.5], "marker_color": "#10B981",
+                "source_frame": "frame_0067.jpg",
+                "description": "후면 테일게이트 미세 덴트 (주차장 접촉 흔적)",
+                "annotated_image_url": "/static/images/placeholder-car.svg",
+            },
+        ],
+    },
 }
 
 

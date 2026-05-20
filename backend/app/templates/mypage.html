@@ -8,7 +8,7 @@
   --surface: #0E1117;
   --sur2:    #161B24;
   --border:  rgba(255,255,255,0.08);
-  --accent:  #0EA5E9;
+  --accent:  #C8A96E;
   --text:    #E2E8F0;
   --muted:   #64748B;
   --muted2:  #94A3B8;
@@ -23,70 +23,327 @@ html:not(.dark) {
   --muted2:  #475569;
 }
 body { background: var(--bg) !important; color: var(--text) !important; }
-.mypage-wrap { max-width: 800px; margin: 0 auto; padding: 100px 24px 60px; }
+
+.mypage-wrap { max-width: 860px; margin: 0 auto; padding: 100px 24px 60px; }
+
+/* Page header */
+.mp-page-header {
+  margin-bottom: 32px;
+  animation: fadeUp 0.5s ease-out;
+}
+.mp-page-header h2 {
+  font-size: 28px; font-weight: 900; color: var(--text);
+  letter-spacing: -0.5px;
+}
+.mp-page-header p {
+  font-size: 14px; color: var(--muted); margin-top: 4px;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Cards */
 .mp-card {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: 16px; padding: 24px; margin-bottom: 20px;
+  border-radius: 20px; padding: 28px; margin-bottom: 20px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  animation: fadeUp 0.5s ease-out both;
 }
-.mp-card h3 { font-size: 17px; font-weight: 800; color: var(--text); margin-bottom: 20px; }
+.mp-card:nth-child(2) { animation-delay: 0.05s; }
+.mp-card:nth-child(3) { animation-delay: 0.1s; }
+.mp-card:nth-child(4) { animation-delay: 0.15s; }
+.mp-card:hover {
+  border-color: rgba(200,169,110,0.12);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+}
+.mp-card h3 {
+  font-size: 17px; font-weight: 800; color: var(--text); margin-bottom: 20px;
+  display: flex; align-items: center; gap: 10px;
+}
+.mp-card h3 .section-icon {
+  width: 32px; height: 32px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; flex-shrink: 0;
+}
+
+/* Profile hero section */
+.profile-hero {
+  display: flex; align-items: flex-start; gap: 20px;
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.profile-avatar {
+  width: 72px; height: 72px;
+  background: linear-gradient(135deg, #C8A96E, #D4B896);
+  border-radius: 20px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; font-weight: 800; color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 8px 24px rgba(200,169,110,0.2);
+  position: relative;
+}
+.profile-avatar::after {
+  content: '';
+  position: absolute; inset: -3px;
+  border-radius: 22px;
+  border: 2px solid rgba(200,169,110,0.2);
+}
+.profile-info { flex: 1; }
+.profile-name {
+  font-size: 22px; font-weight: 800; color: var(--text);
+  margin-bottom: 2px; letter-spacing: -0.3px;
+}
+.profile-email {
+  font-size: 13px; color: var(--muted); margin-bottom: 10px;
+}
+.profile-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+.profile-edit-trigger {
+  align-self: flex-start; margin-top: 4px;
+  padding: 8px 16px; border-radius: 10px; font-size: 12px; font-weight: 600;
+  background: var(--sur2); border: 1px solid var(--border);
+  color: var(--muted2); cursor: pointer; transition: all 0.2s;
+  white-space: nowrap;
+}
+.profile-edit-trigger:hover {
+  border-color: var(--accent); color: var(--accent);
+}
+
+/* Stats grid */
 .mp-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
 @media (max-width: 640px) { .mp-grid { grid-template-columns: 1fr; } }
 .mp-stat {
   background: var(--sur2); border: 1px solid var(--border);
-  border-radius: 12px; padding: 16px; text-align: center;
+  border-radius: 14px; padding: 20px; text-align: center;
+  transition: all 0.3s;
+  position: relative; overflow: hidden;
 }
-.mp-stat .num { font-size: 28px; font-weight: 900; color: var(--accent); }
-.mp-stat .lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.mp-stat::before {
+  content: '';
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 60%; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0; transition: opacity 0.3s;
+}
+.mp-stat:hover { border-color: rgba(200,169,110,0.2); transform: translateY(-2px); }
+.mp-stat:hover::before { opacity: 1; }
+.mp-stat .num {
+  font-size: 30px; font-weight: 900; color: var(--accent);
+  line-height: 1.1;
+}
+.mp-stat .lbl {
+  font-size: 11px; color: var(--muted); margin-top: 6px;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+/* Buttons */
 .mp-btn {
   padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 600;
-  border: none; cursor: pointer; transition: all 0.2s; width: 100%;
+  border: none; cursor: pointer; transition: all 0.25s; width: 100%;
 }
-.mp-btn-primary { background: var(--accent); color: #fff; }
-.mp-btn-primary:hover { background: #38BEF8; }
+.mp-btn-primary {
+  background: linear-gradient(135deg, #C8A96E, #0284C7); color: #fff;
+  box-shadow: 0 4px 16px rgba(200,169,110,0.2);
+}
+.mp-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(200,169,110,0.3);
+}
 .mp-btn-outline { background: none; border: 1px solid var(--border); color: var(--muted2); }
 .mp-btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Input */
 .mp-input {
-  width: 100%; padding: 10px 14px; border-radius: 8px;
+  width: 100%; padding: 11px 14px; border-radius: 10px;
   background: var(--sur2); border: 1px solid var(--border);
   color: var(--text); font-size: 13px; font-family: inherit;
+  transition: all 0.2s;
 }
-.mp-input:focus { outline: none; border-color: var(--accent); }
+.mp-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(200,169,110,0.1); }
+.mp-input:hover:not(:focus) { border-color: rgba(255,255,255,0.12); }
+
+/* Role badge */
 .role-badge {
   display: inline-flex; align-items: center; gap: 4px;
-  padding: 4px 12px; border-radius: 10px; font-size: 12px; font-weight: 600;
+  padding: 5px 14px; border-radius: 10px; font-size: 12px; font-weight: 600;
 }
-.role-buyer { background: rgba(14,165,233,0.1); color: #0EA5E9; border: 1px solid rgba(14,165,233,0.2); }
-.role-seller { background: rgba(16,185,129,0.1); color: #10B981; border: 1px solid rgba(16,185,129,0.2); }
+.role-buyer { background: rgba(200,169,110,0.08); color: #C8A96E; border: 1px solid rgba(200,169,110,0.15); }
+.role-seller { background: rgba(16,185,129,0.08); color: #10B981; border: 1px solid rgba(16,185,129,0.15); }
+
+/* Transaction items */
 .tx-item {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+  padding: 14px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+  transition: background 0.2s;
 }
 .tx-item:last-child { border-bottom: none; }
+.tx-item:hover {
+  background: rgba(200,169,110,0.02);
+  margin: 0 -16px; padding: 14px 16px;
+  border-radius: 10px;
+}
+
+/* Points charge quick buttons */
+.charge-btn-grid {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
+}
+.charge-quick-btn {
+  padding: 10px 20px; border-radius: 10px; font-size: 13px; font-weight: 600;
+  background: var(--sur2); border: 1px solid var(--border);
+  color: var(--muted2); cursor: pointer; transition: all 0.2s;
+}
+.charge-quick-btn:hover {
+  border-color: var(--accent); color: var(--accent);
+  background: rgba(200,169,110,0.04);
+}
+.charge-quick-btn.active {
+  border-color: var(--accent); color: var(--accent);
+  background: rgba(200,169,110,0.08);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* AI Service cards */
+.ai-service-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+@media (max-width: 560px) { .ai-service-grid { grid-template-columns: 1fr; } }
+.ai-service-card {
+  background: var(--sur2); border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px;
+  transition: all 0.3s; position: relative; overflow: hidden;
+}
+.ai-service-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--accent), #D4B896);
+  opacity: 0; transition: opacity 0.3s;
+}
+.ai-service-card:hover {
+  border-color: rgba(200,169,110,0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+.ai-service-card:hover::before { opacity: 1; }
+.ai-service-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.ai-service-price { font-size: 22px; font-weight: 900; color: var(--accent); }
+.ai-service-desc { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+
+/* Wishlist card hover */
+.wishlist-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 0; border-bottom: 1px solid var(--border);
+  transition: all 0.2s;
+}
+.wishlist-item:last-child { border-bottom: none; }
+.wishlist-item:hover {
+  background: rgba(200,169,110,0.02);
+  margin: 0 -16px; padding: 14px 16px;
+  border-radius: 12px;
+}
+.wishlist-thumb {
+  width: 56px; height: 42px; background: var(--sur2);
+  border-radius: 10px; overflow: hidden; flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+.wishlist-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Login history */
+.login-hist-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 0; border-bottom: 1px solid var(--border);
+  font-size: 13px; transition: all 0.2s;
+}
+.login-hist-item:last-child { border-bottom: none; }
+.login-hist-item:hover {
+  background: rgba(200,169,110,0.02);
+  margin: 0 -16px; padding: 14px 16px;
+  border-radius: 10px;
+}
+
+/* Listing item */
+.listing-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 0; border-bottom: 1px solid var(--border);
+  transition: all 0.2s;
+}
+.listing-item:last-child { border-bottom: none; }
+.listing-item:hover {
+  background: rgba(200,169,110,0.02);
+  margin: 0 -16px; padding: 14px 16px;
+  border-radius: 12px;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center; padding: 32px 16px;
+}
+.empty-state .empty-icon {
+  width: 48px; height: 48px; margin: 0 auto 12px;
+  background: var(--sur2); border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+.empty-state p {
+  font-size: 13px; color: var(--muted);
+}
+.empty-state a {
+  color: var(--accent); text-decoration: none; font-weight: 600;
+}
+.empty-state a:hover { text-decoration: underline; }
+
+/* Status badge */
+.status-select {
+  font-size: 10px; padding: 3px 8px; border-radius: 8px;
+  font-weight: 600; cursor: pointer;
+  background: var(--sur2); border: 1px solid var(--border);
+  color: var(--text);
+  transition: all 0.2s;
+}
+.status-select:hover { border-color: var(--accent); }
+.delete-btn {
+  font-size: 10px; padding: 3px 10px; border-radius: 8px;
+  background: rgba(239,68,68,0.06); color: #EF4444;
+  border: 1px solid rgba(239,68,68,0.15); cursor: pointer;
+  font-weight: 600; transition: all 0.2s;
+}
+.delete-btn:hover { background: rgba(239,68,68,0.12); }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="mypage-wrap">
-  <h2 style="font-size:24px;font-weight:900;margin-bottom:24px;">마이페이지</h2>
+  <div class="mp-page-header">
+    <h2>마이페이지</h2>
+    <p>계정 관리 및 활동 내역을 확인하세요</p>
+  </div>
 
   <!-- 사용자 정보 -->
   <div class="mp-card">
-    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
-      <div style="width:56px;height:56px;background:linear-gradient(135deg,#0EA5E9,#6366F1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;flex-shrink:0;">
+    <div class="profile-hero">
+      <div class="profile-avatar">
         {{ user.username[0] }}
       </div>
-      <div>
-        <div style="font-size:18px;font-weight:700;color:var(--text);">{{ user.username }}</div>
-        <div style="font-size:13px;color:var(--muted);margin-top:2px;">{{ user.email }}</div>
-        <div style="margin-top:6px;">
+      <div class="profile-info">
+        <div class="profile-name">{{ user.username }}</div>
+        <div class="profile-email">{{ user.email }}</div>
+        <div class="profile-badges">
           <span class="role-badge {{ 'role-seller' if user.role == 'seller' else 'role-buyer' }}">
             {{ '인증 판매자' if user.is_verified else ('판매자' if user.role == 'seller' else '구매자') }}
           </span>
           {% if user.region %}
-          <span style="font-size:12px;color:var(--muted);margin-left:6px;">📍 {{ user.region }}</span>
+          <span style="font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:4px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            {{ user.region }}
+          </span>
           {% endif %}
         </div>
       </div>
+      <button onclick="document.getElementById('profile-edit-card').style.display='block'" class="profile-edit-trigger">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:-1px;margin-right:4px;"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        수정
+      </button>
     </div>
 
     <div class="mp-grid">
@@ -105,39 +362,125 @@ body { background: var(--bg) !important; color: var(--text) !important; }
     </div>
   </div>
 
+  <!-- 프로필 편집 -->
+  <div class="mp-card" id="profile-edit-card" style="display:none;">
+    <h3>
+      <span class="section-icon" style="background:rgba(200,169,110,0.08);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C8A96E" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </span>
+      프로필 수정
+    </h3>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div><label style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:0.5px;">닉네임</label>
+        <input type="text" id="edit-username" class="mp-input" value="{{ user.username }}"></div>
+      <div><label style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:0.5px;">전화번호</label>
+        <input type="tel" id="edit-phone" class="mp-input" value="{{ user.phone or '' }}"></div>
+      <div><label style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:0.5px;">지역</label>
+        <select id="edit-region" class="mp-input">
+          <option value="">선택</option>
+          {% for r in ['서울','경기','인천','부산','대구','대전','광주','울산','세종','강원','충북','충남','전북','전남','경북','경남','제주'] %}
+          <option value="{{ r }}" {{ 'selected' if user.region == r }}>{{ r }}</option>
+          {% endfor %}
+        </select></div>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <button onclick="saveProfile()" class="mp-btn mp-btn-primary" style="width:auto;padding:10px 28px;">저장</button>
+        <button onclick="document.getElementById('profile-edit-card').style.display='none'" class="mp-btn mp-btn-outline" style="width:auto;padding:10px 28px;">취소</button>
+      </div>
+      <div id="profile-result" style="font-size:13px;"></div>
+    </div>
+  </div>
+
+  <!-- 내 매물 -->
+  <div class="mp-card">
+    <h3>
+      <span class="section-icon" style="background:rgba(16,185,129,0.08);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+      </span>
+      내 매물
+    </h3>
+    <div id="my-listings">
+      <div class="empty-state">
+        <div class="empty-icon" style="animation: pulse 2s ease infinite;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <p>로딩 중...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 찜 목록 -->
+  <div class="mp-card">
+    <h3>
+      <span class="section-icon" style="background:rgba(239,68,68,0.08);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+      </span>
+      찜 목록
+    </h3>
+    <div id="my-wishlist">
+      <div class="empty-state">
+        <div class="empty-icon" style="animation: pulse 2s ease infinite;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <p>로딩 중...</p>
+      </div>
+    </div>
+  </div>
+
   <!-- 포인트 충전 -->
   <div class="mp-card">
-    <h3>포인트 충전</h3>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">1,000원 = 1,000포인트 (최소 1,000P ~ 최대 1,000,000P)</p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
-      <button onclick="setChargeAmount(1000)" class="mp-btn mp-btn-outline" style="width:auto;padding:8px 16px;font-size:13px;">1,000P</button>
-      <button onclick="setChargeAmount(5000)" class="mp-btn mp-btn-outline" style="width:auto;padding:8px 16px;font-size:13px;">5,000P</button>
-      <button onclick="setChargeAmount(10000)" class="mp-btn mp-btn-outline" style="width:auto;padding:8px 16px;font-size:13px;">10,000P</button>
-      <button onclick="setChargeAmount(50000)" class="mp-btn mp-btn-outline" style="width:auto;padding:8px 16px;font-size:13px;">50,000P</button>
+    <h3>
+      <span class="section-icon" style="background:rgba(200,169,110,0.08);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C8A96E" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      </span>
+      포인트 충전
+    </h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.6;">
+      1,000원 = 1,000포인트 (최소 1,000P ~ 최대 1,000,000P)
+    </p>
+    <div class="charge-btn-grid">
+      <button onclick="setChargeAmount(1000)" class="charge-quick-btn">1,000P</button>
+      <button onclick="setChargeAmount(5000)" class="charge-quick-btn">5,000P</button>
+      <button onclick="setChargeAmount(10000)" class="charge-quick-btn">10,000P</button>
+      <button onclick="setChargeAmount(50000)" class="charge-quick-btn">50,000P</button>
     </div>
     <div style="display:flex;gap:10px;">
-      <input type="number" id="charge-amount" class="mp-input" placeholder="충전할 포인트" min="1000" step="1000">
-      <button onclick="chargePoints()" class="mp-btn mp-btn-primary" style="width:auto;padding:10px 24px;">충전하기</button>
+      <input type="number" id="charge-amount" class="mp-input" placeholder="충전할 포인트" min="1000" step="1000" style="flex:1;">
+      <button onclick="chargePoints()" class="mp-btn mp-btn-primary" style="width:auto;padding:12px 28px;white-space:nowrap;">충전하기</button>
     </div>
-    <div id="charge-result" style="margin-top:10px;font-size:13px;"></div>
+    <div id="charge-result" style="margin-top:12px;font-size:13px;"></div>
   </div>
 
   <!-- 포인트 사용 내역 -->
   <div class="mp-card">
-    <h3>포인트 내역</h3>
+    <h3>
+      <span class="section-icon" style="background:rgba(212,180,120,0.08);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4B896" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </span>
+      포인트 내역
+    </h3>
     <div id="point-history">
-      <p style="font-size:13px;color:var(--muted);text-align:center;">로딩 중...</p>
+      <div class="empty-state">
+        <div class="empty-icon" style="animation: pulse 2s ease infinite;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <p>로딩 중...</p>
+      </div>
     </div>
   </div>
 
   <!-- 판매자 전환 -->
   {% if user.role != 'seller' or not user.is_verified %}
   <div class="mp-card">
-    <h3>판매자 전환 신청</h3>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">
+    <h3>
+      <span class="section-icon" style="background:rgba(245,158,11,0.08);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+      </span>
+      판매자 전환 신청
+    </h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.6;">
       차량을 판매하려면 판매자 인증이 필요합니다. 본인인증과 차량등록증 확인을 진행합니다.
     </p>
-    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px;">
       <input type="text" id="seller-name" class="mp-input" placeholder="실명">
       <input type="tel" id="seller-phone" class="mp-input" placeholder="전화번호 (010-0000-0000)">
       <input type="text" id="seller-reg" class="mp-input" placeholder="차량등록증 번호">
@@ -163,43 +506,76 @@ body { background: var(--bg) !important; color: var(--text) !important; }
       </select>
     </div>
     <button onclick="upgradeSeller()" class="mp-btn mp-btn-primary">판매자 인증 신청</button>
-    <div id="seller-result" style="margin-top:10px;font-size:13px;"></div>
+    <div id="seller-result" style="margin-top:12px;font-size:13px;"></div>
   </div>
   {% endif %}
 
+  <!-- 로그인 기록 -->
+  <div class="mp-card">
+    <h3>
+      <span class="section-icon" style="background:rgba(148,163,184,0.08);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </span>
+      로그인 기록
+    </h3>
+    <div id="login-history">
+      <div class="empty-state">
+        <div class="empty-icon" style="animation: pulse 2s ease infinite;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <p>로딩 중...</p>
+      </div>
+    </div>
+  </div>
+
   <!-- AI 사용 수수료 안내 -->
   <div class="mp-card">
-    <h3>AI 서비스 이용 요금</h3>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div style="background:var(--sur2);border:1px solid var(--border);border-radius:10px;padding:16px;">
-        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">AI 차량 분석</div>
-        <div style="font-size:20px;font-weight:800;color:var(--accent);">500P</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:4px;">장단점 요약, 고질병 분석</div>
+    <h3>
+      <span class="section-icon" style="background:linear-gradient(135deg, rgba(200,169,110,0.1), rgba(212,180,120,0.1));">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C8A96E" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+      </span>
+      AI 서비스 이용 요금
+    </h3>
+    <div class="ai-service-grid">
+      <div class="ai-service-card">
+        <div class="ai-service-name">AI 차량 분석</div>
+        <div class="ai-service-price">500P</div>
+        <div class="ai-service-desc">장단점 요약, 고질병 분석</div>
       </div>
-      <div style="background:var(--sur2);border:1px solid var(--border);border-radius:10px;padding:16px;">
-        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">AI 가격 진단</div>
-        <div style="font-size:20px;font-weight:800;color:var(--accent);">300P</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:4px;">시세 분석, 감가상각 예측</div>
+      <div class="ai-service-card">
+        <div class="ai-service-name">AI 가격 진단</div>
+        <div class="ai-service-price">300P</div>
+        <div class="ai-service-desc">시세 분석, 감가상각 예측</div>
       </div>
-      <div style="background:var(--sur2);border:1px solid var(--border);border-radius:10px;padding:16px;">
-        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">AI 파손 진단</div>
-        <div style="font-size:20px;font-weight:800;color:var(--accent);">1,000P</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:4px;">3D 결함 분석, 수리비 예측</div>
+      <div class="ai-service-card">
+        <div class="ai-service-name">AI 파손 진단</div>
+        <div class="ai-service-price">1,000P</div>
+        <div class="ai-service-desc">3D 결함 분석, 수리비 예측</div>
       </div>
-      <div style="background:var(--sur2);border:1px solid var(--border);border-radius:10px;padding:16px;">
-        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">프리미엄 상단 배치</div>
-        <div style="font-size:20px;font-weight:800;color:var(--accent);">5,000P</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:4px;">7일간 검색결과 최상단 노출</div>
+      <div class="ai-service-card">
+        <div class="ai-service-name">프리미엄 상단 배치</div>
+        <div class="ai-service-price">5,000P</div>
+        <div class="ai-service-desc">7일간 검색결과 최상단 노출</div>
       </div>
     </div>
   </div>
 </div>
+
+<style>
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+</style>
 {% endblock %}
 
 {% block scripts %}
 <script>
 function setChargeAmount(amount) {
   document.getElementById('charge-amount').value = amount;
+  document.querySelectorAll('.charge-quick-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.textContent.replace(/[^0-9]/g, '')) === amount);
+  });
 }
 
 async function chargePoints() {
@@ -231,22 +607,22 @@ async function loadPointHistory() {
     const data = await res.json();
     const el = document.getElementById('point-history');
     if (data.items.length === 0) {
-      el.innerHTML = '<p style="font-size:13px;color:var(--muted);text-align:center;">포인트 내역이 없습니다.</p>';
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><p>포인트 내역이 없습니다.</p></div>';
       return;
     }
     el.innerHTML = data.items.map(t => `
       <div class="tx-item">
         <div>
           <div style="color:var(--text);font-weight:600;">${t.description}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px;">${new Date(t.created_at).toLocaleDateString('ko-KR')}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;">${new Date(t.created_at).toLocaleDateString('ko-KR')}</div>
         </div>
-        <div>
-          <span style="font-weight:700;color:${t.amount > 0 ? '#10B981' : '#EF4444'};">${t.amount > 0 ? '+' : ''}${t.amount.toLocaleString()}P</span>
-          <div style="font-size:11px;color:var(--muted);text-align:right;">${t.balance_after.toLocaleString()}P</div>
+        <div style="text-align:right;">
+          <span style="font-weight:700;font-size:14px;color:${t.amount > 0 ? '#10B981' : '#EF4444'};">${t.amount > 0 ? '+' : ''}${t.amount.toLocaleString()}P</span>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">${t.balance_after.toLocaleString()}P</div>
         </div>
       </div>
     `).join('');
-  } catch { document.getElementById('point-history').innerHTML = '<p style="color:var(--muted);font-size:13px;">내역을 불러올 수 없습니다.</p>'; }
+  } catch { document.getElementById('point-history').innerHTML = '<div class="empty-state"><p>내역을 불러올 수 없습니다.</p></div>'; }
 }
 
 async function upgradeSeller() {
@@ -275,6 +651,146 @@ async function upgradeSeller() {
   } catch { document.getElementById('seller-result').innerHTML = '<span style="color:#EF4444;">인증에 실패했습니다.</span>'; }
 }
 
-document.addEventListener('DOMContentLoaded', loadPointHistory);
+// 프로필 수정
+async function saveProfile() {
+  const data = {
+    username: document.getElementById('edit-username').value,
+    phone: document.getElementById('edit-phone').value,
+    region: document.getElementById('edit-region').value,
+  };
+  try {
+    const res = await fetch('/api/auth/profile', {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data),
+    });
+    const result = await res.json();
+    if (res.ok) {
+      document.getElementById('profile-result').innerHTML = '<span style="color:#10B981;">프로필이 수정되었습니다.</span>';
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      document.getElementById('profile-result').innerHTML = `<span style="color:#EF4444;">${result.detail}</span>`;
+    }
+  } catch { document.getElementById('profile-result').innerHTML = '<span style="color:#EF4444;">수정에 실패했습니다.</span>'; }
+}
+
+// 내 매물 로드
+async function loadMyListings() {
+  try {
+    const res = await fetch('/api/auth/my-listings');
+    const data = await res.json();
+    const el = document.getElementById('my-listings');
+    if (data.listings.length === 0) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg></div><p>등록한 매물이 없습니다. <a href="/sell">매물 등록하기</a></p></div>';
+      return;
+    }
+    const statusLabels = { active: '판매중', reserved: '예약중', sold: '판매완료' };
+    const statusColors = { active: '#10B981', reserved: '#F59E0B', sold: '#64748B' };
+    el.innerHTML = data.listings.map(l => `
+      <div class="listing-item">
+        <div style="width:64px;height:48px;background:var(--sur2);border-radius:10px;overflow:hidden;flex-shrink:0;border:1px solid var(--border);">
+          <img src="${l.thumbnail_url}" alt="${l.brand} ${l.model} ${l.year}년식 매물 이미지" style="width:100%;height:100%;object-fit:cover;" onerror="this.onerror=null;this.src='/static/images/placeholder-car.svg';">
+        </div>
+        <div style="flex:1;min-width:0;">
+          <a href="/vehicles/${l.vehicle_id}" style="font-size:13px;font-weight:600;color:var(--text);text-decoration:none;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.title}</a>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px;">${l.brand} ${l.model} ${l.year}년 · 조회 ${l.view_count}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:15px;font-weight:800;color:var(--accent);">${l.price.toLocaleString()}만원</div>
+          <div style="display:flex;gap:6px;margin-top:6px;justify-content:flex-end;">
+            <select onchange="changeListingStatus(${l.id}, this.value)" class="status-select" style="background:${statusColors[l.status]}10;color:${statusColors[l.status]};border-color:${statusColors[l.status]}30;">
+              <option value="active" ${l.status==='active'?'selected':''}>판매중</option>
+              <option value="reserved" ${l.status==='reserved'?'selected':''}>예약중</option>
+              <option value="sold" ${l.status==='sold'?'selected':''}>판매완료</option>
+            </select>
+            <button onclick="deleteListing(${l.id})" class="delete-btn">삭제</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } catch { document.getElementById('my-listings').innerHTML = '<div class="empty-state"><p>매물을 불러올 수 없습니다.</p></div>'; }
+}
+
+async function changeListingStatus(listingId, status) {
+  await fetch(`/api/auth/listings/${listingId}/status?status=${status}`, { method: 'PUT' });
+  loadMyListings();
+}
+
+async function deleteListing(listingId) {
+  if (!confirm('정말 이 매물을 삭제하시겠습니까?')) return;
+  await fetch(`/api/auth/listings/${listingId}`, { method: 'DELETE' });
+  loadMyListings();
+}
+
+// 찜 목록 로드
+async function loadMyWishlist() {
+  try {
+    const res = await fetch('/api/wishlist/');
+    const data = await res.json();
+    const el = document.getElementById('my-wishlist');
+    if (data.items.length === 0) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div><p>찜한 차량이 없습니다. <a href="/listings">매물 둘러보기</a></p></div>';
+      return;
+    }
+    el.innerHTML = data.items.map(w => `
+      <div class="wishlist-item">
+        <div class="wishlist-thumb">
+          <img src="${w.thumbnail_url || '/static/images/placeholder-car.svg'}" alt="${w.brand} ${w.model} ${w.year}년식 찜한 차량" onerror="this.onerror=null;this.src='/static/images/placeholder-car.svg';">
+        </div>
+        <div style="flex:1;min-width:0;">
+          <a href="/vehicles/${w.vehicle_id}" style="font-size:13px;font-weight:600;color:var(--text);text-decoration:none;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${w.title}</a>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;">${w.brand} ${w.model} ${w.year}년</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;display:flex;align-items:center;gap:8px;">
+          ${w.price ? `<div style="font-size:14px;font-weight:800;color:var(--accent);">${w.price.toLocaleString()}만원</div>` : ''}
+          ${w.model_3d_status === 'ready' ? '<span style="font-size:9px;background:linear-gradient(135deg,#C8A96E,#D4B896);color:#fff;padding:2px 8px;border-radius:6px;font-weight:700;">3D</span>' : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch { document.getElementById('my-wishlist').innerHTML = '<div class="empty-state"><p>찜 목록을 불러올 수 없습니다.</p></div>'; }
+}
+
+// 로그인 기록 로드
+async function loadLoginHistory() {
+  try {
+    const res = await fetch('/api/auth/login-history');
+    const data = await res.json();
+    const el = document.getElementById('login-history');
+    if (data.histories.length === 0) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><p>로그인 기록이 없습니다.</p></div>';
+      return;
+    }
+    const deviceIcons = { mobile: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>', desktop: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>', tablet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>' };
+    el.innerHTML = data.histories.slice(0, 10).map(h => {
+      const date = new Date(h.created_at);
+      const dateStr = date.toLocaleDateString('ko-KR') + ' ' + date.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'});
+      const icon = deviceIcons[h.device_type] || deviceIcons.desktop;
+      const statusColor = h.success ? '#10B981' : '#EF4444';
+      const statusText = h.success ? '성공' : '실패';
+      return `
+        <div class="login-hist-item">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="color:var(--muted);display:flex;">${icon}</span>
+            <div>
+              <div style="color:var(--text);font-weight:600;font-size:13px;">${h.browser} · ${h.device_type}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:3px;">${dateStr}</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:11px;color:var(--muted);">${h.ip_address || ''}</span>
+            <span style="font-size:10px;padding:3px 10px;border-radius:8px;background:${statusColor}08;color:${statusColor};font-weight:600;border:1px solid ${statusColor}20;">${statusText}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch { document.getElementById('login-history').innerHTML = '<div class="empty-state"><p>로그인 기록을 불러올 수 없습니다.</p></div>'; }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadPointHistory();
+  loadMyListings();
+  loadMyWishlist();
+  loadLoginHistory();
+});
 </script>
 {% endblock %}

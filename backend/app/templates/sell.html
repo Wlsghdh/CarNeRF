@@ -9,7 +9,7 @@
   --surface: #0E1117;
   --sur2:    #161B24;
   --border:  rgba(255,255,255,0.08);
-  --accent:  #0EA5E9;
+  --accent:  #C8A96E;
   --text:    #E2E8F0;
   --muted:   #64748B;
 }
@@ -26,43 +26,122 @@ html:not(.dark) .dk-input option { background: #fff; color: #1E293B; }
 body { background: var(--bg) !important; color: var(--text) !important; }
 
 .sell-wrap {
-  max-width: 720px; margin: 0 auto;
+  max-width: 740px; margin: 0 auto;
   padding: 100px 24px 80px;
 }
-.sell-head { margin-bottom: 32px; }
-.sell-head h1 { font-size: 26px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
-.sell-head p  { font-size: 14px; color: var(--muted); }
+
+/* Page header */
+.sell-head {
+  margin-bottom: 36px;
+  animation: fadeUp 0.5s ease-out;
+}
+.sell-head h1 {
+  font-size: 30px; font-weight: 900; color: var(--text);
+  margin-bottom: 8px; letter-spacing: -0.5px;
+}
+.sell-head p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Step progress bar at top */
+.form-progress {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0; margin-bottom: 36px;
+  animation: fadeUp 0.5s ease-out 0.1s both;
+}
+.fp-step {
+  display: flex; align-items: center; gap: 0;
+}
+.fp-dot {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+  background: var(--sur2);
+  border: 2px solid var(--border);
+  color: var(--muted);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+}
+.fp-dot.active {
+  border-color: var(--accent);
+  background: rgba(200,169,110,0.1);
+  color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(200,169,110,0.08);
+}
+.fp-dot.completed {
+  border-color: #10B981;
+  background: rgba(16,185,129,0.1);
+  color: #10B981;
+}
+.fp-dot .fp-tooltip {
+  position: absolute; bottom: -24px; left: 50%; transform: translateX(-50%);
+  font-size: 10px; color: var(--muted); white-space: nowrap;
+  font-weight: 500; opacity: 0; transition: opacity 0.2s;
+}
+.fp-dot:hover .fp-tooltip { opacity: 1; }
+.fp-line {
+  width: 32px; height: 2px;
+  background: var(--border);
+  transition: background 0.4s;
+}
+.fp-line.completed { background: #10B981; }
+.fp-line.active { background: var(--accent); }
 
 /* ── STEP CARD ── */
 .step-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 28px;
+  border-radius: 20px;
+  padding: 32px;
   margin-bottom: 16px;
-  transition: border-color 0.2s;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: fadeUp 0.5s ease-out both;
+  position: relative;
+  overflow: hidden;
 }
-.step-card:focus-within { border-color: rgba(14,165,233,0.3); }
+.step-card:nth-child(1) { animation-delay: 0.1s; }
+.step-card:nth-child(2) { animation-delay: 0.15s; }
+.step-card:nth-child(3) { animation-delay: 0.2s; }
+.step-card:nth-child(4) { animation-delay: 0.25s; }
+.step-card:nth-child(5) { animation-delay: 0.3s; }
+
+.step-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--accent), #D4B896);
+  opacity: 0; transition: opacity 0.3s;
+}
+.step-card:focus-within {
+  border-color: rgba(200,169,110,0.2);
+  box-shadow: 0 4px 32px rgba(0,0,0,0.15), 0 0 0 1px rgba(200,169,110,0.05);
+}
+.step-card:focus-within::before { opacity: 1; }
 
 .step-header {
-  display: flex; align-items: center; gap: 10px;
-  margin-bottom: 22px;
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 24px;
 }
 .step-num {
-  width: 26px; height: 26px;
-  background: var(--accent);
-  border-radius: 50%;
+  width: 30px; height: 30px;
+  background: linear-gradient(135deg, #C8A96E, #0284C7);
+  border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 800; color: #fff;
+  font-size: 13px; font-weight: 800; color: #fff;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(200,169,110,0.2);
 }
-.step-title { font-size: 15px; font-weight: 700; color: var(--text); }
+.step-title { font-size: 16px; font-weight: 800; color: var(--text); }
 .step-badge {
   font-size: 10px; font-weight: 600;
-  background: rgba(14,165,233,0.12);
+  background: rgba(200,169,110,0.08);
   color: var(--accent);
-  border: 1px solid rgba(14,165,233,0.2);
-  padding: 2px 8px; border-radius: 20px;
+  border: 1px solid rgba(200,169,110,0.15);
+  padding: 3px 10px; border-radius: 20px;
   margin-left: 4px;
 }
 
@@ -70,37 +149,47 @@ body { background: var(--bg) !important; color: var(--text) !important; }
 .field-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: 16px;
 }
 @media (max-width: 560px) { .field-grid { grid-template-columns: 1fr; } }
 
-.field { display: flex; flex-direction: column; gap: 6px; }
+.field { display: flex; flex-direction: column; gap: 7px; }
 .field label {
   font-size: 11px; font-weight: 600;
   color: var(--muted);
   text-transform: uppercase; letter-spacing: 0.8px;
+  transition: color 0.2s;
 }
+.field:focus-within label { color: var(--accent); }
 .field label .req { color: #EF4444; margin-left: 2px; }
 
 .dk-input {
   background: var(--sur2);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
+  border-radius: 10px;
+  padding: 11px 14px;
   font-size: 13px;
   color: var(--text);
   outline: none;
   width: 100%;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   appearance: none;
   font-family: inherit;
 }
-.dk-input::placeholder { color: var(--muted); }
+.dk-input::placeholder { color: var(--muted); opacity: 0.6; }
 .dk-input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(14,165,233,0.1);
+  box-shadow: 0 0 0 3px rgba(200,169,110,0.1), 0 0 16px rgba(200,169,110,0.04);
+  background: rgba(200,169,110,0.02);
 }
+.dk-input:hover:not(:focus) { border-color: rgba(255,255,255,0.12); }
 .dk-input option { background: #1a1f2e; color: var(--text); }
+.dk-input:invalid:not(:placeholder-shown):not(:focus) {
+  border-color: rgba(239,68,68,0.3);
+}
+.dk-input:valid:not(:placeholder-shown) {
+  border-color: rgba(16,185,129,0.2);
+}
 
 textarea.dk-input { resize: none; line-height: 1.6; }
 
@@ -110,9 +199,10 @@ textarea.dk-input { resize: none; line-height: 1.6; }
   padding: 14px 0;
 }
 .check-row input[type=checkbox] {
-  width: 16px; height: 16px;
+  width: 18px; height: 18px;
   accent-color: var(--accent);
   cursor: pointer;
+  border-radius: 4px;
 }
 .check-row label { font-size: 13px; color: var(--muted2, #94A3B8); cursor: pointer; }
 
@@ -120,110 +210,285 @@ textarea.dk-input { resize: none; line-height: 1.6; }
 .upload-zone {
   background: var(--sur2);
   border: 2px dashed var(--border);
-  border-radius: 12px;
-  padding: 32px;
+  border-radius: 16px;
+  padding: 40px 32px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+.upload-zone::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at center, rgba(200,169,110,0.04) 0%, transparent 70%);
+  opacity: 0; transition: opacity 0.3s;
 }
 .upload-zone:hover {
-  border-color: rgba(14,165,233,0.4);
-  background: rgba(14,165,233,0.04);
+  border-color: rgba(200,169,110,0.4);
+  background: rgba(200,169,110,0.03);
+  transform: translateY(-2px);
 }
-.upload-zone svg { color: var(--muted); margin-bottom: 10px; }
-.upload-zone p { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
-.upload-zone span { font-size: 12px; color: var(--muted); }
+.upload-zone:hover::before { opacity: 1; }
+.upload-zone.dragover {
+  border-color: var(--accent);
+  background: rgba(200,169,110,0.06);
+  box-shadow: 0 0 0 4px rgba(200,169,110,0.08), 0 8px 32px rgba(200,169,110,0.1);
+  transform: translateY(-3px) scale(1.01);
+}
+.upload-zone svg { color: var(--muted); margin-bottom: 12px; transition: color 0.3s; }
+.upload-zone:hover svg { color: var(--accent); }
+.upload-zone p { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 6px; position: relative; }
+.upload-zone span { font-size: 12px; color: var(--muted); position: relative; }
+.upload-zone .drag-hint {
+  display: block; margin-top: 10px; font-size: 11px;
+  color: var(--accent); font-weight: 500; opacity: 0.7;
+}
 
-.img-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 12px; }
-.img-thumb { aspect-ratio: 1; border-radius: 8px; overflow: hidden; background: var(--sur2); border: 1px solid var(--border); }
+.img-grid {
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 14px;
+}
+.img-thumb {
+  aspect-ratio: 1; border-radius: 12px; overflow: hidden;
+  background: var(--sur2); border: 1px solid var(--border);
+  transition: all 0.2s; position: relative;
+}
+.img-thumb:hover { border-color: rgba(200,169,110,0.3); transform: scale(1.03); }
 .img-thumb img { width:100%;height:100%;object-fit:cover; }
 
 /* ── 3D SCAN ── */
 .scan-upload {
   background: var(--sur2);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 28px;
+  border-radius: 16px;
+  padding: 32px;
   text-align: center;
+  transition: all 0.3s;
 }
-.scan-upload p { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
-.scan-upload small { font-size: 12px; color: var(--muted); display: block; margin-bottom: 16px; }
+.scan-upload:hover { border-color: rgba(200,169,110,0.15); }
+.scan-upload p { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.scan-upload small { font-size: 12px; color: var(--muted); display: block; margin-bottom: 18px; line-height: 1.7; }
 .btn-scan-upload {
   display: inline-flex; align-items: center; gap: 8px;
-  background: rgba(14,165,233,0.1);
-  border: 1px solid rgba(14,165,233,0.3);
+  background: rgba(200,169,110,0.08);
+  border: 1px solid rgba(200,169,110,0.2);
   color: var(--accent);
-  padding: 10px 22px;
-  border-radius: 8px;
+  padding: 11px 24px;
+  border-radius: 10px;
   font-size: 13px; font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.25s;
 }
-.btn-scan-upload:hover { background: rgba(14,165,233,0.18); }
+.btn-scan-upload:hover {
+  background: rgba(200,169,110,0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(200,169,110,0.15);
+}
+
+/* 품질 선택 */
+.quality-selector {
+  display: flex; gap: 10px; margin: 18px 0; justify-content: center;
+}
+.quality-opt {
+  flex: 1; max-width: 170px;
+  background: var(--sur2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 12px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative; overflow: hidden;
+}
+.quality-opt::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--accent);
+  opacity: 0; transition: opacity 0.3s;
+}
+.quality-opt:hover { border-color: rgba(200,169,110,0.25); transform: translateY(-1px); }
+.quality-opt.selected {
+  border-color: var(--accent);
+  background: rgba(200,169,110,0.04);
+  box-shadow: 0 0 0 1px var(--accent), 0 4px 16px rgba(200,169,110,0.1);
+}
+.quality-opt.selected::before { opacity: 1; }
+.quality-opt .q-name { font-size: 14px; font-weight: 800; color: var(--text); }
+.quality-opt .q-desc { font-size: 10px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
+.quality-opt .q-time { font-size: 11px; color: var(--accent); margin-top: 6px; font-weight: 700; }
 
 .scan-progress {
   display: none;
-  margin-top: 16px;
-  background: rgba(14,165,233,0.06);
-  border: 1px solid rgba(14,165,233,0.15);
-  border-radius: 10px;
-  padding: 20px;
+  margin-top: 20px;
+  background: rgba(200,169,110,0.04);
+  border: 1px solid rgba(200,169,110,0.1);
+  border-radius: 16px;
+  padding: 28px;
 }
-.progress-bar-bg {
-  width: 100%; height: 4px;
+
+/* 스텝 인디케이터 */
+.step-indicator {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0; margin-bottom: 24px;
+}
+.step-dot {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
   background: var(--sur2);
-  border-radius: 4px; overflow: hidden;
-  margin: 10px 0 6px;
+  border: 2px solid var(--border);
+  color: var(--muted);
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+.step-dot.active {
+  border-color: var(--accent);
+  background: rgba(200,169,110,0.12);
+  color: var(--accent);
+  animation: stepPulse 1.5s ease infinite;
+}
+.step-dot.done {
+  border-color: #10B981;
+  background: rgba(16,185,129,0.12);
+  color: #10B981;
+}
+.step-dot.failed {
+  border-color: #EF4444;
+  background: rgba(239,68,68,0.12);
+  color: #EF4444;
+}
+.step-line {
+  width: 22px; height: 2px;
+  background: var(--border);
+  transition: background 0.3s;
+}
+.step-line.done { background: #10B981; }
+.step-line.active { background: var(--accent); }
+
+@keyframes stepPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(200,169,110,0.3); }
+  50% { box-shadow: 0 0 0 6px rgba(200,169,110,0); }
+}
+
+.progress-bar-bg {
+  width: 100%; height: 6px;
+  background: var(--sur2);
+  border-radius: 6px; overflow: hidden;
+  margin: 14px 0 8px;
 }
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent), #6366F1);
-  border-radius: 4px;
+  background: linear-gradient(90deg, var(--accent), #D4B896);
+  border-radius: 6px;
   transition: width 0.5s ease;
   width: 0%;
+  position: relative;
 }
+.progress-bar-fill::after {
+  content: '';
+  position: absolute; top: 0; right: 0; bottom: 0; width: 40px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  animation: shimmer 1.5s ease infinite;
+}
+@keyframes shimmer {
+  0% { transform: translateX(-40px); }
+  100% { transform: translateX(40px); }
+}
+
+.scan-info-row {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: var(--muted);
+  margin-top: 4px;
+}
+.scan-detail-box {
+  margin-top: 16px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+.scan-detail-box .detail-row {
+  display: flex; justify-content: space-between;
+  font-size: 12px; padding: 5px 0;
+}
+.scan-detail-box .detail-row .dk { color: var(--muted); }
+.scan-detail-box .detail-row .dv { color: var(--text); font-weight: 600; }
+
 .scan-done {
   display: none;
-  margin-top: 16px;
-  background: rgba(16,185,129,0.07);
-  border: 1px solid rgba(16,185,129,0.2);
-  border-radius: 10px;
-  padding: 16px;
+  margin-top: 20px;
+  background: rgba(16,185,129,0.05);
+  border: 1px solid rgba(16,185,129,0.15);
+  border-radius: 16px;
+  padding: 28px;
   text-align: center;
 }
-.scan-done p { color: #10B981; font-weight: 600; font-size: 14px; margin-bottom: 6px; }
-.scan-done a { color: var(--accent); font-size: 13px; text-decoration: none; }
+.scan-done p { color: #10B981; font-weight: 800; font-size: 17px; margin-bottom: 8px; }
+.scan-done .done-sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+.scan-done a {
+  display: inline-flex; align-items: center; gap: 8px;
+  color: #fff; background: linear-gradient(135deg, #C8A96E, #0284C7);
+  padding: 12px 24px; border-radius: 12px;
+  font-size: 13px; font-weight: 700;
+  text-decoration: none; transition: all 0.25s;
+  box-shadow: 0 4px 16px rgba(200,169,110,0.2);
+}
+.scan-done a:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(200,169,110,0.3);
+}
 
 /* ── SUBMIT ── */
 .btn-submit {
   width: 100%;
-  background: var(--accent);
+  background: linear-gradient(135deg, #C8A96E, #0284C7);
   color: #fff;
   border: none;
-  border-radius: 12px;
-  padding: 16px;
-  font-size: 16px; font-weight: 700;
+  border-radius: 14px;
+  padding: 17px;
+  font-size: 16px; font-weight: 800;
   cursor: pointer;
-  transition: all 0.25s;
-  box-shadow: 0 0 30px rgba(14,165,233,0.25);
-  margin-top: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 28px rgba(200,169,110,0.25);
+  margin-top: 12px;
+  position: relative; overflow: hidden;
+  letter-spacing: 0.3px;
+}
+.btn-submit::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.08) 50%, transparent 60%);
+  transform: translateX(-100%);
+  transition: transform 0.6s;
 }
 .btn-submit:hover {
-  background: #38BEF8;
   transform: translateY(-2px);
-  box-shadow: 0 0 40px rgba(14,165,233,0.4);
+  box-shadow: 0 8px 40px rgba(200,169,110,0.35);
 }
+.btn-submit:hover::after { transform: translateX(100%); }
+.btn-submit:active { transform: translateY(0); }
 
 .form-msg {
   display: none;
   text-align: center;
   padding: 16px;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 14px;
-  margin-top: 12px;
+  margin-top: 14px;
+  animation: fadeUp 0.3s ease-out;
 }
-.form-msg.success { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); color: #10B981; }
-.form-msg.error   { background: rgba(239,68,68,0.08);  border: 1px solid rgba(239,68,68,0.2);  color: #EF4444; }
+.form-msg.success { background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.15); color: #10B981; }
+.form-msg.error   { background: rgba(239,68,68,0.06);  border: 1px solid rgba(239,68,68,0.15);  color: #EF4444; }
+
+/* File count badge */
+.file-count-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 8px;
+  background: rgba(200,169,110,0.06); border: 1px solid rgba(200,169,110,0.12);
+  font-size: 12px; font-weight: 600; color: var(--accent);
+  margin-bottom: 12px;
+}
 </style>
 {% endblock %}
 
@@ -234,10 +499,33 @@ textarea.dk-input { resize: none; line-height: 1.6; }
     <p>차량 정보를 입력하고 3D 스캔으로 신뢰도를 높이세요</p>
   </div>
 
+  <!-- Step progress indicator -->
+  <div class="form-progress">
+    <div class="fp-step">
+      <div class="fp-dot active" data-step="1" onclick="scrollToStep(1)">1<span class="fp-tooltip">기본 정보</span></div>
+      <div class="fp-line" data-after="1"></div>
+    </div>
+    <div class="fp-step">
+      <div class="fp-dot" data-step="2" onclick="scrollToStep(2)">2<span class="fp-tooltip">가격</span></div>
+      <div class="fp-line" data-after="2"></div>
+    </div>
+    <div class="fp-step">
+      <div class="fp-dot" data-step="3" onclick="scrollToStep(3)">3<span class="fp-tooltip">사진</span></div>
+      <div class="fp-line" data-after="3"></div>
+    </div>
+    <div class="fp-step">
+      <div class="fp-dot" data-step="4" onclick="scrollToStep(4)">4<span class="fp-tooltip">설명</span></div>
+      <div class="fp-line" data-after="4"></div>
+    </div>
+    <div class="fp-step">
+      <div class="fp-dot" data-step="5" onclick="scrollToStep(5)">5<span class="fp-tooltip">3D 스캔</span></div>
+    </div>
+  </div>
+
   <form id="sell-form">
 
     <!-- 1. 기본 정보 -->
-    <div class="step-card">
+    <div class="step-card" data-form-step="1">
       <div class="step-header">
         <div class="step-num">1</div>
         <div class="step-title">기본 정보</div>
@@ -298,14 +586,30 @@ textarea.dk-input { resize: none; line-height: 1.6; }
     </div>
 
     <!-- 2. 가격 -->
-    <div class="step-card">
+    <div class="step-card" data-form-step="2">
       <div class="step-header">
         <div class="step-num">2</div>
         <div class="step-title">가격 정보</div>
       </div>
-      <div class="field" style="max-width:280px;">
-        <label>판매 가격 (만원)<span class="req">*</span></label>
-        <input type="number" name="price" required min="0" placeholder="3000" class="dk-input">
+      <!-- AI 시세 조회 -->
+      <div id="ai-price-box" style="margin-bottom:20px;padding:20px;border:1px solid rgba(200,169,110,0.2);border-radius:12px;background:rgba(200,169,110,0.03);display:none;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:#C8A96E;fill:none;stroke-width:2;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+          </svg>
+          <span style="font-size:14px;font-weight:700;color:var(--text, #E2E8F0);">AI 예상 시세</span>
+          <span id="ai-price-type" style="font-size:10px;padding:2px 8px;border-radius:4px;background:rgba(200,169,110,0.15);color:#C8A96E;font-weight:600;"></span>
+        </div>
+        <div id="ai-price-result" style="font-size:13px;color:var(--text-muted, #94A3B8);line-height:1.8;"></div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap;">
+        <div class="field" style="max-width:300px;flex:1;">
+          <label>판매 가격 (만원)<span class="req">*</span></label>
+          <input type="number" name="price" required min="0" placeholder="3000" class="dk-input" id="sell-price-input">
+        </div>
+        <button type="button" onclick="fetchAIPrice()" style="height:42px;padding:0 20px;border:1px solid rgba(200,169,110,0.4);background:rgba(200,169,110,0.08);color:#C8A96E;font-size:12px;font-weight:600;border-radius:8px;cursor:pointer;white-space:nowrap;transition:all 0.2s;" onmouseover="this.style.background='rgba(200,169,110,0.15)'" onmouseout="this.style.background='rgba(200,169,110,0.08)'">
+          AI 시세 조회
+        </button>
       </div>
       <div class="check-row" style="margin-top:12px;">
         <input type="checkbox" name="is_negotiable" id="neg" checked>
@@ -314,29 +618,34 @@ textarea.dk-input { resize: none; line-height: 1.6; }
     </div>
 
     <!-- 3. 사진 -->
-    <div class="step-card">
+    <div class="step-card" data-form-step="3">
       <div class="step-header">
         <div class="step-num">3</div>
         <div class="step-title">사진</div>
       </div>
+      <div id="image-count" class="file-count-badge" style="display:none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14"/><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>
+        <span id="image-count-text">0장 선택됨</span>
+      </div>
       <div id="image-preview" class="img-grid"></div>
-      <label class="upload-zone" for="image-input">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:36px;height:36px;display:block;margin:0 auto 10px;">
+      <label class="upload-zone" for="image-input" id="image-upload-zone">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:40px;height:40px;display:block;margin:0 auto 12px;">
           <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91M6.75 7.5l.75-.75M18 3v4.5m0 0V12m0-4.5h4.5m-4.5 0H13.5"/>
         </svg>
-        <p>사진을 선택하세요</p>
-        <span>최대 10장 · JPG, PNG</span>
+        <p>클릭 또는 드래그하여 사진 업로드</p>
+        <span>최대 10장 -- JPG, PNG</span>
+        <span class="drag-hint">파일을 여기에 끌어다 놓으세요</span>
         <input type="file" id="image-input" accept="image/*" multiple class="hidden" style="display:none;">
       </label>
     </div>
 
     <!-- 4. 설명 -->
-    <div class="step-card">
+    <div class="step-card" data-form-step="4">
       <div class="step-header">
         <div class="step-num">4</div>
         <div class="step-title">상세 설명</div>
       </div>
-      <div class="field" style="margin-bottom:14px;">
+      <div class="field" style="margin-bottom:16px;">
         <label>제목<span class="req">*</span></label>
         <input type="text" name="title" required placeholder="예: 그랜저 르블랑 풀옵 무사고" class="dk-input">
       </div>
@@ -347,13 +656,13 @@ textarea.dk-input { resize: none; line-height: 1.6; }
     </div>
 
     <!-- 5. 3D 스캔 -->
-    <div class="step-card">
+    <div class="step-card" data-form-step="5">
       <div class="step-header">
         <div class="step-num">5</div>
         <div class="step-title">3D 스캔<span class="step-badge">선택</span></div>
       </div>
       <div id="scan-upload-area" class="scan-upload">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="#0EA5E9" style="width:44px;height:44px;display:block;margin:0 auto 12px;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="#C8A96E" style="width:48px;height:48px;display:block;margin:0 auto 14px;">
           <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25"/>
         </svg>
         <p>3D 스캔 영상 업로드</p>
@@ -365,23 +674,79 @@ textarea.dk-input { resize: none; line-height: 1.6; }
           영상 선택
           <input type="file" id="video-input" accept="video/*,.mp4,.mov,.avi,.mkv" style="display:none;">
         </label>
-        <p id="video-filename" style="font-size:12px;color:#64748B;margin-top:10px;display:none;"></p>
+        <p id="video-filename" style="font-size:12px;color:#64748B;margin-top:12px;display:none;"></p>
+      </div>
+
+      <!-- 품질 선택 -->
+      <div id="quality-selector" class="quality-selector">
+        <div class="quality-opt" data-quality="standard" onclick="selectQuality('standard')">
+          <div class="q-name">Standard</div>
+          <div class="q-desc">30K iter</div>
+          <div class="q-time">~20분</div>
+        </div>
+        <div class="quality-opt selected" data-quality="hq" onclick="selectQuality('hq')">
+          <div class="q-name">HQ</div>
+          <div class="q-desc">60K iter + 배경제거</div>
+          <div class="q-time">~60분</div>
+        </div>
+        <div class="quality-opt" data-quality="ultra" onclick="selectQuality('ultra')">
+          <div class="q-name">Ultra</div>
+          <div class="q-desc">80K iter + 전처리</div>
+          <div class="q-time">~120분</div>
+        </div>
       </div>
 
       <div id="scan-progress" class="scan-progress">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-          <div style="width:16px;height:16px;border:2px solid #0EA5E9;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;"></div>
-          <span id="scan-status-text" style="font-size:13px;font-weight:600;color:#0EA5E9;">처리 중...</span>
+        <!-- 스텝 인디케이터 -->
+        <div class="step-indicator" id="step-indicator">
+          <div class="step-dot" data-step="1" title="프레임 추출">1</div>
+          <div class="step-line" data-after="1"></div>
+          <div class="step-dot" data-step="2" title="COLMAP">2</div>
+          <div class="step-line" data-after="2"></div>
+          <div class="step-dot" data-step="3" title="배경 제거">3</div>
+          <div class="step-line" data-after="3"></div>
+          <div class="step-dot" data-step="4" title="Depth">4</div>
+          <div class="step-line" data-after="4"></div>
+          <div class="step-dot" data-step="5" title="학습">5</div>
+          <div class="step-line" data-after="5"></div>
+          <div class="step-dot" data-step="6" title="변환">6</div>
+          <div class="step-line" data-after="6"></div>
+          <div class="step-dot" data-step="7" title="완료">&#10003;</div>
         </div>
+
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+          <div style="width:16px;height:16px;border:2px solid #C8A96E;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;"></div>
+          <span id="scan-status-text" style="font-size:14px;font-weight:700;color:#C8A96E;">처리 중...</span>
+        </div>
+        <p id="scan-message" style="font-size:12px;color:#64748B;margin-bottom:4px;"></p>
         <div class="progress-bar-bg">
           <div id="scan-progress-bar" class="progress-bar-fill"></div>
         </div>
-        <p id="scan-message" style="font-size:12px;color:#64748B;"></p>
+        <div class="scan-info-row">
+          <span id="scan-progress-pct">0%</span>
+          <span id="scan-elapsed">경과: 0분</span>
+          <span id="scan-est-time"></span>
+        </div>
+
+        <!-- 상세 정보 -->
+        <div class="scan-detail-box" id="scan-details">
+          <div class="detail-row"><span class="dk">품질</span><span class="dv" id="detail-quality">HQ</span></div>
+          <div class="detail-row"><span class="dk">프레임 수</span><span class="dv" id="detail-frames">-</span></div>
+          <div class="detail-row"><span class="dk">배경 제거</span><span class="dv" id="detail-bg">대기</span></div>
+          <div class="detail-row"><span class="dk">Depth Map</span><span class="dv" id="detail-depth">대기</span></div>
+          <div class="detail-row"><span class="dk">학습 반복</span><span class="dv" id="detail-iter">-</span></div>
+        </div>
       </div>
 
       <div id="scan-done" class="scan-done">
         <p>3D 모델 생성 완료!</p>
-        <a id="scan-view-link" href="#">3D 모델 보기 →</a>
+        <div class="done-sub" id="scan-done-info">고품질 3D 모델이 성공적으로 생성되었습니다.</div>
+        <a id="scan-view-link" href="#">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25"/>
+          </svg>
+          3D 모델 보기
+        </a>
       </div>
     </div>
 
@@ -397,5 +762,123 @@ textarea.dk-input { resize: none; line-height: 1.6; }
 {% endblock %}
 
 {% block scripts %}
+<script>
+// AI 시세 조회
+async function fetchAIPrice() {
+  const form = document.getElementById('sell-form') || document.querySelector('form');
+  const fd = new FormData(form);
+  const brand = fd.get('brand'), model = fd.get('model'), year = fd.get('year'),
+        mileage = fd.get('mileage'), fuel = fd.get('fuel_type');
+  if (!brand || !model || !year || !mileage || !fuel) {
+    alert('차량 정보(브랜드, 모델, 연식, 주행거리, 연료)를 먼저 입력해주세요.');
+    return;
+  }
+  const box = document.getElementById('ai-price-box');
+  const result = document.getElementById('ai-price-result');
+  box.style.display = 'block';
+  result.innerHTML = '<div style="display:flex;align-items:center;gap:8px;"><div class="spinner" style="width:16px;height:16px;border:2px solid rgba(200,169,110,0.2);border-top-color:#C8A96E;border-radius:50%;animation:spin 0.8s linear infinite;"></div> AI가 시세를 분석 중...</div>';
+  try {
+    const res = await fetch('/api/predict/price', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        brand, model, year: parseInt(year), mileage: parseInt(mileage),
+        fuel_type: fuel, engine_cc: parseInt(fd.get('engine_cc') || 0),
+        region: fd.get('region') || '서울',
+      })
+    });
+    const data = await res.json();
+    document.getElementById('ai-price-type').textContent = data.model_type === 'ml' ? 'ML 모델' : '추정값';
+    const conf = Math.round((data.confidence || 0.8) * 100);
+    result.innerHTML = `
+      <div style="font-size:28px;font-weight:900;color:#C8A96E;margin-bottom:4px;">${data.predicted_price.toLocaleString()}만원</div>
+      <div style="color:var(--text-muted,#94A3B8);">예상 범위: ${data.price_range_low.toLocaleString()} ~ ${data.price_range_high.toLocaleString()}만원</div>
+      <div style="margin-top:8px;font-size:12px;color:var(--text-muted,#64748B);">신뢰도 ${conf}% &middot; 이 가격을 참고하여 판매가를 설정하세요</div>
+      <button type="button" onclick="document.getElementById('sell-price-input').value=${data.predicted_price};this.textContent='적용됨!';this.disabled=true;" style="margin-top:12px;padding:6px 16px;font-size:12px;font-weight:600;border:1px solid rgba(200,169,110,0.3);background:transparent;color:#C8A96E;border-radius:6px;cursor:pointer;transition:all 0.2s;">이 가격으로 설정</button>
+    `;
+  } catch(e) {
+    result.innerHTML = '<span style="color:#EF4444;">시세 조회에 실패했습니다. 다시 시도해주세요.</span>';
+  }
+}
+
+// Drag and drop for image upload
+(function() {
+  const zone = document.getElementById('image-upload-zone');
+  if (!zone) return;
+  ['dragenter', 'dragover'].forEach(evt => {
+    zone.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); zone.classList.add('dragover'); });
+  });
+  ['dragleave', 'drop'].forEach(evt => {
+    zone.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); zone.classList.remove('dragover'); });
+  });
+  zone.addEventListener('drop', (e) => {
+    const input = document.getElementById('image-input');
+    if (e.dataTransfer.files.length) {
+      input.files = e.dataTransfer.files;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  });
+})();
+
+// Image preview count
+const imgInput = document.getElementById('image-input');
+if (imgInput) {
+  imgInput.addEventListener('change', function() {
+    const countEl = document.getElementById('image-count');
+    const countText = document.getElementById('image-count-text');
+    if (this.files.length > 0) {
+      countEl.style.display = 'inline-flex';
+      countText.textContent = this.files.length + '장 선택됨';
+    } else {
+      countEl.style.display = 'none';
+    }
+  });
+}
+
+// Form step progress tracking
+function scrollToStep(n) {
+  const card = document.querySelector(`[data-form-step="${n}"]`);
+  if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// Track which steps have been interacted with
+const stepObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const step = entry.target.getAttribute('data-form-step');
+      if (step) {
+        document.querySelectorAll('.form-progress .fp-dot').forEach(dot => {
+          const dotStep = dot.getAttribute('data-step');
+          if (parseInt(dotStep) < parseInt(step)) {
+            dot.classList.add('completed');
+            dot.classList.remove('active');
+          } else if (dotStep === step) {
+            dot.classList.add('active');
+            dot.classList.remove('completed');
+          } else {
+            dot.classList.remove('active', 'completed');
+          }
+        });
+        document.querySelectorAll('.form-progress .fp-line').forEach(line => {
+          const afterStep = line.getAttribute('data-after');
+          if (parseInt(afterStep) < parseInt(step)) {
+            line.classList.add('completed');
+            line.classList.remove('active');
+          } else if (afterStep === step) {
+            line.classList.add('active');
+            line.classList.remove('completed');
+          } else {
+            line.classList.remove('active', 'completed');
+          }
+        });
+      }
+    }
+  });
+}, { threshold: 0.5 });
+
+document.querySelectorAll('.step-card[data-form-step]').forEach(card => {
+  stepObserver.observe(card);
+});
+</script>
 <script src="/static/js/sell.js"></script>
 {% endblock %}

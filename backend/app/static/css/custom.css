@@ -1,42 +1,370 @@
-/* CarNeRF Custom Styles */
+/* ═══ CarNeRF Design System ═══ */
 
-/* Smooth scrolling */
-html {
-    scroll-behavior: smooth;
+/* ── Base ── */
+html { scroll-behavior: smooth; }
+* { box-sizing: border-box; }
+
+/* ── Animated Gradient Backgrounds ── */
+@keyframes gradient-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-/* Card hover animation */
-.group:hover .group-hover\:scale-105 {
-    transform: scale(1.05);
+.gradient-animate {
+  background: linear-gradient(135deg, #C8A96E, #D4B896, #E8DFC8, #C8A96E);
+  background-size: 300% 300%;
+  animation: gradient-shift 6s ease infinite;
 }
 
-/* Score circle animation */
+.gradient-text {
+  background: linear-gradient(135deg, #C8A96E, #D4B896);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Glassmorphism Cards ── */
+.glass-card {
+  background: rgba(14, 17, 23, 0.6);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+}
+
+html:not(.dark) .glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+/* ── Hover Glow Effect ── */
+.glow-hover {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.glow-hover::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(200,169,110,0), rgba(200,169,110,0.15), rgba(212,180,120,0.15), rgba(200,169,110,0));
+  opacity: 0;
+  transition: opacity 0.4s;
+  z-index: -1;
+}
+.glow-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3), 0 0 30px rgba(200,169,110,0.08);
+}
+.glow-hover:hover::before { opacity: 1; }
+
+/* ── Skeleton Loading ── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--sur2, #161B24) 25%, rgba(255,255,255,0.06) 50%, var(--sur2, #161B24) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+html:not(.dark) .skeleton {
+  background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
+  background-size: 200% 100%;
+}
+
+/* ── Button Animations ── */
+.btn-primary {
+  background: linear-gradient(135deg, #C8A96E, #D4B896);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 28px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(200,169,110,0.35);
+}
+.btn-primary:hover::after { opacity: 1; }
+.btn-primary:active { transform: translateY(0); }
+
+/* ── Ripple Effect ── */
+@keyframes ripple {
+  to { transform: scale(4); opacity: 0; }
+}
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+.ripple::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  width: 100px; height: 100px;
+  margin-top: -50px; margin-left: -50px;
+  top: 50%; left: 50%;
+  transform: scale(0);
+  opacity: 1;
+}
+.ripple:active::after {
+  animation: ripple 0.6s linear;
+}
+
+/* ── Reveal Animation (scroll) ── */
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Floating Particles ── */
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25%      { transform: translateY(-15px) rotate(5deg); }
+  50%      { transform: translateY(-25px) rotate(0deg); }
+  75%      { transform: translateY(-10px) rotate(-5deg); }
+}
+.float-slow  { animation: float 8s ease-in-out infinite; }
+.float-med   { animation: float 5s ease-in-out infinite 1s; }
+.float-fast  { animation: float 3s ease-in-out infinite 0.5s; }
+
+/* ── Pulse Glow (3D badge) ── */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(200,169,110,0.3); }
+  50%      { box-shadow: 0 0 20px rgba(200,169,110,0.6), 0 0 40px rgba(212,180,120,0.2); }
+}
+.badge-3d-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* ── Score Circle Animation ── */
 @keyframes score-fill {
-    from { stroke-dasharray: 0, 100; }
+  from { stroke-dasharray: 0, 100; }
 }
-
 svg circle[stroke-dasharray] {
-    animation: score-fill 1s ease-out;
+  animation: score-fill 1s ease-out;
 }
 
-/* Loading spinner */
-@keyframes spin {
-    to { transform: rotate(360deg); }
+/* ── Count-up Number Animation ── */
+@keyframes count-pop {
+  0%   { transform: scale(0.5); opacity: 0; }
+  60%  { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.count-animate {
+  animation: count-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.animate-spin {
-    animation: spin 1s linear infinite;
+/* ── Loading Spinner ── */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  width: 20px; height: 20px;
+  border: 2px solid rgba(200,169,110,0.2);
+  border-top-color: #C8A96E;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.animate-spin { animation: spin 1s linear infinite; }
+
+/* ── Progress Bar Animation ── */
+@keyframes progress-fill {
+  from { width: 0; }
+}
+.progress-animated {
+  animation: progress-fill 1s ease-out;
 }
 
-/* Form focus states */
+/* ── Tooltip ── */
+.tooltip {
+  position: relative;
+}
+.tooltip::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.9);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  background: #1E293B;
+  color: #E2E8F0;
+  border: 1px solid rgba(255,255,255,0.1);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+}
+.tooltip:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+/* ── Card Image Zoom ── */
+.card-img-zoom {
+  overflow: hidden;
+}
+.card-img-zoom img {
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card-img-zoom:hover img {
+  transform: scale(1.08);
+}
+
+/* ── Navbar Blur ── */
+.nav-blur {
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+}
+
+/* ── Tag/Chip ── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.chip-accent {
+  background: rgba(200,169,110,0.1);
+  color: #C8A96E;
+  border: 1px solid rgba(200,169,110,0.2);
+}
+.chip-accent:hover {
+  background: rgba(200,169,110,0.2);
+}
+.chip-success {
+  background: rgba(16,185,129,0.1);
+  color: #10B981;
+  border: 1px solid rgba(16,185,129,0.2);
+}
+
+/* ── Input Focus Glow ── */
 input:focus, select:focus, textarea:focus {
-    outline: none;
+  outline: none;
+  border-color: #C8A96E !important;
+  box-shadow: 0 0 0 3px rgba(200,169,110,0.1);
 }
 
-/* Viewer container */
+/* ── Smooth Page Transition ── */
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+main {
+  animation: page-in 0.4s ease-out;
+}
+
+/* ── Scroll Progress Bar ── */
+#scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #C8A96E, #fff);
+  z-index: 9999;
+  transition: width 0.1s;
+}
+
+/* ── Viewer ── */
 #viewer-container canvas,
 #viewer-fullscreen canvas {
-    display: block;
-    width: 100% !important;
-    height: 100% !important;
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* ── Mobile Responsive Helpers ── */
+@media (max-width: 640px) {
+  .hide-mobile { display: none !important; }
+  .btn-primary { padding: 10px 20px; font-size: 13px; }
+}
+
+/* ── 3D Card Tilt Effect ── */
+.card-3d-tilt {
+  transition: transform 0.4s cubic-bezier(0.03,0.98,0.52,0.99), box-shadow 0.4s;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.card-3d-tilt:hover {
+  box-shadow: 0 25px 50px rgba(0,0,0,0.4), 0 0 40px rgba(200,169,110,0.08);
+}
+
+/* ── Gradient Border on Hover ── */
+.gradient-border-hover {
+  position: relative;
+}
+.gradient-border-hover::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(200,169,110,0.3), rgba(212,180,120,0.2), rgba(200,169,110,0.3));
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.gradient-border-hover:hover::after { opacity: 1; }
+
+/* ── Image Gradient Overlay ── */
+.img-gradient-overlay {
+  position: relative;
+  overflow: hidden;
+}
+.img-gradient-overlay::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 60%;
+  background: linear-gradient(transparent, rgba(7,9,15,0.8));
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Custom Scrollbar ── */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.2); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,0.35); }
+html:not(.dark) ::-webkit-scrollbar-thumb { background: rgba(100,116,139,0.2); }
+html:not(.dark) ::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,0.35); }
+
+/* ── Selection Color ── */
+::selection { background: rgba(200,169,110,0.3); color: #E2E8F0; }
+html:not(.dark) ::selection { background: rgba(200,169,110,0.2); color: #1E293B; }
+
+/* ── Scroll Reveal JS Hook ── */
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; }
 }

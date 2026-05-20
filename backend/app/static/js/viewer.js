@@ -26,12 +26,31 @@ export function initViewer(containerId, options = {}) {
         backgroundColor = 0x1a1a2e,
     } = options;
 
+    // 로딩 인디케이터 표시
+    const loadingEl = document.createElement('div');
+    loadingEl.id = 'viewer-loading';
+    loadingEl.style.cssText = `
+        position:absolute;inset:0;display:flex;flex-direction:column;
+        align-items:center;justify-content:center;z-index:15;
+        background:rgba(7,9,15,0.9);backdrop-filter:blur(4px);transition:opacity 0.5s;
+    `;
+    loadingEl.innerHTML = `
+        <div style="width:40px;height:40px;border:3px solid rgba(200,169,110,0.2);border-top-color:#C8A96E;border-radius:50%;animation:viewerSpin 0.8s linear infinite;margin-bottom:16px;"></div>
+        <p style="color:#E2E8F0;font-size:14px;font-weight:600;margin:0;">3D 모델 로딩 중...</p>
+        <p style="color:#64748B;font-size:12px;margin:4px 0 0;">잠시만 기다려주세요</p>
+        <style>@keyframes viewerSpin{to{transform:rotate(360deg)}}</style>
+    `;
+    container.style.position = 'relative';
+    container.appendChild(loadingEl);
+
     const viewer = new GaussianSplats3D.Viewer({
         rootElement: container,
         cameraUp: [0, -1, 0],
         initialCameraPosition: [5, -3, 8],
         initialCameraLookAt: [0, 0, 0],
         sharedMemoryForWorkers: false,
+        sphericalHarmonicsDegree: 2,
+        antialiased: true,
     });
     _viewer = viewer;
 
@@ -44,6 +63,9 @@ export function initViewer(containerId, options = {}) {
             });
             viewer.start();
             try { viewer.renderer.setClearColor(backgroundColor); } catch (_) {}
+            // 로딩 완료 - 인디케이터 제거
+            const loading = document.getElementById('viewer-loading');
+            if (loading) { loading.style.opacity = '0'; setTimeout(() => loading.remove(), 500); }
 
             if (autoRotate) {
                 if (viewer.controls && 'autoRotate' in viewer.controls) {
@@ -69,6 +91,7 @@ export function initViewer(containerId, options = {}) {
             }
         } catch (e) {
             console.error('Model load failed:', e);
+            showLoadError(container);
         }
     }
 
@@ -77,6 +100,24 @@ export function initViewer(containerId, options = {}) {
     }
 
     return { loadModelFromURL, getViewer: () => viewer };
+}
+
+function showLoadError(container) {
+    const err = document.createElement('div');
+    err.style.cssText = `
+        position:absolute;inset:0;display:flex;flex-direction:column;
+        align-items:center;justify-content:center;z-index:20;
+        background:rgba(7,9,15,0.85);backdrop-filter:blur(8px);
+    `;
+    err.innerHTML = `
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="1.5" style="margin-bottom:12px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
+        </svg>
+        <p style="color:#E2E8F0;font-size:16px;font-weight:600;margin:0 0 4px;">3D 모델 로딩 실패</p>
+        <p style="color:#94A3B8;font-size:13px;margin:0;">모델 파일을 불러올 수 없습니다. 나중에 다시 시도해주세요.</p>
+    `;
+    container.style.position = 'relative';
+    container.appendChild(err);
 }
 
 
@@ -254,7 +295,7 @@ function showTooltip(defect, event) {
         <p style="font-size:12px;color:#94A3B8;line-height:1.5;margin:0 0 6px 0;">${defect.description}</p>
         <div style="font-size:11px;color:#64748B;">
             신뢰도: ${Math.round(defect.confidence * 100)}%
-            <span style="margin-left:8px;color:#0EA5E9;cursor:pointer;">클릭하여 상세보기</span>
+            <span style="margin-left:8px;color:#C8A96E;cursor:pointer;">클릭하여 상세보기</span>
         </div>
     `;
 

@@ -4,6 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}CarNeRF{% endblock %} - AI 중고차 플랫폼</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-HJF6M3KEL5"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-HJF6M3KEL5');
+    </script>
+    <!-- Microsoft Clarity -->
+    <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "w8v7w04l4c");
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <link rel="stylesheet" href="/static/css/custom.css">
@@ -14,8 +31,8 @@
                 extend: {
                     fontFamily: { sans: ['Pretendard', 'sans-serif'] },
                     colors: {
-                        primary: { 50:'#eff6ff', 100:'#dbeafe', 200:'#bfdbfe', 300:'#93c5fd', 400:'#60a5fa', 500:'#3b82f6', 600:'#2563eb', 700:'#1d4ed8', 800:'#1e40af', 900:'#1e3a8a' },
-                        carnerf: { dark:'#0f172a', card:'#1e293b', accent:'#38bdf8' }
+                        primary: { 50:'#FAF8F4', 100:'#F3EFE5', 200:'#E8DFC8', 300:'#D4B896', 400:'#C8A96E', 500:'#B89455', 600:'#9E7E45', 700:'#7D6336', 800:'#5C4928', 900:'#3D311B' },
+                        carnerf: { dark:'#000000', card:'#0a0a0a', accent:'#C8A96E' }
                     }
                 }
             }
@@ -32,41 +49,75 @@
     {% block head %}{% endblock %}
 </head>
 <body class="bg-gray-50 dark:bg-[#07090F] font-sans text-gray-900 dark:text-gray-100 min-h-screen flex flex-col transition-colors duration-300">
+    <!-- Scroll Progress -->
+    <div id="scroll-progress" style="width:0"></div>
     {% block navbar %}
     <!-- Navbar -->
-    <nav class="bg-white dark:bg-[#0E1117] shadow-sm border-b border-gray-200 dark:border-white/5 sticky top-0 z-50">
+    <nav class="bg-white dark:bg-[#0E1117] shadow-sm border-b border-gray-200 dark:border-white/5 sticky top-0 z-50" style="backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);background:rgba(14,17,23,0.85);">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center space-x-8">
                     <a href="/" class="flex items-center space-x-2">
-                        <div class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                            <span class="text-white font-bold text-sm">3D</span>
-                        </div>
-                        <span class="text-xl font-bold dark:text-white">Car<span class="text-primary-600">NeRF</span></span>
+                        <div style="width:32px;height:32px;background:#000;border:1px solid rgba(255,255,255,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff;">3D</div>
+                        <span class="text-xl font-bold dark:text-white" style="letter-spacing:-0.5px;">Car<span style="color:#C8A96E;">NeRF</span></span>
                     </a>
                     <div class="hidden md:flex items-center space-x-6">
-                        <a href="/listings" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 transition font-medium">매물 검색</a>
-                        <a href="/sell" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 transition font-medium">내 차 팔기</a>
+                        <a href="/listings" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 transition font-medium text-sm">매물 검색</a>
+                        <a href="/compare" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 transition font-medium text-sm">차량 비교</a>
+                        <a href="/sell" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 transition font-medium text-sm">내 차 팔기</a>
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
+                    <!-- 검색 -->
+                    <div class="hidden md:block relative" id="search-wrap" style="width:220px;">
+                        <input type="text" id="nav-search" placeholder="브랜드, 모델 검색..."
+                            autocomplete="off"
+                            class="w-full px-3 py-1.5 pl-8 text-sm rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary-500 transition"
+                            oninput="onNavSearch(this.value)" onfocus="onNavSearch(this.value)" onblur="setTimeout(()=>document.getElementById('search-dropdown').classList.add('hidden'),200)">
+                        <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                        <div id="search-dropdown" class="hidden absolute top-full left-0 right-0 mt-1 bg-white dark:bg-[#1E293B] border border-gray-200 dark:border-white/10 rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto"></div>
+                    </div>
                     <!-- 다크/라이트 토글 -->
                     <button onclick="toggleTheme()" id="theme-toggle" class="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5 transition" title="테마 변경">
                         <svg id="icon-sun" class="w-4 h-4 text-gray-500 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg>
                         <svg id="icon-moon" class="w-4 h-4 text-gray-500 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>
                     </button>
                     {% if user %}
-                    <a href="/mypage" class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 transition font-medium">마이페이지</a>
-                    <span class="text-sm text-gray-600 dark:text-gray-400">{{ user.username }}님</span>
-                    <button onclick="logout()" class="text-sm text-gray-500 hover:text-red-500 transition">로그아웃</button>
+                    <a href="/mypage" class="hidden sm:inline text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 transition font-medium">마이페이지</a>
+                    <span class="hidden sm:inline text-sm text-gray-600 dark:text-gray-400">{{ user.username }}님</span>
+                    <button onclick="logout()" class="hidden sm:inline text-sm text-gray-500 hover:text-red-500 transition">로그아웃</button>
                     {% else %}
-                    <a href="/login" class="text-sm font-medium text-primary-600 hover:text-primary-700 transition">로그인</a>
-                    <a href="/login?tab=register" class="hidden sm:inline-block bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700 transition">회원가입</a>
+                    <a href="/login" class="hidden sm:inline text-sm font-medium text-primary-600 hover:text-primary-700 transition">로그인</a>
+                    <a href="/login?tab=register" class="hidden sm:inline-block text-black px-4 py-2 rounded-lg text-sm font-medium transition hover:opacity-80" style="background:#fff;">회원가입</a>
                     {% endif %}
+                    <!-- 모바일 햄버거 메뉴 -->
+                    <button onclick="toggleMobileMenu()" class="md:hidden w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5 transition">
+                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
+                    </button>
                 </div>
             </div>
         </div>
     </nav>
+    <!-- 모바일 메뉴 패널 -->
+    <div id="mobile-menu" class="hidden md:hidden bg-white dark:bg-[#0E1117] border-b border-gray-200 dark:border-white/5">
+        <div class="px-4 py-3 space-y-2">
+            <a href="/listings" class="block py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-primary-600">매물 검색</a>
+            <a href="/compare" class="block py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-primary-600">차량 비교</a>
+            <a href="/sell" class="block py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-primary-600">내 차 팔기</a>
+            {% if user %}
+            <a href="/mypage" class="block py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-primary-600">마이페이지</a>
+            <div class="flex items-center justify-between py-2">
+                <span class="text-sm text-gray-500 dark:text-gray-400">{{ user.username }}님</span>
+                <button onclick="logout()" class="text-sm text-red-500">로그아웃</button>
+            </div>
+            {% else %}
+            <div class="flex gap-2 pt-2">
+                <a href="/login" class="flex-1 text-center py-2 text-sm font-medium text-primary-600 border border-primary-600 rounded-lg">로그인</a>
+                <a href="/login?tab=register" class="flex-1 text-center py-2 text-sm font-medium text-white bg-primary-600 rounded-lg">회원가입</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
     {% endblock %}
 
     <!-- Content -->
@@ -75,37 +126,43 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-carnerf-dark text-gray-400 mt-auto">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <footer style="background:#0E1117;border-top:1px solid rgba(255,255,255,0.06);margin-top:auto;">
+        <div style="max-width:1200px;margin:0 auto;padding:48px 24px;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:32px;">
                 <div>
-                    <div class="flex items-center space-x-2 mb-4">
-                        <div class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                            <span class="text-white font-bold text-sm">3D</span>
-                        </div>
-                        <span class="text-lg font-bold text-white">Car<span class="text-primary-400">NeRF</span></span>
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+                        <div style="width:28px;height:28px;background:#000;border:1px solid rgba(255,255,255,0.15);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;">3D</div>
+                        <span style="font-size:18px;font-weight:800;color:#fff;">Car<span style="color:#C8A96E;">NeRF</span></span>
                     </div>
-                    <p class="text-sm">AI 기반 3D 차량 분석으로<br>더 안전한 중고차 거래를 만듭니다.</p>
+                    <p style="font-size:13px;color:#64748B;line-height:1.7;">AI 기반 3D 차량 분석으로<br>더 안전한 중고차 거래를 만듭니다.</p>
                 </div>
                 <div>
-                    <h3 class="text-white font-semibold mb-3">서비스</h3>
-                    <ul class="space-y-2 text-sm">
-                        <li><a href="/listings" class="hover:text-white transition">매물 검색</a></li>
-                        <li><a href="/sell" class="hover:text-white transition">내 차 팔기</a></li>
-                        <li><a href="/mypage" class="hover:text-white transition">마이페이지</a></li>
+                    <h3 style="font-size:14px;font-weight:700;color:#E2E8F0;margin-bottom:14px;">서비스</h3>
+                    <ul style="list-style:none;padding:0;margin:0;">
+                        <li style="margin-bottom:8px;"><a href="/listings" style="font-size:13px;color:#64748B;text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='#E2E8F0'" onmouseout="this.style.color='#64748B'">매물 검색</a></li>
+                        <li style="margin-bottom:8px;"><a href="/sell" style="font-size:13px;color:#64748B;text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='#E2E8F0'" onmouseout="this.style.color='#64748B'">내 차 팔기</a></li>
+                        <li style="margin-bottom:8px;"><a href="/mypage" style="font-size:13px;color:#64748B;text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='#E2E8F0'" onmouseout="this.style.color='#64748B'">마이페이지</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h3 class="text-white font-semibold mb-3">고객센터</h3>
-                    <ul class="space-y-2 text-sm">
-                        <li>전화: 1588-0000</li>
-                        <li>이메일: help@carnerf.kr</li>
-                        <li>운영시간: 평일 09:00 - 18:00</li>
+                    <h3 style="font-size:14px;font-weight:700;color:#E2E8F0;margin-bottom:14px;">기술</h3>
+                    <ul style="list-style:none;padding:0;margin:0;">
+                        <li style="margin-bottom:8px;font-size:13px;color:#64748B;">3D Gaussian Splatting</li>
+                        <li style="margin-bottom:8px;font-size:13px;color:#64748B;">YOLOv8 결함 탐지</li>
+                        <li style="margin-bottom:8px;font-size:13px;color:#64748B;">ChatGPT 차량 분석</li>
+                        <li style="margin-bottom:8px;font-size:13px;color:#64748B;">AI 가격 예측</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 style="font-size:14px;font-weight:700;color:#E2E8F0;margin-bottom:14px;">고객센터</h3>
+                    <ul style="list-style:none;padding:0;margin:0;">
+                        <li style="margin-bottom:8px;font-size:13px;color:#64748B;">평일 09:00 - 18:00</li>
+                        <li style="margin-bottom:8px;font-size:13px;color:#64748B;">help@carnerf.kr</li>
                     </ul>
                 </div>
             </div>
-            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-sm">
-                <p>&copy; 2026 CarNeRF. All rights reserved.</p>
+            <div style="border-top:1px solid rgba(255,255,255,0.06);margin-top:32px;padding-top:24px;text-align:center;">
+                <p style="font-size:12px;color:#475569;">&copy; 2026 CarNeRF. All rights reserved. | AI 기반 3D 중고차 거래 플랫폼</p>
             </div>
         </div>
     </footer>
@@ -135,9 +192,61 @@
         }
         updateThemeIcon();
 
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            if (menu) menu.classList.toggle('hidden');
+        }
+
         async function logout() {
             await fetch('/api/auth/logout', { method: 'POST' });
             window.location.href = '/';
+        }
+        // 스크롤 프로그레스 바
+        window.addEventListener('scroll', () => {
+            const el = document.getElementById('scroll-progress');
+            if (!el) return;
+            const h = document.documentElement.scrollHeight - window.innerHeight;
+            el.style.width = h > 0 ? (window.scrollY / h * 100) + '%' : '0';
+        });
+
+        // Reveal on scroll (IntersectionObserver)
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revealObserver.unobserve(e.target); }});
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+        // 현재 페이지 네비 링크 하이라이트
+        document.querySelectorAll('nav a[href]').forEach(a => {
+            if (a.getAttribute('href') === window.location.pathname) {
+                a.style.color = '#C8A96E';
+                a.style.fontWeight = '600';
+            }
+        });
+
+        // 검색 자동완성
+        let searchTimer = null;
+        async function onNavSearch(q) {
+            const dd = document.getElementById('search-dropdown');
+            if (!q || q.length < 1) { dd.classList.add('hidden'); return; }
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(async () => {
+                try {
+                    const res = await fetch(`/api/search/autocomplete?q=${encodeURIComponent(q)}`);
+                    const data = await res.json();
+                    if (!data.results || data.results.length === 0) {
+                        dd.innerHTML = '<div style="padding:12px 16px;font-size:13px;color:#64748B;">검색 결과가 없습니다</div>';
+                    } else {
+                        dd.innerHTML = data.results.map(r => {
+                            const icon = r.type === 'brand' ? '🏷' : r.type === 'model' ? '🚗' : '📋';
+                            const cnt = r.count != null ? `<span style="font-size:11px;color:#64748B;margin-left:auto;">${r.count}대</span>` : '';
+                            const href = r.listing_id ? `/vehicles/${r.listing_id}` : `/listings?search=${encodeURIComponent(r.text)}`;
+                            return `<a href="${href}" style="display:flex;align-items:center;gap:8px;padding:8px 14px;text-decoration:none;color:inherit;font-size:13px;transition:background 0.15s;" onmouseover="this.style.background='rgba(200,169,110,0.08)'" onmouseout="this.style.background=''">
+                                <span>${icon}</span><span style="color:var(--text,#E2E8F0);">${r.label || r.text}</span>${cnt}</a>`;
+                        }).join('');
+                    }
+                    dd.classList.remove('hidden');
+                } catch(e) { dd.classList.add('hidden'); }
+            }, 250);
         }
     </script>
     {% block scripts %}{% endblock %}

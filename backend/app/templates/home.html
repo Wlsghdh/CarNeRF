@@ -4,133 +4,152 @@
 
 {% block head %}
 <style>
-:root{--bg:#07090F;--surface:#0F1218;--border:rgba(255,255,255,0.06);--accent:#0EA5E9;--accent2:#6366F1;--text:#E2E8F0;--muted:#64748B;--heading:#fff}
-html:not(.dark){--bg:#FAFBFC;--surface:#FFFFFF;--border:rgba(0,0,0,0.06);--text:#1E293B;--muted:#64748B;--heading:#0F172A}
+:root{--bg:#000000;--surface:rgba(255,255,255,0.03);--border:rgba(255,255,255,0.06);--accent:#C8A96E;--text:#999999;--muted:#666666;--heading:#FFFFFF}
+html:not(.dark){--bg:#FFFFFF;--surface:rgba(0,0,0,0.02);--border:rgba(0,0,0,0.06);--text:#666666;--muted:#999999;--heading:#000000}
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{background:var(--bg)!important;color:var(--text)!important;font-family:'Pretendard',sans-serif;overflow-x:hidden}
+body{background:#000!important;color:var(--text)!important;font-family:'Pretendard',sans-serif;overflow-x:hidden}
+html:not(.dark) body{background:#fff!important}
 
 /* NAV */
-.nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:60px;transition:all 0.4s}
-.nav.scrolled{background:color-mix(in srgb,var(--bg) 85%,transparent);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
-.nav-logo{display:flex;align-items:center;gap:8px;text-decoration:none;font-size:18px;font-weight:800;color:var(--heading)}
-.nav-logo em{font-style:normal;color:var(--accent)}
-.nav-logo div{width:28px;height:28px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:#fff}
-.nav-links{display:flex;gap:28px}
-.nav-links a{font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;transition:color 0.2s}
+.nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:64px;transition:all 0.4s}
+.nav.scrolled{background:rgba(0,0,0,0.85);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid rgba(255,255,255,0.06)}
+html:not(.dark) .nav.scrolled{background:rgba(255,255,255,0.85)}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-size:20px;font-weight:900;color:var(--heading);letter-spacing:-0.5px}
+.nav-logo div{width:32px;height:32px;background:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#000}
+html:not(.dark) .nav-logo div{background:#000;color:#fff}
+.nav-links{display:flex;gap:32px}
+.nav-links a{font-size:11px;font-weight:500;color:var(--muted);text-decoration:none;transition:color 0.2s;letter-spacing:3px;text-transform:uppercase}
 .nav-links a:hover{color:var(--heading)}
 .nav-right{display:flex;gap:8px;align-items:center}
-.btn{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;border:none;cursor:pointer;transition:all 0.2s}
-.btn-o{color:var(--muted);border:1px solid var(--border);background:none}
-.btn-o:hover{color:var(--heading);border-color:var(--heading)}
-.btn-f{background:var(--accent);color:#fff}
-.btn-f:hover{background:#38BEF8}
+.btn{padding:8px 18px;border-radius:0;font-size:12px;font-weight:600;text-decoration:none;border:none;cursor:pointer;transition:all 0.3s;letter-spacing:1px;text-transform:uppercase}
+.btn-o{color:var(--muted);border:1px solid var(--border);background:transparent}
+.btn-o:hover{color:var(--heading);border-color:rgba(255,255,255,0.3)}
+html:not(.dark) .btn-o:hover{border-color:rgba(0,0,0,0.3)}
+.btn-f{background:#fff;color:#000;font-weight:700}
+.btn-f:hover{background:#C8A96E;color:#000}
+html:not(.dark) .btn-f{background:#000;color:#fff}
+html:not(.dark) .btn-f:hover{background:#333;color:#fff}
 @media(max-width:768px){.nav-links{display:none}.nav{padding:0 20px}}
 
-/* ═══ SECTION 1 : HERO (영상 배경) ═══ */
-.hero{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden}
-.hero-video{position:absolute;inset:0;z-index:0}
-.hero-video video{width:100%;height:100%;object-fit:cover}
-.hero-video::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,9,15,0.7) 0%,rgba(7,9,15,0.85) 100%)}
-html:not(.dark) .hero-video::after{background:linear-gradient(180deg,rgba(250,251,252,0.7) 0%,rgba(250,251,252,0.85) 100%)}
-.hero-inner{position:relative;z-index:2;padding:0 24px;max-width:700px}
-.hero-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:50px;background:rgba(14,165,233,0.1);border:1px solid rgba(14,165,233,0.2);font-size:13px;font-weight:600;color:var(--accent);margin-bottom:28px}
-.hero h1{font-size:clamp(32px,6vw,56px);font-weight:900;letter-spacing:-2px;line-height:1.15;color:var(--heading);margin-bottom:16px}
-.hero h1 em{font-style:normal;color:var(--accent)}
-.hero h1 small{display:block;font-size:clamp(16px,2.5vw,22px);font-weight:500;color:var(--muted);letter-spacing:0;margin-top:12px}
-.hero>p{font-size:16px;color:var(--muted);line-height:1.8;margin-bottom:40px}
-.hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-.hero-cta a{padding:14px 36px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;transition:all 0.3s}
-.cta-main{background:var(--accent);color:#fff;box-shadow:0 0 40px rgba(14,165,233,0.25)}
-.cta-main:hover{background:#38BEF8;transform:translateY(-2px);box-shadow:0 0 60px rgba(14,165,233,0.4)}
-.cta-ghost{background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--muted)}
-.cta-ghost:hover{color:var(--heading);border-color:rgba(255,255,255,0.15)}
-.scroll-hint{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--muted);font-size:10px;letter-spacing:2px}
-.scroll-hint div{width:16px;height:16px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(45deg);animation:bounce 2s infinite}
-@keyframes bounce{0%,100%{transform:rotate(45deg) translateY(0);opacity:0.3}50%{transform:rotate(45deg) translateY(4px);opacity:1}}
+/* ═══ HERO: SCROLL-HIJACK HORIZONTAL ═══ */
+.hero-scroll-container{position:relative;height:400vh}
+.hero-sticky{position:sticky;top:0;height:100vh;overflow:hidden}
+.hero-track{display:flex;width:400vw;height:100vh;will-change:transform}
+.hero-slide{width:100vw;height:100vh;position:relative;display:flex;align-items:center;overflow:hidden;flex-shrink:0}
+.hero-slide-bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:brightness(0.3)}
+.hero-slide::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.4) 0%,rgba(0,0,0,0.1) 40%,rgba(0,0,0,0.6) 100%);z-index:1}
+.hero-content{position:relative;z-index:2;max-width:700px;padding:0 80px;opacity:0;transform:translateY(30px);transition:opacity 0.7s ease,transform 0.7s ease}
+.hero-slide.active .hero-content{opacity:1;transform:translateY(0)}
+.hero-tag{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#C8A96E;font-weight:600;margin-bottom:24px}
+.hero-title{font-size:clamp(40px,8vw,80px);font-weight:900;color:#fff;line-height:1.05;letter-spacing:-2px;margin-bottom:24px}
+.hero-desc{font-size:clamp(15px,1.8vw,18px);color:rgba(255,255,255,0.6);line-height:1.8;max-width:480px}
+.hero-cta{display:flex;gap:16px;margin-top:40px}
+.hero-cta a{padding:16px 40px;font-size:13px;font-weight:700;text-decoration:none;transition:all 0.3s;letter-spacing:2px;text-transform:uppercase}
+.hero-cta .cta-primary{background:#fff;color:#000}
+.hero-cta .cta-primary:hover{background:#C8A96E;color:#000}
+.hero-cta .cta-secondary{border:1px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.7)}
+.hero-cta .cta-secondary:hover{border-color:#fff;color:#fff}
 
-/* ═══ SECTION 2 : 핵심 메시지 (대문구) ═══ */
-.msg-sec{padding:140px 24px 80px;text-align:center}
-.msg-sec h2{font-size:clamp(22px,4vw,38px);font-weight:800;letter-spacing:-1px;color:var(--heading);line-height:1.6;margin-bottom:28px}
-.msg-sec h2 em{font-style:normal;color:var(--accent)}
-.msg-sec p{font-size:16px;color:var(--muted);line-height:2;max-width:520px;margin:0 auto}
+/* Vertical progress dots - right side */
+.hero-progress{position:fixed;right:32px;top:50%;transform:translateY(-50%);z-index:100;display:flex;flex-direction:column;gap:16px;transition:opacity 0.4s}
+.hero-progress.hidden{opacity:0;pointer-events:none}
+.hero-progress-dot{width:10px;height:10px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.3);background:transparent;cursor:pointer;transition:all 0.4s;position:relative}
+.hero-progress-dot.active{border-color:#fff;background:#fff}
+.hero-progress-dot::after{content:attr(data-label);position:absolute;right:22px;top:50%;transform:translateY(-50%);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.4);white-space:nowrap;opacity:0;transition:opacity 0.3s;pointer-events:none}
+.hero-progress-dot:hover::after{opacity:1}
 
-/* ═══ 3D SCAN ═══ */
-@keyframes ringRotate{to{transform:rotate(360deg)}}
-@keyframes beamDown{0%{top:0;opacity:0}5%{opacity:1}95%{opacity:1}100%{top:100%;opacity:0}}
-.scan-marker{position:absolute;display:flex;align-items:center;gap:5px;padding:4px 10px;border:1.5px solid;border-radius:8px;font-size:10px;font-weight:700;opacity:0;transform:scale(0.8);transition:all 0.5s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;backdrop-filter:blur(6px)}
-.scan-marker.show{opacity:1;transform:scale(1)}
-.scan-marker .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.scan-marker.warn{border-color:#F59E0B;color:#F59E0B;background:rgba(245,158,11,0.1)}.scan-marker.warn .dot{background:#F59E0B}
-.scan-marker.bad{border-color:#EF4444;color:#EF4444;background:rgba(239,68,68,0.1)}.scan-marker.bad .dot{background:#EF4444}
-.scan-marker.ok{border-color:#10B981;color:#10B981;background:rgba(16,185,129,0.1)}.scan-marker.ok .dot{background:#10B981}
-.hud-line{font-size:11px;color:var(--muted);margin-bottom:5px;opacity:0;transition:opacity 0.4s}
-.hud-line.show{opacity:1}
-.hud-line em{font-style:normal;font-weight:700}
-.hud-line.c-accent em{color:var(--accent)}
-.hud-line.c-green em{color:#10B981}
-.hud-line.c-red em{color:#EF4444}
+@media(max-width:768px){
+  .hero-content{padding:0 24px}
+  .hero-progress{right:16px;gap:12px}
+  .hero-progress-dot::after{display:none}
+}
 
-/* ═══ SECTION 3 : 서비스 카드 ═══ */
-.svc-sec{padding:100px 24px 120px;max-width:1100px;margin:0 auto}
-.svc-tag{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:12px;text-align:center}
-.svc-title{font-size:clamp(24px,3.5vw,36px);font-weight:800;letter-spacing:-1px;color:var(--heading);text-align:center;margin-bottom:56px}
-.svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.svc-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px 28px;transition:all 0.3s;text-align:center}
-.svc-card:hover{border-color:rgba(14,165,233,0.15);transform:translateY(-4px)}
-.svc-icon{font-size:44px;margin-bottom:20px;line-height:1}
-.svc-card h3{font-size:18px;font-weight:800;color:var(--heading);margin-bottom:10px}
-.svc-card p{font-size:13px;color:var(--muted);line-height:1.8}
-.svc-divider{width:32px;height:3px;background:var(--accent);border-radius:2px;margin:16px auto 0;opacity:0.5}
-@media(max-width:768px){.svc-grid{grid-template-columns:1fr}}
+/* ═══ SPLIT-SCREEN SECTIONS ═══ */
+.split-section{display:flex;min-height:100vh}
+.split-text{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;padding:80px 80px;background:#000}
+.split-text > .reveal{max-width:460px;text-align:left}
+.split-img{flex:1;position:relative;overflow:hidden}
+.split-img img{width:100%;height:100%;object-fit:cover}
+.split-section:nth-child(even){flex-direction:row-reverse}
+.split-section:nth-child(even) .split-text{align-items:flex-start;background:#0a0a0a}
+.split-num{font-size:80px;font-weight:900;color:#C8A96E;line-height:1;margin-bottom:24px}
+.split-title{font-size:36px;font-weight:900;color:#fff;margin-bottom:20px;letter-spacing:-1px}
+.split-desc{font-size:16px;color:rgba(255,255,255,0.5);line-height:1.9;max-width:420px}
+.split-heading{margin-bottom:80px;text-align:center}
+.split-heading .tag{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#C8A96E;font-weight:600;margin-bottom:16px}
+.split-heading h2{font-size:clamp(32px,6vw,56px);font-weight:900;color:#fff;letter-spacing:-2px;line-height:1.1}
+@media(max-width:768px){
+  .split-section{flex-direction:column!important;min-height:auto}
+  .split-text{padding:60px 24px;min-height:50vh;align-items:center!important}
+  .split-text > .reveal{text-align:center!important;max-width:100%}
+  .split-img{min-height:50vh}
+  .split-num{font-size:56px}
+  .split-title{font-size:28px}
+}
 
-/* ═══ SECTION 4 : 신뢰 포인트 ═══ */
-.trust-sec{padding:120px 24px;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
-.trust-inner{max-width:1000px;margin:0 auto}
-.trust-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-top:48px}
-.trust-card{background:var(--bg);padding:36px 20px;text-align:center}
-html:not(.dark) .trust-card{background:var(--surface)}
-.trust-card .num{font-size:28px;font-weight:900;color:var(--accent);margin-bottom:4px}
-.trust-card .label{font-size:12px;color:var(--muted);line-height:1.6}
-@media(max-width:640px){.trust-grid{grid-template-columns:repeat(2,1fr)}}
-
-/* ═══ SECTION 5 : 프로세스 ═══ */
-.proc-sec{padding:120px 24px;max-width:1000px;margin:0 auto}
-.proc-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:48px}
-.proc-step{background:var(--surface);border:1px solid var(--border);padding:36px 24px;text-align:center;transition:all 0.3s}
-.proc-step:first-child{border-radius:16px 0 0 16px}
-.proc-step:last-child{border-radius:0 16px 16px 0}
-.proc-step:hover{background:var(--bg);border-color:rgba(14,165,233,0.15)}
-.proc-num{font-size:40px;font-weight:900;background:linear-gradient(135deg,var(--accent),transparent);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px;line-height:1}
-.proc-step h3{font-size:15px;font-weight:700;color:var(--heading);margin-bottom:8px}
-.proc-step p{font-size:13px;color:var(--muted);line-height:1.8}
-@media(max-width:640px){.proc-steps{grid-template-columns:1fr}.proc-step:first-child,.proc-step:last-child{border-radius:16px}}
-
-/* ═══ CTA ═══ */
-.cta-sec{padding:120px 24px;text-align:center;position:relative}
-.cta-glow{position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(14,165,233,0.06),transparent);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
-.cta-sec h2{font-size:clamp(26px,4vw,42px);font-weight:800;letter-spacing:-1px;color:var(--heading);margin-bottom:12px}
-.cta-sec p{font-size:15px;color:var(--muted);margin-bottom:36px}
+/* ═══ CTA SECTION ═══ */
+.cta-pres{background:#000;text-align:center;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.cta-pres h2{font-size:clamp(36px,7vw,72px);font-weight:900;letter-spacing:-2px;color:#fff;margin-bottom:20px;line-height:1.1}
+.cta-pres p{font-size:16px;color:rgba(255,255,255,0.4);margin-bottom:48px;letter-spacing:0.3px}
+.cta-btn{display:inline-block;padding:18px 56px;background:#fff;color:#000;font-size:14px;font-weight:700;text-decoration:none;letter-spacing:3px;text-transform:uppercase;transition:all 0.3s;border:none}
+.cta-btn:hover{background:#C8A96E;color:#000}
 
 /* ═══ FOOTER ═══ */
-.ft{background:var(--surface);border-top:1px solid var(--border);padding:48px 24px 24px;color:var(--muted)}
+.ft{border-top:1px solid var(--border);padding:56px 24px 28px;color:var(--muted);background:#000}
+html:not(.dark) .ft{background:#fff}
 .ft-inner{max-width:1000px;margin:0 auto;display:flex;justify-content:space-between;font-size:13px}
-.ft-left{display:flex;flex-direction:column;gap:6px}
+.ft-left{display:flex;flex-direction:column;gap:8px}
 .ft-right{display:flex;gap:28px}
-.ft-right a{color:var(--muted);text-decoration:none}.ft-right a:hover{color:var(--heading)}
-.ft-copy{text-align:center;padding:16px;font-size:11px;color:var(--muted)}
+.ft-right a{color:var(--muted);text-decoration:none;transition:color 0.2s;font-size:12px;letter-spacing:1px;text-transform:uppercase}.ft-right a:hover{color:var(--heading)}
+.ft-copy{text-align:center;padding:16px;font-size:11px;color:var(--muted);letter-spacing:2px;background:#000}
+html:not(.dark) .ft-copy{background:#fff}
 @media(max-width:640px){.ft-inner{flex-direction:column;gap:20px}}
 
 /* REVEAL */
-.reveal{opacity:0;transform:translateY(24px);transition:opacity 0.7s,transform 0.7s}
+.reveal{opacity:0;transform:translateY(28px);transition:opacity 0.8s cubic-bezier(0.4,0,0.2,1),transform 0.8s cubic-bezier(0.4,0,0.2,1)}
 .reveal.show{opacity:1;transform:translateY(0)}
+
+/* ═══ TECH SECTION ═══ */
+.tech-section{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:120px 24px;background:#000;position:relative;overflow:hidden}
+.tech-section::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(200,169,110,0.03),transparent 70%)}
+.tech-label{font-size:clamp(60px,12vw,120px);font-weight:900;color:rgba(255,255,255,0.03);letter-spacing:-4px;margin-bottom:-20px;line-height:1}
+.tech-heading{font-size:clamp(36px,6vw,64px);font-weight:900;color:#fff;letter-spacing:-2px;margin-bottom:16px}
+.tech-sub{font-size:14px;color:rgba(255,255,255,0.35);letter-spacing:3px;text-transform:uppercase;margin-bottom:60px}
+.tech-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:900px;width:100%;perspective:1200px}
+.tech-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);padding:40px 28px;text-align:center;position:relative;overflow:hidden;transition:all 0.5s cubic-bezier(0.03,0.98,0.52,0.99);transform-style:preserve-3d;cursor:default}
+.tech-card:hover{transform:translateZ(20px) rotateX(-2deg);border-color:rgba(200,169,110,0.2);background:rgba(255,255,255,0.05)}
+.tech-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(200,169,110,0.3),transparent);opacity:0;transition:opacity 0.5s}
+.tech-card:hover::before{opacity:1}
+.tech-card .icon{font-size:32px;margin-bottom:16px;display:block;color:rgba(255,255,255,0.15)}
+.tech-card h3{font-size:16px;font-weight:800;color:#fff;margin-bottom:8px;letter-spacing:-0.3px}
+.tech-card p{font-size:12px;color:rgba(255,255,255,0.35);line-height:1.7;letter-spacing:0.3px}
+@media(max-width:768px){.tech-grid{grid-template-columns:1fr;max-width:400px}.tech-label{font-size:60px}}
+
+/* ═══ SECTION DIVIDER ═══ */
+.section-divider{min-height:60vh;display:flex;align-items:center;justify-content:center;background:#000;position:relative}
+.section-divider h2{font-size:clamp(48px,10vw,100px);font-weight:900;color:#fff;letter-spacing:-3px;line-height:1}
+.section-divider .sub{font-size:13px;color:rgba(200,169,110,0.6);letter-spacing:4px;text-transform:uppercase;margin-top:16px}
+
+/* ═══ 3D SPLIT SECTION ANIMATIONS ═══ */
+.split-section{perspective:1000px}
+.split-text .reveal{transform:translateY(40px) rotateX(4deg);opacity:0;transform-origin:bottom center;transition:all 1s cubic-bezier(0.16,1,0.3,1)}
+.split-text .reveal.show{transform:translateY(0) rotateX(0);opacity:1}
+.split-img{transform:scale(1.02);transition:transform 1.2s cubic-bezier(0.16,1,0.3,1)}
+.split-img.show{transform:scale(1)}
+.split-num{transition:all 0.8s 0.1s;transform:translateX(-20px);opacity:0}
+.reveal.show .split-num{transform:translateX(0);opacity:1}
+.split-title{transition:all 0.8s 0.2s;transform:translateX(-20px);opacity:0}
+.reveal.show .split-title{transform:translateX(0);opacity:1}
+.split-desc{transition:all 0.8s 0.3s;transform:translateX(-20px);opacity:0}
+.reveal.show .split-desc{transform:translateX(0);opacity:1}
 </style>
 {% endblock %}
 
 {% block content %}
 <!-- ═══ NAV ═══ -->
 <nav class="nav" id="gnav">
-  <a href="/" class="nav-logo"><div>3D</div>Car<em>NeRF</em></a>
+  <a href="/" class="nav-logo"><div>3D</div>CarNeRF</a>
   <div class="nav-links">
     <a href="#service">서비스</a>
     <a href="#process">이용방법</a>
@@ -152,153 +171,208 @@ html:not(.dark) .trust-card{background:var(--surface)}
   </div>
 </nav>
 
-<!-- ═══ SECTION 1 : HERO ═══ -->
-<section class="hero">
-  <!-- 영상 배경 (영상 없으면 그라데이션 배경) -->
-  <div class="hero-video">
-    <video autoplay muted loop playsinline poster="">
-      <!-- 영상 파일을 /static/videos/hero.mp4 에 넣으면 자동 재생됩니다 -->
-      <source src="/static/videos/hero.mp4" type="video/mp4">
-    </video>
-  </div>
+<!-- ═══ HERO: SCROLL-HIJACK HORIZONTAL SLIDES ═══ -->
+<div class="hero-scroll-container" id="heroScrollContainer">
+  <div class="hero-sticky" id="heroSticky">
+    <div class="hero-track" id="heroTrack">
 
-  <div class="hero-inner">
-    <div class="hero-badge">AI 딜러</div>
-    <h1><em>CarNeRF</em></h1>
-    <div class="hero-cta">
-      <a href="/listings" class="cta-main">매물 둘러보기</a>
-      <a href="#message" class="cta-ghost">더 알아보기 ↓</a>
-    </div>
-  </div>
-
-  <div class="scroll-hint"><span>SCROLL</span><div></div></div>
-</section>
-
-<!-- ═══ SECTION 2 : 핵심 메시지 ═══ -->
-<section class="msg-sec reveal" id="message">
-  <h2>
-    나도 모르게 빠져나가던 중고차 매매 비용,<br>
-    <em>CarNeRF</em>가 제거합니다.
-  </h2>
-  <p>
-    AI가 직접 차량을 3D로 분석하고 적정 가격을 측정합니다.<br>
-    중간 마진 없는, 신뢰 있는 거래 플랫폼.
-  </p>
-</section>
-
-<!-- ═══ 3D 스캔 애니메이션 ═══ -->
-<section style="padding:0 24px 100px;max-width:900px;margin:0 auto;">
-  <div id="scan-stage" style="position:relative;width:100%;aspect-ratio:16/9;background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden;">
-    <!-- 차량 (원 위) -->
-    <div id="scan-car" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);z-index:5;opacity:0;transition:opacity 1s;">
-      <div style="position:relative;">
-        <div id="scan-circle" style="width:clamp(140px,22vw,200px);height:clamp(140px,22vw,200px);border-radius:50%;background:linear-gradient(135deg,rgba(14,165,233,0.06),rgba(99,102,241,0.06));border:1px solid rgba(14,165,233,0.1);display:flex;align-items:center;justify-content:center;transition:all 0.6s;">
-          <div style="font-size:clamp(60px,12vw,90px);line-height:1;">🚗</div>
+      <div class="hero-slide active" data-slide="0">
+        <div class="hero-slide-bg" style="background-image:url('/static/images/hero/hero_neural.jpg')"></div>
+        <div class="hero-content">
+          <div class="hero-tag">AI-Powered 3D Scanning</div>
+          <h1 class="hero-title">차량을 3D로<br>스캔합니다</h1>
+          <p class="hero-desc">딥러닝 신경망이 차량의 모든 면을 분석하여<br>3D Gaussian Splatting 모델을 생성합니다.</p>
         </div>
-        <div id="scan-ring" style="position:absolute;inset:-10px;border-radius:50%;border:2px solid transparent;border-top-color:var(--accent);opacity:0;transition:opacity 0.4s;"></div>
+      </div>
+
+      <div class="hero-slide" data-slide="1">
+        <div class="hero-slide-bg" style="background-image:url('/static/images/hero/hero_estimation.jpg')"></div>
+        <div class="hero-content">
+          <div class="hero-tag">Real-Time Price Analysis</div>
+          <h1 class="hero-title">정확한 시세를<br>측정합니다</h1>
+          <p class="hero-desc">5만 건의 실거래 데이터를 기반으로<br>AI가 차량의 적정 가격을 산출합니다.</p>
+        </div>
+      </div>
+
+      <div class="hero-slide" data-slide="2">
+        <div class="hero-slide-bg" style="background-image:url('/static/images/hero/hero_reliable.jpg')"></div>
+        <div class="hero-content">
+          <div class="hero-tag">AI Defect Detection</div>
+          <h1 class="hero-title">결함을 자동으로<br>탐지합니다</h1>
+          <p class="hero-desc">YOLOv8 모델이 차량의 스크래치, 덴트,<br>도색 손상을 정밀하게 감지합니다.</p>
+        </div>
+      </div>
+
+      <div class="hero-slide" data-slide="3">
+        <div class="hero-slide-bg" style="background-image:url('/static/images/hero/hero_fair.jpg')"></div>
+        <div class="hero-content">
+          <div class="hero-tag">Transparent Trading</div>
+          <h1 class="hero-title">공정한 거래를<br>시작하세요</h1>
+          <p class="hero-desc">에스크로 결제와 AI 진단 리포트로<br>신뢰할 수 있는 중고차 거래.</p>
+          <div class="hero-cta">
+            <a href="/listings" class="cta-primary">매물 둘러보기</a>
+            <a href="/sell" class="cta-secondary">내 차 팔기</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Vertical progress dots (right side) -->
+<div class="hero-progress" id="heroProgress">
+  <div class="hero-progress-dot active" data-slide="0" data-label="Scan"></div>
+  <div class="hero-progress-dot" data-slide="1" data-label="Price"></div>
+  <div class="hero-progress-dot" data-slide="2" data-label="Detect"></div>
+  <div class="hero-progress-dot" data-slide="3" data-label="Trade"></div>
+</div>
+
+<!-- ═══ SECTION 2: CarNeRF가 하는 일 (Split-Screen) ═══ -->
+<div id="service">
+  <div class="split-section">
+    <div class="split-text">
+      <div class="reveal">
+        <div class="split-num">01</div>
+        <div class="split-title">3D 모델링</div>
+        <p class="split-desc">스마트폰 영상만으로 차량의 완벽한 3D 모델을 생성합니다. Gaussian Splatting 기술로 실물과 동일한 품질.</p>
       </div>
     </div>
-    <!-- 스캔 빔 -->
-    <div id="scan-beam" style="position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent 5%,var(--accent) 50%,transparent 95%);box-shadow:0 0 30px var(--accent),0 0 80px rgba(14,165,233,0.3);opacity:0;top:0;z-index:10;"></div>
-    <!-- 마커 -->
-    <div id="scan-markers" style="position:absolute;inset:0;z-index:15;pointer-events:none;"></div>
-    <!-- HUD -->
-    <div id="scan-hud" style="position:absolute;top:16px;left:20px;z-index:15;text-align:left;font-family:'Pretendard',monospace;"></div>
-    <!-- 점수 -->
-    <div id="scan-score" style="position:absolute;bottom:20px;right:20px;z-index:15;background:rgba(14,17,23,0.8);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:14px;padding:16px 20px;text-align:center;opacity:0;transform:translateY(10px);transition:all 0.6s;">
-      <div id="scan-score-num" style="font-size:36px;font-weight:900;color:#10B981;line-height:1;">--</div>
-      <div style="font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:4px;">종합 점수</div>
+    <div class="split-img">
+      <img src="/static/images/hero/svc_3d.jpg" alt="3D 모델링" loading="lazy">
     </div>
   </div>
-</section>
 
-<!-- ═══ SECTION 3 : 서비스 ═══ -->
-<section class="svc-sec" id="service">
-  <div class="svc-tag">Service</div>
-  <div class="svc-title">CarNeRF가 하는 일</div>
-  <div class="svc-grid">
-    <div class="svc-card reveal">
-      <div class="svc-icon">🔍</div>
-      <h3>AI 대리 판매</h3>
-      <p>직접 차량을 점검하고 가격을 측정합니다.<br>외부·내부 3D 모델링 진행,<br>차량 판매를 보장합니다.</p>
-      <div class="svc-divider"></div>
+  <div class="split-section">
+    <div class="split-text">
+      <div class="reveal">
+        <div class="split-num">02</div>
+        <div class="split-title">AI 결함 탐지</div>
+        <p class="split-desc">YOLOv8 딥러닝 모델이 차량 외관의 스크래치, 덴트, 도색 손상을 자동으로 감지합니다.</p>
+      </div>
     </div>
-    <div class="svc-card reveal" style="transition-delay:0.1s">
-      <div class="svc-icon">📊</div>
-      <h3>실거래 시세 분석</h3>
-      <p>5만 건의 실거래 데이터를 기반으로<br>현재 차량의 실제 평균 가격을<br>정확하게 파악합니다.</p>
-      <div class="svc-divider"></div>
-    </div>
-    <div class="svc-card reveal" style="transition-delay:0.2s">
-      <div class="svc-icon">🛡️</div>
-      <h3>안심거래 100% 보장</h3>
-      <p>거래 대금을 CarNeRF가 안전하게 보관.<br>차량 인도 확인 후 판매자에게 정산.<br>에스크로 방식으로 사기 걱정 제로.</p>
-      <div class="svc-divider"></div>
+    <div class="split-img">
+      <img src="/static/images/hero/svc_defect.jpg" alt="AI 결함 탐지" loading="lazy">
     </div>
   </div>
-</section>
 
-<!-- ═══ SECTION 4 : 신뢰 포인트 ═══ -->
-<section class="trust-sec">
-  <div class="trust-inner">
+  <div class="split-section">
+    <div class="split-text">
+      <div class="reveal">
+        <div class="split-num">03</div>
+        <div class="split-title">공정 거래</div>
+        <p class="split-desc">AI 시세 분석과 에스크로 결제로 판매자와 구매자 모두가 신뢰할 수 있는 거래를 보장합니다.</p>
+      </div>
+    </div>
+    <div class="split-img">
+      <img src="/static/images/hero/svc_trade.jpg" alt="공정 거래" loading="lazy">
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TECH KEYWORDS SECTION ═══ -->
+<section class="tech-section">
+  <div class="reveal">
     <div style="text-align:center">
-      <div class="svc-tag">Why CarNeRF</div>
-      <div class="svc-title" style="margin-bottom:0">믿을 수 있는 거래 플랫폼</div>
+      <div class="tech-label">How?</div>
+      <h2 class="tech-heading">Our Technology</h2>
+      <p class="tech-sub">Powered by cutting-edge AI</p>
     </div>
-    <div class="trust-grid reveal">
-      <div class="trust-card">
-        <div class="num">3D</div>
-        <div class="label">Gaussian Splatting<br>차량 3D 모델링</div>
-      </div>
-      <div class="trust-card">
-        <div class="num">5만+</div>
-        <div class="label">실거래 데이터<br>기반 시세 분석</div>
-      </div>
-      <div class="trust-card">
-        <div class="num">100%</div>
-        <div class="label">에스크로<br>안심거래 보장</div>
-      </div>
-      <div class="trust-card">
-        <div class="num">AI</div>
-        <div class="label">YOLOv8 + ChatGPT<br>자동 진단 리포트</div>
-      </div>
+  </div>
+  <div class="tech-grid">
+    <div class="tech-card reveal">
+      <span class="icon">◇</span>
+      <h3>Gaussian Splatting</h3>
+      <p>3D point cloud를 실시간으로<br>렌더링하는 최신 기술</p>
+    </div>
+    <div class="tech-card reveal" style="transition-delay:0.1s">
+      <span class="icon">△</span>
+      <h3>YOLOv8</h3>
+      <p>실시간 객체 탐지 모델로<br>차량 결함을 자동 감지</p>
+    </div>
+    <div class="tech-card reveal" style="transition-delay:0.2s">
+      <span class="icon">○</span>
+      <h3>COLMAP</h3>
+      <p>Structure from Motion으로<br>카메라 포즈 자동 추정</p>
+    </div>
+    <div class="tech-card reveal" style="transition-delay:0.3s">
+      <span class="icon">□</span>
+      <h3>LightGBM</h3>
+      <p>5만 건 실거래 데이터 기반<br>정밀 가격 예측 모델</p>
+    </div>
+    <div class="tech-card reveal" style="transition-delay:0.4s">
+      <span class="icon">⬡</span>
+      <h3>Depth Estimation</h3>
+      <p>단안 깊이 추정으로<br>3D 품질 극대화</p>
+    </div>
+    <div class="tech-card reveal" style="transition-delay:0.5s">
+      <span class="icon">◈</span>
+      <h3>Escrow System</h3>
+      <p>안전 결제 시스템으로<br>거래 신뢰도 보장</p>
     </div>
   </div>
 </section>
 
-<!-- ═══ SECTION 5 : 프로세스 ═══ -->
-<section class="proc-sec" id="process">
-  <div style="text-align:center">
-    <div class="svc-tag">How it works</div>
-    <div class="svc-title">이렇게 진행됩니다</div>
-  </div>
-  <div class="proc-steps">
-    <div class="proc-step reveal">
-      <div class="proc-num">01</div>
-      <h3>차량 촬영</h3>
-      <p>스마트폰으로 차량 주위를<br>1~2분 동영상 촬영</p>
-    </div>
-    <div class="proc-step reveal" style="transition-delay:0.1s">
-      <div class="proc-num">02</div>
-      <h3>AI 3D 분석</h3>
-      <p>3D 모델 생성 + 결함 탐지 +<br>시세 분석을 AI가 자동으로</p>
-    </div>
-    <div class="proc-step reveal" style="transition-delay:0.2s">
-      <div class="proc-num">03</div>
-      <h3>안심 거래</h3>
-      <p>에스크로 결제로<br>안전하게 거래 완료</p>
-    </div>
+<!-- ═══ SECTION DIVIDER: HOW IT WORKS ═══ -->
+<section class="section-divider">
+  <div class="reveal" style="text-align:center">
+    <h2>How It Works</h2>
+    <p class="sub">사용 방법</p>
   </div>
 </section>
 
-<!-- ═══ CTA ═══ -->
-<section class="cta-sec">
-  <div class="cta-glow"></div>
-  <h2 class="reveal">지금 시작하세요</h2>
-  <p class="reveal" style="transition-delay:0.1s">AI가 분석한 차량을 직접 확인해보세요</p>
-  <div class="reveal" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;transition-delay:0.2s">
-    <a href="/listings" class="cta-main" style="padding:14px 36px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;display:inline-block">매물 둘러보기</a>
-    <a href="/sell" class="cta-ghost" style="padding:14px 36px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;display:inline-block">내 차 팔기 →</a>
+<!-- ═══ SECTION 3: 이렇게 진행됩니다 (Split-Screen) ═══ -->
+<div id="process">
+  <div class="split-section">
+    <div class="split-text">
+      <div class="reveal">
+        <div class="split-num">01</div>
+        <div class="split-title">차량 촬영</div>
+        <p class="split-desc">스마트폰으로 차량 주위를 1~2분 동영상 촬영하면 끝. 전문 장비 필요 없습니다.</p>
+      </div>
+    </div>
+    <div class="split-img">
+      <img src="/static/images/hero/step_filming.jpg" alt="차량 촬영" loading="lazy">
+    </div>
+  </div>
+
+  <div class="split-section">
+    <div class="split-text">
+      <div class="reveal">
+        <div class="split-num">02</div>
+        <div class="split-title">AI 3D 분석</div>
+        <p class="split-desc">3D 모델 생성, 결함 탐지, 시세 분석을 AI가 자동으로 수행합니다.</p>
+      </div>
+    </div>
+    <div class="split-img">
+      <img src="/static/images/hero/step_ai.jpg" alt="AI 3D 분석" loading="lazy">
+    </div>
+  </div>
+
+  <div class="split-section">
+    <div class="split-text">
+      <div class="reveal">
+        <div class="split-num">03</div>
+        <div class="split-title">안심 거래</div>
+        <p class="split-desc">에스크로 결제로 안전하게 거래를 완료합니다.</p>
+      </div>
+    </div>
+    <div class="split-img">
+      <img src="/static/images/hero/step_deal.jpg" alt="안심 거래" loading="lazy">
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 4: CTA ═══ -->
+<section class="cta-pres">
+  <div>
+    <div class="reveal">
+      <h2>지금 시작하세요</h2>
+    </div>
+    <p class="reveal" style="transition-delay:0.1s">AI가 분석한 차량을 직접 확인해보세요</p>
+    <div class="reveal" style="transition-delay:0.2s">
+      <a href="/listings" class="cta-btn">매물 둘러보기</a>
+    </div>
   </div>
 </section>
 
@@ -306,111 +380,104 @@ html:not(.dark) .trust-card{background:var(--surface)}
 <div class="ft">
   <div class="ft-inner">
     <div class="ft-left">
-      <strong style="color:var(--heading)">CarNeRF</strong>
-      <span>AI 기반 3D 중고차 거래 플랫폼</span>
-      <span>help@carnerf.kr · 평일 09:00-18:00</span>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div style="width:24px;height:24px;background:#fff;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:900;color:#000;">3D</div>
+        <strong style="color:var(--heading);font-size:14px;letter-spacing:1px">CarNeRF</strong>
+      </div>
+      <span style="font-size:12px;">AI 기반 3D 중고차 거래 플랫폼</span>
+      <span style="font-size:12px;">help@carnerf.kr &middot; 평일 09:00-18:00</span>
     </div>
     <div class="ft-right">
-      <a href="/listings">매물 검색</a>
-      <a href="/sell">내 차 팔기</a>
+      <a href="/listings">매물</a>
+      <a href="/sell">판매</a>
       <a href="/mypage">마이페이지</a>
-      <a href="/login">로그인</a>
     </div>
   </div>
 </div>
-<div class="ft-copy">© 2026 CarNeRF. All rights reserved.</div>
+<div class="ft-copy">&copy; 2026 CarNeRF. All rights reserved.</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
 const gnav=document.getElementById('gnav');
-addEventListener('scroll',()=>gnav.classList.toggle('scrolled',scrollY>40),{passive:true});
+
+// ═══ NAV SCROLL TOGGLE ═══
+window.addEventListener('scroll',()=>{
+  gnav.classList.toggle('scrolled',window.scrollY>40);
+},{passive:true});
+
+// ═══ SCROLL-HIJACK HERO ENGINE ═══
+(function(){
+  const container=document.getElementById('heroScrollContainer');
+  const track=document.getElementById('heroTrack');
+  const slides=document.querySelectorAll('.hero-slide');
+  const progressDots=document.querySelectorAll('.hero-progress-dot');
+  const progressContainer=document.getElementById('heroProgress');
+  const totalSlides=slides.length;
+
+  function updateHero(){
+    const rect=container.getBoundingClientRect();
+    const scrolled=-rect.top;
+    const totalScroll=container.offsetHeight-window.innerHeight;
+    const progress=Math.max(0,Math.min(1,scrolled/totalScroll));
+    const slideIndex=Math.min(Math.floor(progress*totalSlides),totalSlides-1);
+    const slideProgress=(progress*totalSlides)-slideIndex;
+
+    // Translate the track
+    const translateX=-(slideIndex*100+Math.min(slideProgress,1)*0)+'vw';
+    track.style.transform='translateX(-'+slideIndex*100+'vw)';
+    track.style.transition='transform 0.6s cubic-bezier(0.16,1,0.3,1)';
+
+    // Activate current slide
+    slides.forEach((s,i)=>s.classList.toggle('active',i===slideIndex));
+
+    // Update progress dots
+    progressDots.forEach((d,i)=>d.classList.toggle('active',i===slideIndex));
+
+    // Show/hide progress dots based on hero visibility
+    if(rect.top<=-totalScroll||rect.top>0){
+      progressContainer.classList.add('hidden');
+    }else{
+      progressContainer.classList.remove('hidden');
+    }
+  }
+
+  // Click on progress dots scrolls to that slide
+  progressDots.forEach(d=>{
+    d.addEventListener('click',()=>{
+      const idx=parseInt(d.dataset.slide);
+      const totalScroll=container.offsetHeight-window.innerHeight;
+      const targetScroll=container.offsetTop+(totalScroll*idx/totalSlides);
+      window.scrollTo({top:targetScroll,behavior:'smooth'});
+    });
+  });
+
+  window.addEventListener('scroll',updateHero,{passive:true});
+  updateHero();
+})();
+
+// ═══ REVEAL OBSERVER ═══
 const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('show');obs.unobserve(e.target)}}),{threshold:0.08});
-document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+document.querySelectorAll('.reveal, .split-img').forEach(el=>obs.observe(el));
+
+// ═══ TECH CARD 3D TILT ═══
+document.querySelectorAll('.tech-card').forEach(card=>{
+  card.addEventListener('mousemove',e=>{
+    const rect=card.getBoundingClientRect();
+    const x=(e.clientX-rect.left)/rect.width-0.5;
+    const y=(e.clientY-rect.top)/rect.height-0.5;
+    card.style.transform=`translateZ(20px) rotateY(${x*15}deg) rotateX(${-y*15}deg)`;
+  });
+  card.addEventListener('mouseleave',()=>{
+    card.style.transform='translateZ(0) rotateY(0) rotateX(0)';
+  });
+});
+
+// ═══ THEME / AUTH ═══
 function toggleTheme(){const h=document.documentElement,d=h.classList.contains('dark');d?h.classList.remove('dark'):h.classList.add('dark');localStorage.setItem('theme',d?'light':'dark');updateThemeIcon()}
 function updateThemeIcon(){const d=document.documentElement.classList.contains('dark'),s=document.getElementById('icon-sun'),m=document.getElementById('icon-moon');if(s&&m){s.style.display=d?'none':'block';m.style.display=d?'block':'none'}}
 updateThemeIcon();
 async function logout(){await fetch('/api/auth/logout',{method:'POST'});location.href='/'}
 
-// ═══ 3D SCAN ANIMATION ═══
-(function(){
-  const stage=document.getElementById('scan-stage');
-  if(!stage)return;
-  const car=document.getElementById('scan-car');
-  const circle=document.getElementById('scan-circle');
-  const ring=document.getElementById('scan-ring');
-  const beam=document.getElementById('scan-beam');
-  const markers=document.getElementById('scan-markers');
-  const hud=document.getElementById('scan-hud');
-  const scoreEl=document.getElementById('scan-score');
-  const scoreNum=document.getElementById('scan-score-num');
-  let running=false;
-
-  function hudLine(txt,cls,delay){
-    setTimeout(()=>{const d=document.createElement('div');d.className='hud-line '+cls;d.innerHTML=txt;hud.appendChild(d);requestAnimationFrame(()=>d.classList.add('show'))},delay);
-  }
-  function marker(cls,top,left,delay){
-    setTimeout(()=>{const m=document.createElement('div');m.className='scan-marker '+cls;m.style.top=top;m.style.left=left;m.innerHTML='<div class="dot"></div>';markers.appendChild(m);requestAnimationFrame(()=>m.classList.add('show'))},delay);
-  }
-
-  function run(){
-    running=true;
-    // 차 등장
-    car.style.opacity='1';
-
-    hudLine('> 차량 감지...','c-accent',600);
-    hudLine('> 3D 스캔 시작','c-accent',1500);
-
-    // 링 회전
-    setTimeout(()=>{ring.style.opacity='1';ring.style.animation='ringRotate 1.5s linear infinite';circle.style.borderColor='rgba(14,165,233,0.3)'},1200);
-
-    // 빔
-    setTimeout(()=>{beam.style.opacity='1';beam.style.animation='beamDown 2.5s ease-in-out'},2200);
-    setTimeout(()=>{beam.style.opacity='0';beam.style.animation='none'},4800);
-
-    hudLine('> 외관 분석 중...','',2500);
-
-    // 마커
-    marker('warn','32%','22%',3800);
-    marker('bad','62%','74%',4800);
-    hudLine('> 좌측 도어 <em>확인</em>','c-red',3800);
-    hudLine('> 후면 범퍼 <em>확인</em>','c-red',4800);
-
-    marker('ok','28%','52%',6200);
-    marker('ok','56%','14%',6800);
-    hudLine('> 엔진 <em>양호</em>','c-green',6200);
-    hudLine('> 내부 <em>양호</em>','c-green',6800);
-
-    // 완료
-    setTimeout(()=>{
-      ring.style.animation='none';
-      circle.style.borderColor='rgba(16,185,129,0.3)';
-      circle.style.background='linear-gradient(135deg,rgba(16,185,129,0.06),rgba(14,165,233,0.06))';
-    },7500);
-
-    setTimeout(()=>{
-      hudLine('> 분석 완료 ✓','c-green',0);
-      scoreEl.style.opacity='1';scoreEl.style.transform='translateY(0)';
-      let n=0;const iv=setInterval(()=>{n+=2;if(n>=72){n=72;clearInterval(iv)}scoreNum.textContent=n},25);
-    },8000);
-
-    // 리셋
-    setTimeout(()=>{
-      car.style.opacity='0';ring.style.opacity='0';ring.style.animation='none';
-      circle.style.borderColor='rgba(14,165,233,0.1)';
-      circle.style.background='linear-gradient(135deg,rgba(14,165,233,0.06),rgba(99,102,241,0.06))';
-      scoreEl.style.opacity='0';scoreEl.style.transform='translateY(10px)';
-      markers.innerHTML='';hud.innerHTML='';scoreNum.textContent='--';
-      running=false;
-      setTimeout(()=>{
-        const o2=new IntersectionObserver(es=>{if(es[0].isIntersecting&&!running){o2.disconnect();run()}},{threshold:0.3});
-        o2.observe(stage);
-      },500);
-    },13000);
-  }
-
-  const o1=new IntersectionObserver(es=>{if(es[0].isIntersecting&&!running){o1.disconnect();run()}},{threshold:0.3});
-  o1.observe(stage);
-})()
 </script>
 {% endblock %}
