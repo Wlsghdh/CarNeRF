@@ -5,6 +5,7 @@ import 'features/auth/login_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/listings/listings_screen.dart';
 import 'features/mypage/mypage_screen.dart';
+import 'features/points/points_screen.dart';
 import 'features/sell/sell_screen.dart';
 import 'features/shell/main_scaffold.dart';
 import 'features/vehicle/vehicle_detail_screen.dart';
@@ -30,6 +31,7 @@ final appRouter = GoRouter(
       path: '/viewer/:id',
       builder: (_, state) => ViewerScreen(id: state.pathParameters['id']!),
     ),
+    GoRoute(path: '/points', builder: (_, _) => const PointsScreen()),
     GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
   ],
   errorBuilder: (_, state) => Scaffold(
