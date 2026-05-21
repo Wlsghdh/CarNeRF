@@ -12,6 +12,8 @@ import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/gold_button.dart';
 import '../../shared/widgets/krw_text.dart';
 import 'providers/detail_providers.dart';
+import 'widgets/ai_summary_card.dart';
+import 'widgets/defect_bars.dart';
 import 'widgets/option_matrix.dart';
 import 'widgets/placeholder_section.dart';
 import 'widgets/reviews_card.dart';
@@ -99,6 +101,10 @@ class _DetailBody extends ConsumerWidget {
                 title: 'AI 분석',
                 subtitle: '전용 RAG 기반 차량 요약',
                 child: _AiSection(vehicleId: vehicleId),
+              ),
+              _Section(
+                title: 'AI 결함 진단',
+                child: _DefectSection(vehicleId: vehicleId),
               ),
               _Section(
                 title: '구매 시 총비용',
@@ -377,17 +383,30 @@ class _AiSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(vehicleSummaryProvider(vehicleId));
     return async.when(
-      loading: () => const LoadingSectionCard(height: 80),
+      loading: () => const LoadingSectionCard(height: 140),
       error: (e, _) => const PlaceholderSectionCard(
         label: 'AI 요약을 불러오지 못했습니다',
         icon: Icons.error_outline,
       ),
-      data: (s) => PlaceholderSectionCard(
-        label: s.summary.isEmpty
-            ? 'AI 요약 준비 중입니다 (Phase 3.4.2)'
-            : '${s.summary.split('\n').first}  · Phase 3.4.2에서 풀 UI',
-        icon: Icons.auto_awesome,
+      data: (s) => AISummaryCard(summary: s),
+    );
+  }
+}
+
+class _DefectSection extends ConsumerWidget {
+  const _DefectSection({required this.vehicleId});
+  final int vehicleId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(defectReportProvider(vehicleId));
+    return async.when(
+      loading: () => const LoadingSectionCard(height: 160),
+      error: (e, _) => const PlaceholderSectionCard(
+        label: '결함 리포트를 불러오지 못했습니다',
+        icon: Icons.error_outline,
       ),
+      data: (r) => DefectBars(report: r),
     );
   }
 }
