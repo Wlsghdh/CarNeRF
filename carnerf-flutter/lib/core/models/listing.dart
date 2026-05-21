@@ -43,22 +43,36 @@ class Listing {
   final Vehicle? vehicle;
   final User? seller;
 
-  factory Listing.fromJson(Map<String, dynamic> json) => Listing(
-        id: json['id'] as int,
-        vehicleId: (json['vehicle_id'] as num).toInt(),
-        sellerId: (json['seller_id'] as num).toInt(),
-        title: json['title'] as String,
-        description: json['description'] as String?,
-        price: (json['price'] as num).toInt(),
-        isNegotiable: json['is_negotiable'] as bool? ?? false,
-        status: _listingStatusFromJson(json['status'] as String?),
-        viewCount: (json['view_count'] as num?)?.toInt() ?? 0,
-        createdAt: DateTime.parse(json['created_at'] as String),
-        vehicle: json['vehicle'] is Map<String, dynamic>
-            ? Vehicle.fromJson(json['vehicle'] as Map<String, dynamic>)
-            : null,
-        seller: json['seller'] is Map<String, dynamic>
-            ? User.fromJson(json['seller'] as Map<String, dynamic>)
-            : null,
-      );
+  factory Listing.fromJson(Map<String, dynamic> json) {
+    final vehicleMap = json['vehicle'] is Map<String, dynamic>
+        ? json['vehicle'] as Map<String, dynamic>
+        : null;
+    final sellerMap = json['seller'] is Map<String, dynamic>
+        ? json['seller'] as Map<String, dynamic>
+        : null;
+
+    int? asInt(dynamic v) => v is num ? v.toInt() : null;
+
+    final vehicleId = asInt(json['vehicle_id']) ??
+        asInt(vehicleMap?['id']) ??
+        0;
+    final sellerId =
+        asInt(json['seller_id']) ?? asInt(sellerMap?['id']) ?? 0;
+
+    return Listing(
+      id: (json['id'] as num).toInt(),
+      vehicleId: vehicleId,
+      sellerId: sellerId,
+      title: json['title'] as String? ?? '',
+      description: json['description'] as String?,
+      price: asInt(json['price']) ?? 0,
+      isNegotiable: json['is_negotiable'] as bool? ?? false,
+      status: _listingStatusFromJson(json['status'] as String?),
+      viewCount: asInt(json['view_count']) ?? 0,
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+      vehicle: vehicleMap != null ? Vehicle.fromJson(vehicleMap) : null,
+      seller: sellerMap != null ? User.fromJson(sellerMap) : null,
+    );
+  }
 }
