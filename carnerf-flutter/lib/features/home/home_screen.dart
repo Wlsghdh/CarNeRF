@@ -307,7 +307,7 @@ class _WeeklySpecialsSectionState extends ConsumerState<_WeeklySpecialsSection> 
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 248,
+          height: 272,
           child: asyncSpecials.when(
             data: (list) {
               if (list.isEmpty) {
@@ -450,7 +450,7 @@ class _AgeRecommendSectionState extends ConsumerState<_AgeRecommendSection> {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 290,
+          height: 310,
           child: asyncList.when(
             data: (list) {
               if (list.isEmpty) {
