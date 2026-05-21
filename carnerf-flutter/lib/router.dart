@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'features/auth/login_screen.dart';
+import 'features/compare/compare_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/listings/listings_screen.dart';
 import 'features/mypage/mypage_screen.dart';
@@ -32,6 +33,7 @@ final appRouter = GoRouter(
       builder: (_, state) => ViewerScreen(id: state.pathParameters['id']!),
     ),
     GoRoute(path: '/points', builder: (_, _) => const PointsScreen()),
+    GoRoute(path: '/compare', builder: (_, _) => const CompareScreen()),
     GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
   ],
   errorBuilder: (_, state) => Scaffold(
