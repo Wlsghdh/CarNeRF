@@ -8,6 +8,7 @@ import 'features/mypage/mypage_screen.dart';
 import 'features/sell/sell_screen.dart';
 import 'features/shell/main_scaffold.dart';
 import 'features/vehicle/vehicle_detail_screen.dart';
+import 'features/viewer/viewer_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -24,6 +25,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/vehicle/:id',
       builder: (_, state) => VehicleDetailScreen(id: state.pathParameters['id']!),
+    ),
+    GoRoute(
+      path: '/viewer/:id',
+      builder: (_, state) => ViewerScreen(id: state.pathParameters['id']!),
     ),
     GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
   ],
