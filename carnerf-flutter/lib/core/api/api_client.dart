@@ -10,12 +10,24 @@ final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
   return const FlutterSecureStorage();
 });
 
+class UnauthorizedSignal {
+  void Function()? handler;
+  void fire() => handler?.call();
+}
+
+final unauthorizedSignalProvider = Provider<UnauthorizedSignal>((ref) {
+  return UnauthorizedSignal();
+});
+
 final apiClientProvider = Provider<Dio>((ref) {
   final storage = ref.watch(secureStorageProvider);
+  final tokenStore = ref.watch(tokenStoreProvider);
+  final unauthorized = ref.watch(unauthorizedSignalProvider);
+
   final dio = Dio(
     BaseOptions(
       baseUrl: Env.apiBaseUrl,
-      connectTimeout: const Duration(seconds: 10),
+      connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 20),
       headers: {'Accept': 'application/json'},
     ),
@@ -28,7 +40,21 @@ final apiClientProvider = Provider<Dio>((ref) {
         if (token != null && token.isNotEmpty) {
           options.headers['Authorization'] = 'Bearer $token';
         }
+        final method = options.method.toUpperCase();
+        if (method == 'GET') {
+          final path = options.path;
+          if (!path.contains('?') && !path.endsWith('/')) {
+            options.path = '$path/';
+          }
+        }
         handler.next(options);
+      },
+      onError: (e, handler) async {
+        if (e.response?.statusCode == 401) {
+          await tokenStore.clear();
+          unauthorized.fire();
+        }
+        handler.next(e);
       },
     ),
   );
@@ -48,3 +74,17 @@ class TokenStore {
 final tokenStoreProvider = Provider<TokenStore>((ref) {
   return TokenStore(ref.watch(secureStorageProvider));
 });
+
+String extractApiError(Object err) {
+  if (err is DioException) {
+    final data = err.response?.data;
+    if (data is Map) {
+      final detail = data['detail'];
+      if (detail is String && detail.isNotEmpty) return detail;
+      final message = data['message'];
+      if (message is String && message.isNotEmpty) return message;
+    }
+    return err.message ?? '네트워크 오류';
+  }
+  return err.toString();
+}
