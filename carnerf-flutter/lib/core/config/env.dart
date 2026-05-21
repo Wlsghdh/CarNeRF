@@ -1,6 +1,6 @@
 class Env {
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:5199',
+    defaultValue: 'http://223.195.111.31:5199',
   );
 }
