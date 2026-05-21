@@ -18,6 +18,7 @@ import 'widgets/option_matrix.dart';
 import 'widgets/placeholder_section.dart';
 import 'widgets/price_distribution_chart.dart';
 import 'widgets/price_trend_chart.dart';
+import 'widgets/purchase_cost_card.dart';
 import 'widgets/reviews_card.dart';
 import 'widgets/section_title.dart';
 import 'widgets/vehicle_spec_card.dart';
@@ -110,8 +111,9 @@ class _DetailBody extends ConsumerWidget {
               ),
               _Section(
                 title: '구매 시 총비용',
-                child: const PlaceholderSectionCard(
-                  label: '등록세 · 취득세 · 보험료 합산 (Phase 3.4.4)',
+                child: PurchaseCostCard(
+                  listingPrice: listing.price,
+                  vehicle: v,
                 ),
               ),
               _Section(
