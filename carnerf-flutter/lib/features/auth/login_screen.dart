@@ -74,7 +74,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
       await notifier.login(email, password);
       if (!mounted) return;
-      context.go('/');
+      final next = GoRouterState.of(context).uri.queryParameters['next'];
+      context.go(next != null && next.isNotEmpty ? next : '/');
     } catch (err) {
       _toast(extractApiError(err));
     } finally {

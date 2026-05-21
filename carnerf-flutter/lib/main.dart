@@ -8,16 +8,17 @@ void main() {
   runApp(const ProviderScope(child: CarNerfApp()));
 }
 
-class CarNerfApp extends StatelessWidget {
+class CarNerfApp extends ConsumerWidget {
   const CarNerfApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(appRouterProvider);
     return MaterialApp.router(
       title: 'CarNeRF',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark(),
-      routerConfig: appRouter,
+      routerConfig: router,
     );
   }
 }
