@@ -6,10 +6,12 @@ import '../../../core/api/listings_api.dart';
 import '../../../core/api/market_api.dart';
 import '../../../core/api/predict_api.dart';
 import '../../../core/api/reviews_api.dart';
+import '../../../core/api/transactions_api.dart';
 import '../../../core/api/wishlist_api.dart';
 import '../../../core/models/defect_report.dart';
 import '../../../core/models/listing.dart';
 import '../../../core/models/market_price.dart';
+import '../../../core/models/price_distribution.dart';
 import '../../../core/models/price_estimate.dart';
 import '../../../core/models/vehicle_summary.dart';
 
@@ -46,6 +48,16 @@ final vehicleReviewsProvider =
 final wishlistCheckProvider =
     FutureProvider.family<bool, int>((ref, vehicleId) async {
   return ref.watch(wishlistApiProvider).check(vehicleId);
+});
+
+final marketTrendProvider =
+    FutureProvider.family<List<MonthlyPricePoint>, int>((ref, vehicleId) async {
+  return ref.watch(transactionsApiProvider).marketPrice(vehicleId);
+});
+
+final marketDistributionProvider =
+    FutureProvider.family<PriceDistribution, int>((ref, vehicleId) async {
+  return ref.watch(marketApiProvider).distribution(vehicleId);
 });
 
 Future<void> toggleWishlist(WidgetRef ref, int vehicleId) async {

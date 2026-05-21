@@ -16,6 +16,8 @@ import 'widgets/ai_summary_card.dart';
 import 'widgets/defect_bars.dart';
 import 'widgets/option_matrix.dart';
 import 'widgets/placeholder_section.dart';
+import 'widgets/price_distribution_chart.dart';
+import 'widgets/price_trend_chart.dart';
 import 'widgets/reviews_card.dart';
 import 'widgets/section_title.dart';
 import 'widgets/vehicle_spec_card.dart';
@@ -123,9 +125,16 @@ class _DetailBody extends ConsumerWidget {
                 ),
               _Section(
                 title: '이 차량 시세',
-                child: const PlaceholderSectionCard(
-                  label: '12개월 실거래 + 예측 범위 (Phase 3.4.3)',
-                  icon: Icons.show_chart,
+                child: _TrendSection(
+                  vehicleId: vehicleId,
+                  ownPrice: listing.price,
+                ),
+              ),
+              _Section(
+                title: '가격 분포',
+                child: _DistributionSection(
+                  vehicleId: vehicleId,
+                  ownPrice: listing.price,
                 ),
               ),
               if (v != null)
@@ -407,6 +416,44 @@ class _DefectSection extends ConsumerWidget {
         icon: Icons.error_outline,
       ),
       data: (r) => DefectBars(report: r),
+    );
+  }
+}
+
+class _TrendSection extends ConsumerWidget {
+  const _TrendSection({required this.vehicleId, required this.ownPrice});
+  final int vehicleId;
+  final int ownPrice;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final estimate = ref.watch(priceEstimateProvider(vehicleId)).asData?.value;
+    return PriceTrendChart(
+      vehicleId: vehicleId,
+      ownPrice: ownPrice,
+      predictedLow: estimate?.priceRangeLow,
+      predictedHigh: estimate?.priceRangeHigh,
+      confidence: estimate?.confidence,
+    );
+  }
+}
+
+class _DistributionSection extends ConsumerWidget {
+  const _DistributionSection({required this.vehicleId, required this.ownPrice});
+  final int vehicleId;
+  final int ownPrice;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(marketDistributionProvider(vehicleId));
+    return async.when(
+      loading: () => const LoadingSectionCard(height: 200),
+      error: (e, _) => const PlaceholderSectionCard(
+        label: '가격 분포를 불러오지 못했습니다',
+        icon: Icons.error_outline,
+      ),
+      data: (d) =>
+          PriceDistributionChart(distribution: d, ownPrice: ownPrice),
     );
   }
 }
