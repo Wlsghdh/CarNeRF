@@ -12,9 +12,12 @@ import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/gold_button.dart';
 import '../../shared/widgets/krw_text.dart';
 import 'providers/detail_providers.dart';
+import 'widgets/option_matrix.dart';
 import 'widgets/placeholder_section.dart';
 import 'widgets/reviews_card.dart';
 import 'widgets/section_title.dart';
+import 'widgets/vehicle_spec_card.dart';
+import 'widgets/warranty_card.dart';
 
 class VehicleDetailScreen extends ConsumerWidget {
   const VehicleDetailScreen({super.key, required this.id});
@@ -105,16 +108,13 @@ class _DetailBody extends ConsumerWidget {
               ),
               _Section(
                 title: '옵션 정보',
-                child: PlaceholderSectionCard(
-                  label: '옵션 ${v?.options.length ?? 0}개 (Phase 3.4.1)',
-                ),
+                child: OptionMatrix(owned: v?.options ?? const []),
               ),
-              _Section(
-                title: '차량 정보',
-                child: const PlaceholderSectionCard(
-                  label: '연식 · 연료 · 변속기 · 주행거리 (Phase 3.4.1)',
+              if (v != null)
+                _Section(
+                  title: '차량 정보',
+                  child: VehicleSpecCard(vehicle: v),
                 ),
-              ),
               _Section(
                 title: '이 차량 시세',
                 child: const PlaceholderSectionCard(
@@ -122,13 +122,16 @@ class _DetailBody extends ConsumerWidget {
                   icon: Icons.show_chart,
                 ),
               ),
-              _Section(
-                title: 'A/S 보증',
-                child: const PlaceholderSectionCard(
-                  label: '제조사 보증 기간 + 잔여 일수 (Phase 3.4.1)',
-                  icon: Icons.shield_outlined,
+              if (v != null)
+                _Section(
+                  title: 'A/S 보증',
+                  child: WarrantyCard(
+                    brand: v.brand,
+                    firstRegisteredAt: v.firstRegisteredAt,
+                    inspectionDate: v.inspectionDate,
+                    mileage: v.mileage,
+                  ),
                 ),
-              ),
               _Section(
                 title: '구매자 후기',
                 child: _ReviewsSection(vehicleId: vehicleId),

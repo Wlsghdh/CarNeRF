@@ -1,0 +1,327 @@
+import 'package:flutter/material.dart';
+
+enum OptionCategory { comfort, safety, multimedia, seat, exterior, etc }
+
+const Map<OptionCategory, String> categoryLabel = {
+  OptionCategory.comfort: '편의',
+  OptionCategory.safety: '안전',
+  OptionCategory.multimedia: '멀티미디어',
+  OptionCategory.seat: '시트',
+  OptionCategory.exterior: '외관/휠',
+  OptionCategory.etc: '기타',
+};
+
+const List<OptionCategory> categoryOrder = [
+  OptionCategory.safety,
+  OptionCategory.comfort,
+  OptionCategory.multimedia,
+  OptionCategory.seat,
+  OptionCategory.exterior,
+  OptionCategory.etc,
+];
+
+class CarOption {
+  const CarOption({
+    required this.key,
+    required this.label,
+    required this.category,
+    required this.icon,
+    required this.description,
+  });
+
+  final String key;
+  final String label;
+  final OptionCategory category;
+  final IconData icon;
+  final String description;
+}
+
+const List<CarOption> carOptions = [
+  CarOption(
+    key: 'rear_camera',
+    label: '후방카메라',
+    category: OptionCategory.safety,
+    icon: Icons.photo_camera_outlined,
+    description: '후진할 때 차량 뒤쪽 화면을 모니터에 보여주는 카메라. 주차 시 사각 보완.',
+  ),
+  CarOption(
+    key: 'around_view',
+    label: '어라운드뷰',
+    category: OptionCategory.safety,
+    icon: Icons.center_focus_strong,
+    description: '차량 4면 카메라 영상을 합성해 위에서 본 듯한 화면을 제공. 좁은 곳 주차에 유용.',
+  ),
+  CarOption(
+    key: 'front_sensor',
+    label: '전방주차센서',
+    category: OptionCategory.safety,
+    icon: Icons.gps_fixed,
+    description: '차량 앞 범퍼의 센서로 가까운 장애물을 감지해 경고음으로 알림.',
+  ),
+  CarOption(
+    key: 'rear_sensor',
+    label: '후방주차센서',
+    category: OptionCategory.safety,
+    icon: Icons.radar,
+    description: '후진 시 뒤쪽 장애물까지의 거리를 단계별 경고음으로 알림.',
+  ),
+  CarOption(
+    key: 'bsd',
+    label: '사각지대경보',
+    category: OptionCategory.safety,
+    icon: Icons.warning_amber_outlined,
+    description: '사이드미러로 안 보이는 옆 차선 사각지대에 차량이 있을 때 경고.',
+  ),
+  CarOption(
+    key: 'lka',
+    label: '차선유지보조',
+    category: OptionCategory.safety,
+    icon: Icons.alt_route,
+    description: '차로 중앙을 인식해 핸들을 자동으로 미세 조정. 장거리 운전 피로 감소.',
+  ),
+  CarOption(
+    key: 'acc',
+    label: '어댑티브크루즈',
+    category: OptionCategory.safety,
+    icon: Icons.speed,
+    description: '앞 차와 일정 거리를 유지하며 속도를 자동으로 조절하는 크루즈.',
+  ),
+  CarOption(
+    key: 'aeb',
+    label: '자동긴급제동',
+    category: OptionCategory.safety,
+    icon: Icons.report_problem_outlined,
+    description: '전방 충돌 위험 감지 시 차량이 스스로 브레이크를 작동.',
+  ),
+  CarOption(
+    key: 'rear_cross_warn',
+    label: '후측방경보',
+    category: OptionCategory.safety,
+    icon: Icons.error_outline,
+    description: '후진 출차 시 좌·우에서 접근하는 차량을 감지해 경고.',
+  ),
+  CarOption(
+    key: 'lane_depart_warn',
+    label: '차선이탈경보',
+    category: OptionCategory.safety,
+    icon: Icons.explore_outlined,
+    description: '방향지시등 없이 차로를 벗어나면 경고음·진동으로 알림.',
+  ),
+  CarOption(
+    key: 'smart_key',
+    label: '스마트키',
+    category: OptionCategory.comfort,
+    icon: Icons.key_outlined,
+    description: '키를 주머니에 둔 채 도어 손잡이만 잡아 잠금 해제·시동이 가능.',
+  ),
+  CarOption(
+    key: 'sunroof',
+    label: '선루프',
+    category: OptionCategory.comfort,
+    icon: Icons.wb_sunny_outlined,
+    description: '지붕 일부가 열리는 유리창. 환기·채광용.',
+  ),
+  CarOption(
+    key: 'pano_sunroof',
+    label: '파노라마선루프',
+    category: OptionCategory.comfort,
+    icon: Icons.camera_outlined,
+    description: '지붕 전체가 유리로 된 대형 선루프. 뒷좌석까지 채광.',
+  ),
+  CarOption(
+    key: 'auto_park',
+    label: '자동주차',
+    category: OptionCategory.comfort,
+    icon: Icons.local_parking,
+    description: '주차 공간을 인식해 차량이 스스로 핸들을 조작해 주차.',
+  ),
+  CarOption(
+    key: 'power_trunk',
+    label: '전동트렁크',
+    category: OptionCategory.comfort,
+    icon: Icons.inventory_2_outlined,
+    description: '버튼이나 발 동작으로 트렁크가 자동으로 열리고 닫힘.',
+  ),
+  CarOption(
+    key: 'wireless_charge',
+    label: '무선충전패드',
+    category: OptionCategory.comfort,
+    icon: Icons.battery_charging_full,
+    description: '콘솔에 휴대폰을 올려두면 케이블 없이 무선 충전.',
+  ),
+  CarOption(
+    key: 'hud',
+    label: 'HUD (헤드업)',
+    category: OptionCategory.comfort,
+    icon: Icons.visibility_outlined,
+    description: '차량 속도·내비 정보를 앞 유리에 투영해 시선을 떼지 않고 확인.',
+  ),
+  CarOption(
+    key: 'memory_seat',
+    label: '메모리시트',
+    category: OptionCategory.comfort,
+    icon: Icons.bookmark_outlined,
+    description: '운전자별 시트 위치를 저장해 버튼 한 번으로 복원.',
+  ),
+  CarOption(
+    key: 'cruise_control',
+    label: '크루즈컨트롤',
+    category: OptionCategory.comfort,
+    icon: Icons.show_chart,
+    description: '설정한 속도를 자동으로 유지. 고속도로 정속 주행에 유용.',
+  ),
+  CarOption(
+    key: 'auto_aircon',
+    label: '자동에어컨',
+    category: OptionCategory.comfort,
+    icon: Icons.ac_unit,
+    description: '원하는 실내 온도를 설정하면 풍량과 풍향을 자동 조절.',
+  ),
+  CarOption(
+    key: 'epb',
+    label: '전자식 파킹브레이크',
+    category: OptionCategory.comfort,
+    icon: Icons.album_outlined,
+    description: '버튼 한 번으로 사이드브레이크를 작동·해제. 발판 사이드브레이크 대체.',
+  ),
+  CarOption(
+    key: 'navigation',
+    label: '내비게이션',
+    category: OptionCategory.multimedia,
+    icon: Icons.map_outlined,
+    description: '차량 내장 디스플레이의 길 안내 지도.',
+  ),
+  CarOption(
+    key: 'bluetooth',
+    label: '블루투스',
+    category: OptionCategory.multimedia,
+    icon: Icons.bluetooth,
+    description: '휴대폰을 무선으로 연결해 통화·음악 재생.',
+  ),
+  CarOption(
+    key: 'carplay',
+    label: '애플 카플레이',
+    category: OptionCategory.multimedia,
+    icon: Icons.smartphone,
+    description: 'iPhone을 차량 디스플레이에 연결해 내비·메시지·음악 등을 사용.',
+  ),
+  CarOption(
+    key: 'android_auto',
+    label: '안드로이드 오토',
+    category: OptionCategory.multimedia,
+    icon: Icons.cast,
+    description: '안드로이드폰을 차량 디스플레이에 연결해 구글맵·메시지 등을 사용.',
+  ),
+  CarOption(
+    key: 'premium_sound',
+    label: '프리미엄 사운드',
+    category: OptionCategory.multimedia,
+    icon: Icons.speaker,
+    description: 'Bose·하만카돈 등 브랜드 사운드 시스템 장착.',
+  ),
+  CarOption(
+    key: 'rear_monitor',
+    label: '후석 모니터',
+    category: OptionCategory.multimedia,
+    icon: Icons.tv,
+    description: '뒷좌석 헤드레스트 후면에 설치된 영상 디스플레이.',
+  ),
+  CarOption(
+    key: 'leather_seat',
+    label: '가죽시트',
+    category: OptionCategory.seat,
+    icon: Icons.chair,
+    description: '시트 표면이 천연 또는 인조 가죽으로 마감.',
+  ),
+  CarOption(
+    key: 'heated_seat',
+    label: '열선시트',
+    category: OptionCategory.seat,
+    icon: Icons.local_fire_department,
+    description: '시트 안의 열선으로 좌석을 따뜻하게 데움. 겨울철 유용.',
+  ),
+  CarOption(
+    key: 'ventilated_seat',
+    label: '통풍시트',
+    category: OptionCategory.seat,
+    icon: Icons.air,
+    description: '시트 안의 팬으로 통풍을 일으켜 등·엉덩이 부분을 시원하게.',
+  ),
+  CarOption(
+    key: 'power_seat',
+    label: '전동시트',
+    category: OptionCategory.seat,
+    icon: Icons.weekend_outlined,
+    description: '시트의 전후·등받이 각도·높낮이를 모터로 조절.',
+  ),
+  CarOption(
+    key: 'rear_heated_seat',
+    label: '후석 열선',
+    category: OptionCategory.seat,
+    icon: Icons.thermostat,
+    description: '뒷좌석에도 열선 시트 적용. 동승자 겨울 편의성 향상.',
+  ),
+  CarOption(
+    key: 'massage_seat',
+    label: '마사지시트',
+    category: OptionCategory.seat,
+    icon: Icons.front_hand,
+    description: '시트 내장 모터가 등·허리를 압박하며 마사지.',
+  ),
+  CarOption(
+    key: 'heated_wheel',
+    label: '열선 스티어링',
+    category: OptionCategory.seat,
+    icon: Icons.donut_large,
+    description: '스티어링휠 림에 열선이 들어가 손잡이가 따뜻해짐.',
+  ),
+  CarOption(
+    key: 'alloy_wheel',
+    label: '알로이휠',
+    category: OptionCategory.exterior,
+    icon: Icons.circle_outlined,
+    description: '철 휠 대비 가볍고 디자인이 다양한 알루미늄 합금 휠.',
+  ),
+  CarOption(
+    key: 'led_head',
+    label: 'LED 헤드램프',
+    category: OptionCategory.exterior,
+    icon: Icons.lightbulb_outline,
+    description: '할로겐·HID 대비 밝고 수명이 긴 LED 전조등.',
+  ),
+  CarOption(
+    key: 'matrix_led',
+    label: '매트릭스 LED',
+    category: OptionCategory.exterior,
+    icon: Icons.layers_outlined,
+    description: '전조등의 LED를 영역별로 제어해 마주오는 차량은 피하고 주변은 밝힘.',
+  ),
+  CarOption(
+    key: 'led_rear',
+    label: 'LED 리어램프',
+    category: OptionCategory.exterior,
+    icon: Icons.auto_awesome,
+    description: '후미등에 LED를 적용해 점등 속도가 빠르고 디자인이 선명.',
+  ),
+  CarOption(
+    key: 'hipass',
+    label: '하이패스',
+    category: OptionCategory.etc,
+    icon: Icons.credit_card,
+    description: '톨게이트를 정차 없이 통과할 수 있는 자동 결제 단말기.',
+  ),
+  CarOption(
+    key: 'blackbox',
+    label: '블랙박스',
+    category: OptionCategory.etc,
+    icon: Icons.videocam_outlined,
+    description: '주행·주차 중 영상을 녹화하는 카메라. 사고 증거 확보.',
+  ),
+  CarOption(
+    key: 'ecm_mirror',
+    label: 'ECM 룸미러',
+    category: OptionCategory.etc,
+    icon: Icons.brightness_6,
+    description: '뒷차 헤드라이트 눈부심을 자동 감지해 룸미러를 어둡게 조절.',
+  ),
+];
