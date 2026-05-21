@@ -91,6 +91,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "app", "static")), name="static")
 app.mount("/uploads", StaticFiles(directory=os.path.join(BASE_DIR, "uploads")), name="uploads")
 app.mount("/promo", StaticFiles(directory=os.path.join(BASE_DIR, "..", "promo_assets"), html=True), name="promo")
+app.mount("/app", StaticFiles(directory=os.path.join(BASE_DIR, "app", "static", "flutter_web"), html=True), name="flutter_web")
 
 # API routes
 app.include_router(auth.router)
