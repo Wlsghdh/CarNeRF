@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from fastapi.templating import Jinja2Templates
@@ -92,6 +92,11 @@ app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "app", "static
 app.mount("/uploads", StaticFiles(directory=os.path.join(BASE_DIR, "uploads")), name="uploads")
 app.mount("/promo", StaticFiles(directory=os.path.join(BASE_DIR, "..", "promo_assets"), html=True), name="promo")
 app.mount("/app", StaticFiles(directory=os.path.join(BASE_DIR, "app", "static", "flutter_web"), html=True), name="flutter_web")
+
+
+@app.get("/preview", include_in_schema=False)
+async def mobile_preview():
+    return FileResponse(os.path.join(BASE_DIR, "app", "static", "preview.html"))
 
 # API routes
 app.include_router(auth.router)

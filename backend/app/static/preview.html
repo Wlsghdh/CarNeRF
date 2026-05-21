@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CarNeRF Mobile — 미리보기</title>
+  <style>
+    :root {
+      --gold: #C8A96E;
+      --gold-dim: #A98748;
+      --bg: #0A0A0A;
+      --surface: #141414;
+      --border: #2A2A2A;
+      --text: #F5F5F5;
+      --muted: #9A9A9A;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", sans-serif; }
+    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; gap: 56px; }
+
+    .info { max-width: 320px; display: flex; flex-direction: column; gap: 12px; }
+    .badge { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; padding: 4px 10px; border-radius: 999px; background: rgba(200,169,110,0.12); border: 1px solid rgba(200,169,110,0.35); color: var(--gold); font-size: 11px; font-weight: 600; letter-spacing: 0.6px; }
+    .title { font-size: 32px; font-weight: 800; margin: 0; line-height: 1.2; }
+    .title em { color: var(--gold); font-style: normal; }
+    .sub { color: var(--muted); font-size: 14px; line-height: 1.7; margin: 4px 0 18px; }
+    .meta { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; color: var(--muted); font-size: 12.5px; }
+    .meta b { color: var(--text); font-weight: 700; }
+    .actions { display: flex; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
+    .btn { padding: 11px 18px; border-radius: 12px; font-weight: 700; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-primary { background: var(--gold); color: #000; }
+    .btn-ghost { background: transparent; color: var(--gold); border: 1px solid rgba(200,169,110,0.4); }
+    .credit { color: var(--muted); font-size: 11px; margin-top: 18px; line-height: 1.6; }
+
+    .stage { position: relative; }
+
+    .phone {
+      width: 393px;
+      height: 852px;
+      background: #050505;
+      border-radius: 56px;
+      padding: 14px;
+      box-shadow:
+        0 30px 80px rgba(0,0,0,0.7),
+        0 0 0 2px #1f1f1f,
+        0 0 0 6px #2a2a2a,
+        0 0 80px rgba(200,169,110,0.10);
+      position: relative;
+    }
+    .phone::before {
+      /* Dynamic Island */
+      content: "";
+      position: absolute;
+      top: 26px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 32px;
+      background: #000;
+      border-radius: 999px;
+      z-index: 2;
+    }
+    .phone::after {
+      /* side buttons hint */
+      content: "";
+      position: absolute;
+      left: -3px;
+      top: 180px;
+      width: 3px;
+      height: 60px;
+      background: #2a2a2a;
+      border-radius: 2px;
+    }
+    .screen {
+      width: 100%;
+      height: 100%;
+      border-radius: 44px;
+      overflow: hidden;
+      background: var(--bg);
+      position: relative;
+    }
+    .screen iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+    }
+    .loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
+      background: var(--bg);
+      color: var(--muted);
+      font-size: 12px;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+    .loading.hidden { opacity: 0; }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 2.4px solid rgba(200,169,110,0.2);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .stage-footer {
+      position: absolute;
+      bottom: -34px;
+      left: 0; right: 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .stage-footer code { color: var(--gold); }
+
+    /* Tablet/mobile responsiveness */
+    @media (max-width: 960px) {
+      body { flex-direction: column; padding: 16px; gap: 24px; }
+      .info { max-width: 100%; text-align: center; align-items: center; }
+      .meta { grid-template-columns: 1fr; text-align: center; }
+      .actions { justify-content: center; }
+      .phone { transform: scale(0.85); transform-origin: top center; }
+    }
+    @media (max-width: 480px) {
+      .phone { transform: scale(0.7); }
+    }
+  </style>
+</head>
+<body>
+  <aside class="info">
+    <span class="badge">● LUXURY 3D PREVIEW</span>
+    <h1 class="title">Car<em>NeRF</em> Mobile</h1>
+    <p class="sub">영상 한 번에 3D 중고차를 만나다 — 전용 RAG 기반 AI 요약 · 결함 탐지 · 시세 예측까지 한 화면에서.</p>
+    <div class="meta">
+      <b>스택</b><span>Flutter 3.41 + Riverpod + go_router</span>
+      <b>백엔드</b><span>FastAPI · /api/* (16 라우터)</span>
+      <b>3D</b><span>FastGS (CVPR 2026)</span>
+      <b>차별점</b><span>전용 RAG 차량 요약 · 보험사 다이렉트 자동연동</span>
+    </div>
+    <div class="actions">
+      <a class="btn btn-primary" href="/app/" target="_blank">전체 화면 ↗</a>
+      <a class="btn btn-ghost" href="/" target="_blank">웹 버전</a>
+    </div>
+    <p class="credit">아이니쥬카 (수원대 데이터과학부) · 팀장 주진호 · 김영우 · 정유담 · 임대윤</p>
+  </aside>
+
+  <div class="stage">
+    <div class="phone">
+      <div class="screen">
+        <div class="loading" id="loading">
+          <div class="spinner"></div>
+          <span>앱 로딩 중…</span>
+        </div>
+        <iframe id="app" src="/app/" allow="accelerometer; camera; geolocation; gyroscope; clipboard-write"></iframe>
+      </div>
+    </div>
+    <div class="stage-footer">393 × 852 · iPhone 14 Pro 비율 · <code>http://223.195.111.31:5199/app</code></div>
+  </div>
+
+  <script>
+    const app = document.getElementById('app');
+    const loading = document.getElementById('loading');
+    app.addEventListener('load', () => {
+      setTimeout(() => loading.classList.add('hidden'), 600);
+    });
+  </script>
+</body>
+</html>
