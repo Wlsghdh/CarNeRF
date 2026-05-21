@@ -1,7 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/week.dart';
+import '../../shared/widgets/error_view.dart';
+import '../../shared/widgets/loading_shimmer.dart';
+import '../vehicle/widgets/vehicle_card.dart';
+import 'providers/age_recommend_provider.dart';
+import 'providers/weekly_specials_provider.dart';
+import 'widgets/special_deal_card.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -173,19 +183,19 @@ class _FeatureChips extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: const [
-          Expanded(child: _Chip(icon: Icons.view_in_ar_outlined, label: '3D 뷰어')),
+          Expanded(child: _FeatureChip(icon: Icons.view_in_ar_outlined, label: '3D 뷰어')),
           SizedBox(width: 12),
-          Expanded(child: _Chip(icon: Icons.shield_outlined, label: 'AI 결함')),
+          Expanded(child: _FeatureChip(icon: Icons.shield_outlined, label: 'AI 결함')),
           SizedBox(width: 12),
-          Expanded(child: _Chip(icon: Icons.trending_up, label: '시세 예측')),
+          Expanded(child: _FeatureChip(icon: Icons.trending_up, label: '시세 예측')),
         ],
       ),
     );
   }
 }
 
-class _Chip extends StatelessWidget {
-  const _Chip({required this.icon, required this.label});
+class _FeatureChip extends StatelessWidget {
+  const _FeatureChip({required this.icon, required this.label});
   final IconData icon;
   final String label;
 
@@ -216,21 +226,50 @@ class _Chip extends StatelessWidget {
   }
 }
 
-class _WeeklySpecialsSection extends StatelessWidget {
+class _WeeklySpecialsSection extends ConsumerStatefulWidget {
   const _WeeklySpecialsSection();
 
   @override
+  ConsumerState<_WeeklySpecialsSection> createState() => _WeeklySpecialsSectionState();
+}
+
+class _WeeklySpecialsSectionState extends ConsumerState<_WeeklySpecialsSection> {
+  CountdownParts _remain = timeToNextMondayKst();
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => setState(() => _remain = timeToNextMondayKst()),
+    );
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  String _two(int n) => n.toString().padLeft(2, '0');
+
+  @override
   Widget build(BuildContext context) {
+    final hms = '${_two(_remain.hours)}:${_two(_remain.minutes)}:${_two(_remain.seconds)}';
+    final label = _remain.days > 0 ? '${_remain.days}일 $hms' : hms;
+    final asyncSpecials = ref.watch(weeklySpecialsProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Row(
             children: [
-              Icon(Icons.local_fire_department, color: AppColors.gold, size: 20),
-              SizedBox(width: 6),
-              Text(
+              const Icon(Icons.local_fire_department, color: AppColors.gold, size: 20),
+              const SizedBox(width: 6),
+              const Text(
                 '이번 주 특가',
                 style: TextStyle(
                   color: AppColors.white,
@@ -238,18 +277,78 @@ class _WeeklySpecialsSection extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.gold.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: AppColors.gold.withValues(alpha: 0.4)),
+                ),
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    color: AppColors.gold,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ],
+          ),
+        ),
+        const SizedBox(height: 4),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20),
+          child: Text(
+            '매주 월요일 0시 새 특가로 교체',
+            style: TextStyle(color: AppColors.muted, fontSize: 12),
           ),
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 240,
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            scrollDirection: Axis.horizontal,
-            itemCount: 3,
-            separatorBuilder: (_, _) => const SizedBox(width: 12),
-            itemBuilder: (_, i) => _SpecialDealCardStub(index: i),
+          height: 248,
+          child: asyncSpecials.when(
+            data: (list) {
+              if (list.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  child: Text(
+                    '이번 주 특가가 준비 중입니다',
+                    style: TextStyle(color: AppColors.muted),
+                  ),
+                );
+              }
+              return ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                scrollDirection: Axis.horizontal,
+                itemCount: list.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 12),
+                itemBuilder: (_, i) {
+                  final it = list[i];
+                  return SpecialDealCard(
+                    item: it,
+                    onPress: () => context.push('/vehicle/${it.listing.id}'),
+                  );
+                },
+              );
+            },
+            loading: () => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: List.generate(2, (i) => Padding(
+                  padding: EdgeInsets.only(right: i == 0 ? 12 : 0),
+                  child: const LoadingShimmer(width: 280, height: 220, radius: 16),
+                )),
+              ),
+            ),
+            error: (e, _) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: ErrorView(
+                message: '특가를 불러오지 못했습니다',
+                onRetry: () => ref.invalidate(weeklySpecialsProvider),
+              ),
+            ),
           ),
         ),
       ],
@@ -257,217 +356,170 @@ class _WeeklySpecialsSection extends StatelessWidget {
   }
 }
 
-class _SpecialDealCardStub extends StatelessWidget {
-  const _SpecialDealCardStub({required this.index});
-  final int index;
+class _AgeRecommendSection extends ConsumerStatefulWidget {
+  const _AgeRecommendSection();
+
+  @override
+  ConsumerState<_AgeRecommendSection> createState() => _AgeRecommendSectionState();
+}
+
+class _AgeRecommendSectionState extends ConsumerState<_AgeRecommendSection> {
+  AgeGroup _group = AgeGroup.thirties;
 
   @override
   Widget build(BuildContext context) {
-    final pct = [15, 22, 9][index % 3];
-    final price = [2380, 3150, 1890][index % 3];
-    return Container(
-      width: 280,
-      decoration: BoxDecoration(
-        color: const Color(0xFF0E1117),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
+    final asyncList = ref.watch(ageRecommendProvider(_group));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                height: 140,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF1A1A1A),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-                ),
-                child: const Center(
-                  child: Icon(Icons.view_in_ar, size: 48, color: AppColors.gold),
+              const Text(
+                '연령대별 인기 차량',
+                style: TextStyle(
+                  color: AppColors.white,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-              Positioned(
-                top: 12,
-                left: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.gold,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.local_fire_department, size: 12, color: AppColors.black),
-                      const SizedBox(width: 3),
-                      Text(
-                        '-$pct%',
-                        style: const TextStyle(
-                          color: AppColors.black,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                        ),
+              GestureDetector(
+                onTap: () => context.go('/listings'),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '전체보기',
+                      style: TextStyle(
+                        color: AppColors.gold,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
                       ),
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.7),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: AppColors.gold.withValues(alpha: 0.4)),
-                  ),
-                  child: const Text(
-                    '이번 주 특가',
-                    style: TextStyle(
-                      color: AppColors.gold,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
                     ),
-                  ),
+                    SizedBox(width: 2),
+                    Icon(Icons.arrow_forward, size: 12, color: AppColors.gold),
+                  ],
                 ),
               ),
             ],
           ),
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '샘플 매물',
-                  style: TextStyle(
-                    color: AppColors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  '2022 · 32,000km · 가솔린',
-                  style: TextStyle(color: AppColors.muted, fontSize: 11),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${(price * 1.15).round()}만',
-                            style: const TextStyle(
-                              color: AppColors.muted,
-                              fontSize: 12,
-                              decoration: TextDecoration.lineThrough,
-                            ),
-                          ),
-                          RichText(
-                            text: TextSpan(
-                              text: '$price',
-                              style: const TextStyle(
-                                color: AppColors.gold,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                              ),
-                              children: const [
-                                TextSpan(
-                                  text: ' 만원',
-                                  style: TextStyle(
-                                    color: AppColors.muted,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AgeRecommendSection extends StatelessWidget {
-  const _AgeRecommendSection();
-
-  @override
-  Widget build(BuildContext context) {
-    final groups = [
-      ('20대', '경제형 가성비'),
-      ('30대', '패밀리 SUV'),
-      ('40대', '프리미엄 세단'),
-    ];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+        ),
+        const SizedBox(height: 4),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 20),
           child: Text(
-            '연령대별 추천',
-            style: TextStyle(
-              color: AppColors.white,
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-            ),
+            '또래가 가장 많이 찾은 매물',
+            style: TextStyle(color: AppColors.muted, fontSize: 12),
           ),
         ),
         const SizedBox(height: 12),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            children: List.generate(groups.length, (i) {
-              final (age, desc) = groups[i];
-              return Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(right: i == groups.length - 1 ? 0 : 10),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0E1117),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          age,
-                          style: const TextStyle(
-                            color: AppColors.gold,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          desc,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppColors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+        SizedBox(
+          height: 36,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            scrollDirection: Axis.horizontal,
+            itemCount: AgeGroup.values.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
+            itemBuilder: (_, i) {
+              final g = AgeGroup.values[i];
+              final selected = g == _group;
+              return GestureDetector(
+                onTap: () => setState(() => _group = g),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: selected ? AppColors.gold.withValues(alpha: 0.12) : AppColors.surfaceAlt,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: selected ? AppColors.gold : AppColors.border),
+                  ),
+                  child: Text(
+                    g.label,
+                    style: TextStyle(
+                      color: selected ? AppColors.gold : AppColors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
               );
-            }),
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 290,
+          child: asyncList.when(
+            data: (list) {
+              if (list.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    '해당 연령대 추천 매물이 없습니다',
+                    style: TextStyle(color: AppColors.muted),
+                  ),
+                );
+              }
+              return ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                scrollDirection: Axis.horizontal,
+                itemCount: list.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 12),
+                itemBuilder: (_, i) {
+                  final l = list[i];
+                  return SizedBox(
+                    width: 280,
+                    child: Stack(
+                      children: [
+                        VehicleCard(
+                          listing: l,
+                          onPress: () => context.push('/vehicle/${l.id}'),
+                        ),
+                        Positioned(
+                          top: 10,
+                          left: 10,
+                          child: IgnorePointer(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.gold,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                '${_group.label} 추천',
+                                style: const TextStyle(
+                                  color: AppColors.black,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+            loading: () => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: List.generate(2, (i) => Padding(
+                  padding: EdgeInsets.only(right: i == 0 ? 12 : 0),
+                  child: const LoadingShimmer(width: 280, height: 260, radius: 16),
+                )),
+              ),
+            ),
+            error: (e, _) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: ErrorView(
+                message: '추천 매물을 불러오지 못했습니다',
+                onRetry: () => ref.invalidate(ageRecommendProvider(_group)),
+              ),
+            ),
           ),
         ),
       ],
