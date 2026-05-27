@@ -169,3 +169,14 @@ class TransactionHistory(Base):
     seller_region = Column(String(50), nullable=True)
 
     vehicle = relationship("Vehicle", back_populates="transaction_histories")
+
+
+class AIAnalysisCache(Base):
+    __tablename__ = "ai_analysis_cache"
+
+    id = Column(Integer, primary_key=True, index=True)
+    vehicle_id = Column(Integer, ForeignKey("vehicles.id"), unique=True, nullable=False, index=True)
+    data_json = Column(Text, nullable=False)
+    source = Column(String(30), nullable=False)
+    input_hash = Column(String(64), nullable=False)
+    generated_at = Column(DateTime, default=datetime.utcnow)

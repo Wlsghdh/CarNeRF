@@ -1,6 +1,11 @@
 import logging
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,7 +24,7 @@ logging.basicConfig(
     format="[%(asctime)s] %(levelname)s %(name)s: %(message)s",
     datefmt="%H:%M:%S",
 )
-from app.models import User, Vehicle, Listing, DiagnosisReport, PointTransaction, UserReview, TransactionHistory, Wishlist, LoginHistory  # noqa: F401
+from app.models import User, Vehicle, Listing, DiagnosisReport, PointTransaction, UserReview, TransactionHistory, Wishlist, LoginHistory, AIAnalysisCache  # noqa: F401
 from app.api import pages, vehicles, listings, auth, upload, pipeline, predict, defect
 from app.api import ai_summary, points, reviews, transactions, seller, market_price, wishlist
 from app.api import search, stats

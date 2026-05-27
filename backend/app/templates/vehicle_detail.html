@@ -1274,6 +1274,13 @@ async function logout() {
 
 // ── AI 차량 요약 ──
 let aiSummaryLoaded = false;
+function refreshAISummary() {
+  aiSummaryLoaded = false;
+  const content = document.getElementById('ai-summary-content');
+  content.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:12px;"><div class="spinner"></div><span style="font-size:13px;color:var(--muted);">AI가 차량을 재분석하고 있습니다...</span></div>';
+  _fetchAISummary(true);
+}
+
 function loadAISummary() {
   const content = document.getElementById('ai-summary-content');
   const btn = document.getElementById('ai-summary-btn');
@@ -1290,13 +1297,32 @@ function loadAISummary() {
 
   content.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:12px;"><div class="spinner"></div><span style="font-size:13px;color:var(--muted);">AI가 차량을 분석하고 있습니다...</span></div>';
 
-  fetch(`/api/ai/vehicle-summary/${VEHICLE_ID}`)
+  _fetchAISummary(false);
+}
+
+function _fetchAISummary(force) {
+  const content = document.getElementById('ai-summary-content');
+  const url = `/api/ai/vehicle-summary/${VEHICLE_ID}${force ? '?force=1' : ''}`;
+  fetch(url)
     .then(r => r.json())
     .then(data => {
       const prosHtml = data.pros.map(p => `<li style="font-size:13px;color:#10B981;padding:4px 0;">✓ ${p}</li>`).join('');
       const consHtml = data.cons.map(c => `<li style="font-size:13px;color:#EF4444;padding:4px 0;">✗ ${c}</li>`).join('');
+      const defectBadge = (data.defect_count && data.defect_count > 0)
+        ? `<span style="font-size:10px;color:#EF4444;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);padding:3px 9px;border-radius:10px;font-weight:600;margin-left:8px;">결함 ${data.defect_count}건</span>`
+        : '';
+      const cachedNote = data.cached
+        ? '캐시됨'
+        : '방금 분석';
+      const sourceLabel = data.source === 'chatgpt+rag' ? '리뷰 기반 ChatGPT'
+                        : (data.source === 'chatgpt' ? 'Powered by ChatGPT' : 'AI 모의 분석');
 
       content.innerHTML = `
+        <!-- 🚗 이 차량 분석 -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <span style="font-size:11px;color:#C8A96E;background:rgba(200,169,110,0.1);border:1px solid rgba(200,169,110,0.3);padding:3px 10px;border-radius:10px;font-weight:700;letter-spacing:0.3px;">🚗 이 차량 분석</span>
+          ${defectBadge}
+        </div>
         <div style="font-size:13px;color:var(--muted2);line-height:1.8;margin-bottom:16px;">${data.summary}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
           <div style="background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.15);border-radius:10px;padding:14px;">
@@ -1304,17 +1330,39 @@ function loadAISummary() {
             <ul style="list-style:none;padding:0;margin:0;">${prosHtml}</ul>
           </div>
           <div style="background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.15);border-radius:10px;padding:14px;">
-            <div style="font-size:12px;font-weight:700;color:#EF4444;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">단점</div>
+            <div style="font-size:12px;font-weight:700;color:#EF4444;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">단점 ${data.defect_count > 0 ? `(결함 ${data.defect_count}건 포함)` : ''}</div>
             <ul style="list-style:none;padding:0;margin:0;">${consHtml}</ul>
           </div>
         </div>
-        ${data.known_issues ? `
-        <div style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.15);border-radius:10px;padding:14px;">
-          <div style="font-size:12px;font-weight:700;color:#F59E0B;margin-bottom:6px;">알려진 고질병 / 주의사항</div>
-          <div style="font-size:13px;color:var(--muted2);line-height:1.7;">${data.known_issues}</div>
+
+        <!-- 📰 동일 차종 정보 -->
+        ${(data.known_issues || data.review_summary || (data.sources && data.sources.length > 0)) ? `
+        <div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+            <span style="font-size:11px;color:#C8A96E;background:rgba(200,169,110,0.05);border:1px solid rgba(200,169,110,0.3);padding:3px 10px;border-radius:10px;font-weight:700;letter-spacing:0.3px;">📰 동일 차종 정보</span>
+          </div>
+          ${data.known_issues ? `
+          <div style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.15);border-radius:10px;padding:14px;margin-bottom:10px;">
+            <div style="font-size:12px;font-weight:700;color:#F59E0B;margin-bottom:6px;">알려진 고질병 / 주의사항</div>
+            <div style="font-size:13px;color:var(--muted2);line-height:1.7;">${data.known_issues}</div>
+          </div>` : ''}
+          ${data.review_summary ? `
+          <div style="font-size:13px;color:var(--muted2);line-height:1.7;margin-bottom:10px;padding-left:8px;border-left:2px solid rgba(200,169,110,0.4);">${data.review_summary}</div>` : ''}
+          ${data.sources && data.sources.length > 0 ? `
+          <div style="margin-top:8px;">
+            <div style="font-size:10px;color:var(--muted);margin-bottom:6px;">참고 — 같은 차종 전문 매체 리뷰 ${data.sources.length}건</div>
+            <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;">
+              ${data.sources.map(s => `<li style="font-size:11px;line-height:1.5;">
+                <a href="${s.url}" target="_blank" rel="noopener" style="color:#C8A96E;text-decoration:none;border-bottom:1px dotted rgba(200,169,110,0.4);">${s.title}</a>
+                <span style="color:var(--muted);font-size:10px;margin-left:6px;text-transform:uppercase;letter-spacing:0.3px;">${s.source}</span>
+              </li>`).join('')}
+            </ul>
+          </div>` : ''}
         </div>` : ''}
-        <div style="font-size:10px;color:var(--muted);margin-top:10px;text-align:right;">
-          ${data.source === 'chatgpt' ? 'Powered by ChatGPT' : 'AI 모의 분석'}
+
+        <div style="display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:14px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.04);">
+          <span>${cachedNote} · ${sourceLabel}</span>
+          <button onclick="refreshAISummary()" style="font-size:10px;background:transparent;border:1px solid rgba(200,169,110,0.3);color:#C8A96E;padding:3px 10px;border-radius:8px;cursor:pointer;font-weight:600;">↻ 새로 분석</button>
         </div>
       `;
     })

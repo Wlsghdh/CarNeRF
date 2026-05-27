@@ -195,7 +195,7 @@ DEMO_DEFECTS = {
                 "severity": "중간", "confidence": 0.87,
                 "position_3d": [2.1, -0.8, 1.5], "marker_color": "#F59E0B",
                 "source_frame": "frame_0042.jpg",
-                "description": "좌측 앞 도어에 약 15cm 스크래치 발견",
+                "description": "좌측 앞 도어에 약 15cm 스크래치 (외판교환 이력 없음)",
                 "annotated_image_url": "/static/images/placeholder-car.svg",
             },
             {
@@ -203,7 +203,7 @@ DEMO_DEFECTS = {
                 "severity": "경미", "confidence": 0.72,
                 "position_3d": [-1.8, -0.5, -1.2], "marker_color": "#10B981",
                 "source_frame": "frame_0078.jpg",
-                "description": "후면 범퍼 우측 소형 덴트",
+                "description": "후면 범퍼 우측 소형 덴트 (쿼터패널 정상)",
                 "annotated_image_url": "/static/images/placeholder-car.svg",
             },
             {
@@ -228,7 +228,7 @@ DEMO_DEFECTS = {
                 "severity": "경미", "confidence": 0.78,
                 "position_3d": [-2.5, -0.3, 0.8], "marker_color": "#10B981",
                 "source_frame": "frame_0025.jpg",
-                "description": "후면 범퍼 하단 미세 도색 벗겨짐 (도색 이력 확인)",
+                "description": "후면 범퍼 하단 미세 도색 벗겨짐 (단순교환 이력에 따른 흔적)",
                 "annotated_image_url": "/static/images/placeholder-car.svg",
             },
             {
@@ -253,7 +253,7 @@ DEMO_DEFECTS = {
                 "severity": "경미", "confidence": 0.69,
                 "position_3d": [1.5, -0.4, 2.0], "marker_color": "#10B981",
                 "source_frame": "frame_0031.jpg",
-                "description": "전면 좌측 휀더 주변 경미한 스크래치",
+                "description": "전면 좌측 펜더 주변 경미한 스크래치",
                 "annotated_image_url": "/static/images/placeholder-car.svg",
             },
             {
@@ -261,7 +261,7 @@ DEMO_DEFECTS = {
                 "severity": "경미", "confidence": 0.58,
                 "position_3d": [-1.2, -0.3, -0.5], "marker_color": "#10B981",
                 "source_frame": "frame_0067.jpg",
-                "description": "후면 테일게이트 미세 덴트 (주차장 접촉 흔적)",
+                "description": "후면 테일게이트 미세 덴트 (단순교환 이력에 따른 잔흔)",
                 "annotated_image_url": "/static/images/placeholder-car.svg",
             },
         ],
@@ -269,39 +269,30 @@ DEMO_DEFECTS = {
 }
 
 
-@router.get("/vehicles/{vehicle_id}")
-async def get_vehicle_defects(vehicle_id: int, db: Session = Depends(get_db)):
-    """3D 뷰어용 결함 위치 데이터 반환"""
-    vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
-    if not vehicle:
-        raise HTTPException(404, "차량을 찾을 수 없습니다.")
-
-    # 1) 파일 기반 결함 데이터 (파이프라인 결과 defects.json)
-    if vehicle.model_3d_url:
+def resolve_defects(vehicle_id: int, vehicle: Optional[Vehicle]) -> dict:
+    """차량 결함 정보 조회 (파일 → YOLO → DEMO → none 순). ai_summary 등에서 재사용."""
+    if vehicle and vehicle.model_3d_url:
         model_dir = vehicle.model_3d_url.rsplit("/", 1)[0]
         defects_path = os.path.join(BASE_DIR, model_dir.lstrip("/"), "defects.json")
         if os.path.exists(defects_path):
             with open(defects_path, "r", encoding="utf-8") as f:
                 return json.load(f)
 
-    # 2) 실제 YOLOv8 모델로 추론 (프레임 이미지가 있으면)
-    if _load_defect_model() and vehicle.model_3d_url:
+    if vehicle and vehicle.model_3d_url and _load_defect_model():
         model_dir = vehicle.model_3d_url.rsplit("/", 1)[0]
         frames_dir = os.path.join(BASE_DIR, model_dir.lstrip("/"), "frames")
         if os.path.exists(frames_dir):
             import glob
-            frames = sorted(glob.glob(os.path.join(frames_dir, "*.jpg")))[:20]  # 최대 20장
+            frames = sorted(glob.glob(os.path.join(frames_dir, "*.jpg")))[:20]
             all_detections = []
             for frame in frames:
                 dets = _detect_from_image(frame)
                 all_detections.extend(dets)
             return _build_defect_response(vehicle_id, all_detections, source="yolov8")
 
-    # 3) 데모 데이터
     if vehicle_id in DEMO_DEFECTS:
         return DEMO_DEFECTS[vehicle_id]
 
-    # 4) 결함 없음
     return {
         "vehicle_id": vehicle_id,
         "total_defect_score": 0,
@@ -310,6 +301,15 @@ async def get_vehicle_defects(vehicle_id: int, db: Session = Depends(get_db)):
         "defects": [],
         "source": "none",
     }
+
+
+@router.get("/vehicles/{vehicle_id}")
+async def get_vehicle_defects(vehicle_id: int, db: Session = Depends(get_db)):
+    """3D 뷰어용 결함 위치 데이터 반환"""
+    vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
+    if not vehicle:
+        raise HTTPException(404, "차량을 찾을 수 없습니다.")
+    return resolve_defects(vehicle_id, vehicle)
 
 
 @router.post("/detect")
