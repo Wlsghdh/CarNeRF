@@ -1,0 +1,53 @@
+# Datasets (too large, downloaded from AI Hub)
+datasets/
+*.zip
+
+# Model weights (use Git LFS or external storage)
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# Ultralytics runs
+runs/
+weights/
+
+# Training logs and outputs
+outputs/
+logs/
+*.log
+*.cache
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Environment
+.venv/
+venv/
+env/
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary
+*.tmp
+*.bak
+*~
+
+# Backup directories
+*_backup/

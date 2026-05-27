@@ -1,0 +1,19 @@
+{
+  "n_yolo_detections": 5613,
+  "n_normal_filtered": 278,
+  "n_kept": 5335,
+  "box_aps": {
+    "scratch": 0.2672797513089806,
+    "dent": 0.23773001884723058,
+    "breakage": 0.3355029238365309,
+    "separation": 0.3209982000605608
+  },
+  "map50": 0.2903777235133257,
+  "aihub_mIoU_per_class": {
+    "scratch": 0.6211023503582175,
+    "dent": 0.5823435738408542,
+    "breakage": 0.6010408805632415,
+    "separation": 0.6125101119283337
+  },
+  "aihub_mIoU_mean": 0.6042492291726618
+}
