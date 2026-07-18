@@ -1,0 +1,39 @@
+# CarNeRF RAG - 결함/검수/수리/용어 풀이용 corpus
+# 형식: 카테고리|토픽|URL  (기존 fetch_from_urls.py가 brand|model로 파싱하므로 그대로 활용)
+# 카테고리: inspection / accident / repair / terminology / flood / corrosion
+# 25건, 6개 한국 자동차 매체
+
+# ==================== A. 외관 검수 / 결함 확인 (8건) ====================
+inspection|general|https://www.motorgraph.com/news/articleView.html?idxno=11392
+inspection|judgment|https://www.motorgraph.com/news/articleView.html?idxno=1378
+inspection|report|https://www.motoya.co.kr/news/articleView.html?idxno=43478
+inspection|paint|http://www.autoherald.co.kr/news/articleView.html?idxno=45422
+inspection|general|https://www.motoya.co.kr/news/articleView.html?idxno=11816
+inspection|seasonal|https://www.autoherald.co.kr/news/articleView.html?idxno=3688
+inspection|minor_defect|https://www.motoya.co.kr/news/articleView.html?idxno=17706
+inspection|repair_cost|http://www.autoherald.co.kr/news/articleView.html?idxno=22008
+
+# ==================== B. 사고 이력 해석 (4건) ====================
+accident|terminology|http://www.autoherald.co.kr/news/articleView.html?idxno=10363
+accident|judgment|http://www.autoherald.co.kr/news/articleView.html?idxno=22257
+accident|history|https://www.carguy.kr/news/articleView.html?idxno=48475
+accident|purchase_tip|https://www.motoya.co.kr/news/articleView.html?idxno=37521
+
+# ==================== C. 수리비 / 도색 / 정비 (3건) ====================
+repair|cost|https://www.motorgraph.com/news/articleView.html?idxno=26332
+repair|paint_diy|https://www.motoya.co.kr/news/articleView.html?idxno=36466
+repair|cost|https://www.dailycar.co.kr/content/news.html?type=view&autoId=23751
+
+# ==================== D. 디젤 / DPF 등 용어 풀이 (5건) ====================
+terminology|dpf|https://www.dailycar.co.kr/content/news.html?type=view&autoId=33649
+terminology|dpf|https://www.dailycar.co.kr/content/news.html?type=view&autoId=38197
+terminology|dpf|http://www.autoherald.co.kr/news/articleView.html?idxno=30028
+terminology|diesel|http://www.autoherald.co.kr/news/articleView.html?idxno=22216
+terminology|dpf|https://www.dailycar.co.kr/content/news.html?type=view&autoId=34646
+
+# ==================== E. 부식 / 침수 (5건) ====================
+flood|inspection|https://www.motorgraph.com/news/articleView.html?idxno=26145
+flood|inspection|http://www.autoherald.co.kr/news/articleView.html?idxno=44731
+flood|guide|http://www.autoherald.co.kr/news/articleView.html?idxno=31943
+corrosion|salt|https://www.dailycar.co.kr/content/news.html?type=view&autoId=38980
+flood|recovery|https://www.motorgraph.com/news/articleView.html?idxno=26157

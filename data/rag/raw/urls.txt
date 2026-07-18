@@ -1,0 +1,138 @@
+# CarNeRF RAG - 자동차 리뷰 URL 큐레이션 (자동 큐레이션 결과)
+# 형식: 브랜드|모델|URL
+# 12 차종 × 3건 = 36건, 매체 분산 (모터그래프/오토헤럴드/데일리카/카가이/모토야)
+
+# ==================== 현대 그랜저 (3건) ====================
+현대|그랜저|https://www.motorgraph.com/news/articleView.html?idxno=41440
+현대|그랜저|https://www.motorgraph.com/news/articleView.html?idxno=11109
+현대|그랜저|https://www.dailycar.co.kr/content/news.html?type=view&autoId=46616
+
+# ==================== 현대 투싼 (3건) ====================
+현대|투싼|https://www.motorgraph.com/news/articleView.html?idxno=20813
+현대|투싼|http://www.autoherald.co.kr/news/articleView.html?idxno=39190
+현대|투싼|https://www.carguy.kr/news/articleView.html?idxno=47840
+
+# ==================== 현대 아반떼 CN7 (3건) ====================
+현대|아반떼 CN7|https://www.motorgraph.com/news/articleView.html?idxno=20897
+현대|아반떼 CN7|https://www.carguy.kr/news/articleView.html?idxno=45892
+현대|아반떼 CN7|http://www.autoherald.co.kr/news/articleView.html?idxno=50419
+
+# ==================== 현대 캐스퍼 (3건) ====================
+현대|캐스퍼|https://www.motorgraph.com/news/articleView.html?idxno=30105
+현대|캐스퍼|https://www.motoya.co.kr/news/articleView.html?idxno=34724
+현대|캐스퍼|https://www.dailycar.co.kr/content/news.html?type=view&autoId=41055
+
+# ==================== 현대 NF소나타 (3건, 일반 소나타 시승기) ====================
+현대|NF소나타|https://www.motorgraph.com/news/articleView.html?idxno=13062
+현대|NF소나타|http://www.autoherald.co.kr/news/articleView.html?idxno=35834
+현대|NF소나타|https://www.motoya.co.kr/news/articleView.html?idxno=17558
+
+# ==================== 기아 K5 (3건) ====================
+기아|K5|https://www.motorgraph.com/news/articleView.html?idxno=27249
+기아|K5|http://www.autoherald.co.kr/news/articleView.html?idxno=37085
+기아|K5|https://www.motoya.co.kr/news/articleView.html?idxno=30734
+
+# ==================== 기아 쏘렌토 (3건) ====================
+기아|쏘렌토|https://www.motoya.co.kr/news/articleView.html?idxno=31597
+기아|쏘렌토|https://www.motorgraph.com/news/articleView.html?idxno=33199
+기아|쏘렌토|https://www.motorgraph.com/news/articleView.html?idxno=26223
+
+# ==================== 기아 EV6 (3건) ====================
+기아|EV6|https://www.motorgraph.com/news/articleView.html?idxno=29378
+기아|EV6|https://www.autoherald.co.kr/news/articleView.html?idxno=42011
+기아|EV6|http://www.autoherald.co.kr/news/articleView.html?idxno=41699
+
+# ==================== 기아 카니발 (3건) ====================
+기아|카니발|https://www.motorgraph.com/news/articleView.html?idxno=26341
+기아|카니발|https://www.carguy.kr/news/articleView.html?idxno=47825
+기아|카니발|https://www.dailycar.co.kr/content/news.html?type=view&autoId=57967
+
+# ==================== 제네시스 G80 (3건) ====================
+제네시스|G80|https://www.motorgraph.com/news/articleView.html?idxno=25684
+제네시스|G80|http://www.carguy.kr/news/articleView.html?idxno=53795
+제네시스|G80|https://www.dailycar.co.kr/content/news.html?type=view&autoId=51498
+
+# ==================== BMW 520i (3건) ====================
+BMW|520i|https://www.motoya.co.kr/news/articleView.html?idxno=40394
+BMW|520i|http://www.autoherald.co.kr/news/articleView.html?idxno=51543
+BMW|520i|http://www.dailycar.co.kr/content/news.html?type=view&autoId=33328
+
+# ==================== 쉐보레 트레일블레이저 (3건) ====================
+쉐보레|트레일블레이저|https://www.motorgraph.com/news/articleView.html?idxno=26383
+쉐보레|트레일블레이저|https://www.motoya.co.kr/news/articleView.html?idxno=31325
+쉐보레|트레일블레이저|http://www.carguy.kr/news/articleView.html?idxno=39443
+
+# ==================== 추가 큐레이션 (2026-05-13, +24건) ====================
+# 차종별 +2건씩, 단점/장기시승/리콜 다각도 보강
+
+# 현대 그랜저 +2
+현대|그랜저|http://www.autoherald.co.kr/news/articleView.html?idxno=45904
+현대|그랜저|http://www.carguy.kr/news/articleView.html?idxno=43965
+
+# 현대 투싼 +2 (DPF/엔진오일 무상수리 이슈)
+현대|투싼|https://www.motorgraph.com/news/articleView.html?idxno=31205
+현대|투싼|http://www.carguy.kr/news/articleView.html?idxno=30957
+
+# 현대 아반떼 CN7 +2 (롱텀 시승 + 7세대 시승기)
+현대|아반떼 CN7|https://www.motorgraph.com/news/articleView.html?idxno=25534
+현대|아반떼 CN7|https://www.motorgraph.com/news/articleView.html?idxno=25419
+
+# 현대 캐스퍼 +2 (장기시승 및 최초시승, 일렉트릭 포함)
+현대|캐스퍼|https://www.carguy.kr/news/articleView.html?idxno=54194
+현대|캐스퍼|https://www.carguy.kr/news/articleView.html?idxno=50915
+
+# 현대 NF소나타 +2 (LF 세대 시승기로 보강 - 동일 플랫폼)
+현대|NF소나타|https://www.motorgraph.com/news/articleView.html?idxno=3872
+현대|NF소나타|https://www.motorgraph.com/news/articleView.html?idxno=2196
+
+# 기아 K5 +2 (변속기 시승 + 리콜 이슈)
+기아|K5|http://www.carguy.kr/news/articleView.html?idxno=38473
+기아|K5|http://www.autoherald.co.kr/news/articleView.html?idxno=35584
+
+# 기아 쏘렌토 +2 (시동 불량 + 디젤 생존 이유)
+기아|쏘렌토|http://www.autoherald.co.kr/news/articleView.html?idxno=37671
+기아|쏘렌토|https://www.carguy.kr/news/articleView.html?idxno=46451
+
+# 기아 EV6 +2 (장기시승 17시간 900km + 디지털 노마드 시승)
+기아|EV6|https://www.dailycar.co.kr/content/news.html?type=view&autoId=57492
+기아|EV6|http://www.carguy.kr/news/articleView.html?idxno=43737
+
+# 기아 카니발 +2 (하이브리드 400km 시승 + 4세대 단점 정리)
+기아|카니발|https://www.carguy.kr/news/articleView.html?idxno=48272
+기아|카니발|http://www.carguy.kr/news/articleView.html?idxno=39925
+
+# 제네시스 G80 +2 (스포츠 시승기 + 주행 안정성 분석)
+제네시스|G80|https://www.motorgraph.com/news/articleView.html?idxno=28153
+제네시스|G80|http://www.autoherald.co.kr/news/articleView.html?idxno=37783
+
+# BMW 520i +2 (B48 엔진 분석 + 냉각수 누수 리콜)
+BMW|520i|https://www.motoya.co.kr/news/articleView.html?idxno=14986
+BMW|520i|https://www.dailycar.co.kr/content/news.html?type=view&autoId=54201
+
+# 쉐보레 트레일블레이저 +2 (RS 시승기 + XM3 비교)
+쉐보레|트레일블레이저|https://www.motoya.co.kr/news/articleView.html?idxno=30515
+쉐보레|트레일블레이저|https://www.motorgraph.com/news/articleView.html?idxno=25319
+
+# ==================== 약점 차종 보강 (2026-05-14, +10건) ====================
+# 시맨틱 검색 약점 차종: 투싼 (도심 출퇴근 SUV 매칭 약함), 520i (독일 프리미엄 세단 미반환)
+
+# 현대 투싼 +5 (가솔린 1.6T, 환골탈태 리뷰, 스포티지 비교, 신형 분석, 하이브리드 인증)
+현대|투싼|http://www.carguy.kr/news/articleView.html?idxno=41439
+현대|투싼|http://www.autoherald.co.kr/news/articleView.html?idxno=52201
+현대|투싼|http://www.carguy.kr/news/articleView.html?idxno=40181
+현대|투싼|http://www.carguy.kr/news/articleView.html?idxno=40085
+현대|투싼|https://www.motorgraph.com/news/articleView.html?idxno=26132
+
+# BMW 520i +5 (E200 vs 520i 독일 세단 비교 - 핵심, 5시리즈 어제오늘, 신형 출시, E클래스 비교, G60 종합)
+BMW|520i|https://www.dailycar.co.kr/content/news.html?type=view&autoId=51452
+BMW|520i|https://www.motorgraph.com/news/articleView.html?idxno=32785
+BMW|520i|https://www.motorgraph.com/news/articleView.html?idxno=26465
+BMW|520i|https://www.motorgraph.com/news/articleView.html?idxno=26470
+BMW|520i|https://www.motorgraph.com/news/articleView.html?idxno=32715
+
+# ==================== 재규어 XF (5건) ====================
+재규어|XF|https://www.motorgraph.com/news/articleView.html?idxno=9177
+재규어|XF|https://www.motorgraph.com/news/articleView.html?idxno=11844
+재규어|XF|https://www.dailycar.co.kr/content/news.html?type=view&autoId=29856
+재규어|XF|https://www.dailycar.co.kr/content/news.html?type=view&autoId=34962
+재규어|XF|https://www.dailycar.co.kr/content/news.html?type=view&autoId=26774
